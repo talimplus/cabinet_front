@@ -2,7 +2,7 @@ import router from '@/router/index';
 import axios from 'axios';
 
 const http = axios.create({
-        baseURL: 'http://95.130.227.101:3011',
+        baseURL: 'http://api.talimplus.uz',
 });
 
 http.interceptors.request.use(function (config) {

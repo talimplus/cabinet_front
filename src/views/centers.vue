@@ -4,6 +4,16 @@
       Centers
       <v-btn @click="dialog = true" color="primary">Create</v-btn>
     </v-card-title>
+    <v-row class="px-4">
+      <v-col cols="3">
+        <v-text-field
+          @input="getCenters"
+          v-model="params.name"
+          variant="outlined"
+          label="Center Name"
+        ></v-text-field>
+      </v-col>
+    </v-row>
     <v-data-table :items="items" :headers="headers" hide-default-footer :loading="loading">
       <template v-slot:item.actions="{ item }">
         <div class="d-flex">
@@ -18,7 +28,6 @@
           ></v-btn>
           <v-btn
             :loading="deleteLoading"
-            teicon="mdi-delete"
             density="compact"
             color="medium-emphasis"
             icon="mdi-delete"
@@ -44,13 +53,20 @@
 import CenterCreate from '@/components/pages/center/CenterCreate.vue'
 import { ref } from 'vue'
 import { fetchCenters, deleteCenter } from '@/services/pages/centers'
-import type { Center } from '@/types/center.types'
+import type { Center, CentersParams } from '@/types/center.types'
 
 const loading = ref(false)
 const items = ref<Center[]>([])
 const dialog = ref(false)
 const formForEdit = ref<Center>()
 const deleteLoading = ref(false)
+const totalPages = ref(0)
+
+const params = ref<CentersParams>({
+  name: '',
+  page: 1,
+  perPage: 10,
+})
 
 const edit = (center: Center) => {
   formForEdit.value = center
@@ -65,9 +81,10 @@ const getCenters = async () => {
   loading.value = true
   try {
     const {
-      data: { data },
-    } = await fetchCenters()
+      data: { data, meta },
+    } = await fetchCenters(params.value)
     items.value = data
+    totalPages.value = meta.totalPages
   } catch (err) {
     console.log(err)
   } finally {

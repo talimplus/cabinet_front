@@ -6,7 +6,6 @@ export const register = async (form: RegisterForm) => {
 }
 
 
-
 export const login = async (form: LoginForm) => {
         return http.post('/auth/login', form)
 }

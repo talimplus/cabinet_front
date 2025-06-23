@@ -40,6 +40,7 @@ const items = [
   { text: 'Subjects', icon: 'mdi-clock', path: '/subjects' },
   { text: 'Centers', icon: 'mdi-domain', path: '/centers' },
   { text: 'Groups', icon: 'mdi-flag', path: '/groups' },
+  { text: 'Reception', icon: 'mdi-account-school', path: '/students' },
 ]
 const drawer = ref(null)
 </script>

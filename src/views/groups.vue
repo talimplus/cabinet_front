@@ -5,6 +5,9 @@
       <v-btn color="primary">Create</v-btn>
     </v-card-title>
     <v-data-table :items="items" :headers="headers" hide-default-footer>
+      <template v-slot:item.teacherFullName="{ item }">
+        <div>{{ item.teacher.firstName + ' ' + item.teacher.lastName }}</div>
+      </template>
       <template v-slot:item.actions="{ item }">
         <div class="d-flex">
           <v-btn
@@ -16,7 +19,6 @@
             variant="text"
           ></v-btn>
           <v-btn
-            :loading="deleteLoading"
             teicon="mdi-delete"
             density="compact"
             color="medium-emphasis"
@@ -52,9 +54,12 @@ getGroups()
 
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'Name', key: 'name' },
-  { title: 'Group', key: 'name' },
-  { title: 'Teacher', key: 'name' },
+  { title: 'Nomi', key: 'name' },
+  { title: 'Fan', key: 'subject.name' },
+  { title: 'Dars kunlari', key: '' },
+  { title: 'Dars soati', key: '' },
+  { title: 'Xona', key: '' },
+  { title: 'Ustoz', key: 'teacherFullName' },
   { title: 'Actions', key: 'actions' },
 ]
 </script>

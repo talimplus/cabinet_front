@@ -1,9 +1,9 @@
 import http from '../baseHttp';
-import type { CenterForm } from '@/types/center.types';
+import type { CenterForm, CentersParams } from '@/types/center.types';
 
 
-export const fetchCenters = async () => {
-        return await http.get('/centers')
+export const fetchCenters = async (par: CentersParams) => {
+        return await http.get('/centers', { params: par })
 }
 
 export const createCenter = async (form: CenterForm) => {

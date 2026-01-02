@@ -40,11 +40,14 @@
       </template>
     </v-data-table>
     <CenterCreate
+      ref="centerFormRef"
       :formForEdit="formForEdit"
-      :open="dialog"
+      v-model:open="dialog"
+      :test="test"
       @close="dialog = false"
       @updateData="getCenters"
       @clearEditForm="clearEditForm"
+      @chaqiryapman="chaqirildi"
     ></CenterCreate>
   </v-card>
 </template>
@@ -61,6 +64,8 @@ const dialog = ref(false)
 const formForEdit = ref<Center>()
 const deleteLoading = ref(false)
 const totalPages = ref(0)
+const test = ref({ name: 'Lazizbek' })
+const centerFormRef = ref()
 
 const params = ref<CentersParams>({
   name: '',

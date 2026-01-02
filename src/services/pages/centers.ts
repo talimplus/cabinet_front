@@ -5,7 +5,9 @@ import type { CenterForm, CentersParams } from '@/types/center.types';
 export const fetchCenters = async (par: CentersParams) => {
         return await http.get('/centers', { params: par })
 }
-
+export const fetchAllCenters = async () => {
+        return await http.get('/centers/all')
+}
 export const createCenter = async (form: CenterForm) => {
         return await http.post('/centers', form)
 }

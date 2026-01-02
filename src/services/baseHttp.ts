@@ -2,7 +2,7 @@ import router from '@/router/index';
 import axios from 'axios';
 
 const http = axios.create({
-        baseURL: 'http://api.talimplus.uz',
+        baseURL: 'https://api.talimplus.uz',
 });
 
 http.interceptors.request.use(function (config) {
@@ -17,7 +17,7 @@ http.interceptors.request.use(function (config) {
 http.interceptors.response.use(function (response) {
         return response;
 }, function (error) {
-        if (error.status === 401) {
+        if (error.response.status === 401) {
                 localStorage.removeItem('token');
                 router.push('/login')
         }

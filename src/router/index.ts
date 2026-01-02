@@ -20,7 +20,12 @@ const router = createRouter({
         {
           path: '/groups',
           name: 'groups',
-          component: () => import('../views/groups.vue')
+          component: () => import('../views/groups/index.vue'),
+        },
+        {
+          path: '/groups/:id',
+          name: 'group-view',
+          component: () => import('../views/groups/view.vue'),
         },
         {
           path: '/centers',
@@ -28,9 +33,34 @@ const router = createRouter({
           component: () => import('../views/centers.vue')
         },
         {
-          path: 'students',
+          path: '/rooms',
+          name: 'rooms',
+          component: () => import('../views/rooms/index.vue')
+        },
+        {
+          path: '/reception',
+          name: 'reception',
+          component: () => import('../views/students/reception.vue')
+        },
+        {
+          path: '/students',
           name: 'students',
-          component: () => import('../views/students.vue')
+          component: () => import('../views/students/students.vue')
+        },
+        {
+          path: '/stopped',
+          name: 'stopped',
+          component: () => import('../views/students/stopped.vue')
+        },
+        {
+          path: '/ignored',
+          name: 'ignored',
+          component: () => import('../views/students/ignored.vue')
+        },
+        {
+          path: '/finished',
+          name: 'finished',
+          component: () => import('../views/students/finished.vue')
         }
       ]
     },
@@ -47,4 +77,9 @@ const router = createRouter({
   ],
 })
 
+// beforeeach
+
+
 export default router
+
+

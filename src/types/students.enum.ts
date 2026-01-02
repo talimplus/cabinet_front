@@ -3,4 +3,13 @@ export enum StudentStatus {
         ACTIVE = 'ACTIVE',
         IGNORED = 'ignored',
         STOPPED = 'stopped',
+        FINISHED = 'finished'
+}
+
+export const studentStatusLabels = {
+        [StudentStatus.NEW]: "Kutmoqda",
+        [StudentStatus.ACTIVE]: "O'qimoqda",
+        [StudentStatus.IGNORED]: "O'qishni xoxlamadi",
+        [StudentStatus.STOPPED]: "O'qishni to'xtatdi",
+        [StudentStatus.FINISHED]: "O'qishni tamomladi",
 }

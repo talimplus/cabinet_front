@@ -8,18 +8,18 @@ export interface Student {
         monthlyFee: number;
         referralDiscount: number;
         status: StudentStatus;
+        openStatus: boolean,
+        statusLoading: boolean
 }
 export interface StudentForm {
         firstName: string;
         lastName: string;
         phone: string;
         birthDate: string;
-        login: string;
         referrerId: number;
         monthlyFee: number;
-        password: string,
         centerId: number,
-        groupIds: number,
+        groupIds: number[],
 }
 export interface StudentsParams {
         centerId?: number;

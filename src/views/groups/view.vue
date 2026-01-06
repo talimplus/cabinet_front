@@ -23,6 +23,7 @@
                   label="From Date"
                   density="compact"
                   variant="outlined"
+                  :max="today"
                   @update:model-value="loadAttendance"
                 ></v-date-input>
               </v-col>
@@ -36,14 +37,14 @@
                   @update:model-value="loadAttendance"
                 ></v-date-input>
               </v-col>
-              <v-col cols="12" md="4" class="d-flex align-center">
+              <v-col cols="12" md="4" class="d-flex">
             <v-btn
-                  color="primary"
-                  @click="loadAttendance"
-                  :loading="loadingAttendance"
-                  prepend-icon="mdi-refresh"
+                  color="secondary"
+                  variant="outlined"
+                  @click="clearFilters"
+                  prepend-icon="mdi-close-circle"
                 >
-                  Refresh
+                  Clear
                 </v-btn>
               </v-col>
             </v-row>
@@ -159,7 +160,7 @@
                   <v-col cols="12" md="6">
                     <div class="info-row">
                       <span class="info-label">Center:</span>
-                      <span class="info-value">{{ group.centers?.name || '—' }}</span>
+                      <span class="info-value">{{ group.center?.name || '—' }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
@@ -203,50 +204,13 @@
             </v-card>
 
             <!-- Schedule -->
-            <v-card variant="outlined" class="mb-4" v-if="group.days && group.days.length > 0">
+            <v-card variant="outlined" class="mb-4" v-if="group.schedules && group.schedules.length > 0">
               <v-card-title class="text-h6 pa-4">Schedule</v-card-title>
               <v-card-text>
-                <div v-for="(day, index) in group.days" :key="index" class="schedule-item mb-2">
-                  <v-chip size="small" class="me-2">{{ formatDayName(day.day) }}</v-chip>
-                  <span class="text-body-1">{{ formatTime(day.startTime) }}</span>
+                <div v-for="schedule in group.schedules" :key="schedule.id" class="schedule-item mb-2">
+                  <v-chip size="small" class="me-2">{{ formatDayName(schedule.day) }}</v-chip>
+                  <span class="text-body-1">{{ formatTime(schedule.startTime) }}</span>
                 </div>
-              </v-card-text>
-            </v-card>
-
-            <!-- Timeline -->
-            <v-card variant="outlined" class="mb-4">
-              <v-card-title class="text-h6 pa-4">Timeline</v-card-title>
-              <v-card-text>
-                <v-row>
-                  <v-col cols="12" md="6">
-                    <div class="info-row">
-                      <span class="info-label">Start Date:</span>
-                      <span class="info-value">{{
-                        group.startDate ? formatDate(group.startDate) : '—'
-                      }}</span>
-                    </div>
-                  </v-col>
-                  <v-col cols="12" md="6">
-                    <div class="info-row">
-                      <span class="info-label">End Date:</span>
-                      <span class="info-value">{{
-                        group.endDate ? formatDate(group.endDate) : 'No end date'
-                      }}</span>
-                    </div>
-                  </v-col>
-                  <v-col cols="12" md="6">
-                    <div class="info-row">
-                      <span class="info-label">Timezone:</span>
-                      <span class="info-value">{{ attendanceData?.timezone || '—' }}</span>
-                    </div>
-                  </v-col>
-                  <v-col cols="12" md="6">
-                    <div class="info-row">
-                      <span class="info-label">Created At:</span>
-                      <span class="info-value">{{ formatDate(group.createdAt) }}</span>
-                    </div>
-                  </v-col>
-                </v-row>
               </v-card-text>
             </v-card>
 
@@ -264,13 +228,15 @@
                   <v-col cols="12" md="4">
                     <div class="info-row">
                       <span class="info-label">Lessons per Week:</span>
-                      <span class="info-value">{{ group.days?.length || 0 }}</span>
+                      <span class="info-value">{{ group.schedules?.length || 0 }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="4">
                     <div class="info-row">
-                      <span class="info-label">Group Duration:</span>
-                      <span class="info-value">{{ calculateGroupDuration() }}</span>
+                      <span class="info-label">Start Date:</span>
+                      <span class="info-value">{{
+                        group.startDate ? formatDate(group.startDate) : '—'
+                      }}</span>
                     </div>
                   </v-col>
                 </v-row>
@@ -415,6 +381,13 @@ const formatDateForAPI = (date: string | Date | null | undefined): string | unde
   return `${year}-${month}-${day}`
 }
 
+// Clear date filters and reset to default
+const clearFilters = () => {
+  dateFrom.value = ''
+  dateTo.value = ''
+  loadAttendance()
+}
+
 // Load attendance data
 const loadAttendance = async () => {
   const groupId = route.params.id
@@ -538,15 +511,10 @@ const getCellIcon = (studentId: number, date: string): string => {
 
 // Get cell icon color
 const getCellIconColor = (studentId: number, date: string): string => {
-  // Past dates: grayscale
-  if (isPast(date)) {
-    return 'grey'
-  }
-
   // Future dates: grey
   if (isFuture(date)) return 'grey'
 
-  // Today: check attendance status
+  // Check attendance status (for both past and today)
   const attendance = attendanceData.value?.attendanceByDate[date]
   if (!attendance?.exists) return 'grey'
 
@@ -554,6 +522,7 @@ const getCellIconColor = (studentId: number, date: string): string => {
   const item = rows.find((r: { studentId: number }) => r.studentId === studentId)
   if (!item) return 'grey'
 
+  // Return actual colors (success/error) - CSS will handle visual distinction for past dates
   return item.status === 'present' ? 'success' : 'error'
 }
 
@@ -635,17 +604,6 @@ const getGroupStatusColor = (status: string | undefined): string => {
   return 'primary'
 }
 
-// Calculate group duration
-const calculateGroupDuration = (): string => {
-  if (!group.value?.startDate) return '—'
-
-  const start = new Date(group.value.startDate)
-  const end = group.value.endDate ? new Date(group.value.endDate) : new Date()
-  const diffTime = Math.abs(end.getTime() - start.getTime())
-  const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7))
-
-  return `${diffWeeks} week${diffWeeks !== 1 ? 's' : ''}`
-}
 
 // Student table headers
 const studentHeaders = [
@@ -742,9 +700,9 @@ onMounted(() => {
   background-color: rgba(25, 118, 210, 0.1);
 }
 
-/* Past dates - read-only, visually distinct */
+/* Past dates - read-only, visually distinct but colors visible */
 .attendance-cell.cell-past {
-  opacity: 0.45;
+  opacity: 0.75;
   cursor: not-allowed;
   background-color: rgba(0, 0, 0, 0.02);
 }
@@ -755,8 +713,8 @@ onMounted(() => {
 }
 
 .attendance-cell.cell-past .icon-past {
-  filter: grayscale(100%);
-  opacity: 0.6;
+  filter: grayscale(20%);
+  opacity: 0.9;
 }
 
 /* Future dates - disabled, slightly different from past */

@@ -2,8 +2,9 @@ import router from '@/router/index';
 import axios from 'axios';
 
 const http = axios.create({
-        baseURL: 'https://api.talimplus.uz',
-});
+  // baseURL: 'https://api.talimplus.uz',
+  baseURL: 'http://localhost:3004',
+})
 
 http.interceptors.request.use(function (config) {
         const token = localStorage.getItem('token');

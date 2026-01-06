@@ -1,6 +1,7 @@
 import type { Center } from '@/types/centers.types.ts'
 import type { Teacher } from '@/types/teacher.types.ts'
 import type { Subject } from '@/types/subject.types.ts'
+import type { Room } from '@/types/rooms.types.ts'
 import { WeekDay } from '@/types/groups.enum'
 
 
@@ -11,7 +12,12 @@ export interface Group {
         createdAt: string;
         centers: Center;
         subject: Subject;
-        teacher: Teacher;
+        teacher: Teacher | null;
+        room?: Room | null;
+        status?: string;
+        days?: GroupFormDays[];
+        startDate?: string;
+        endDate?: string | null;
 }
 export interface GroupFormDays {
         day: WeekDay,

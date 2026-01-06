@@ -8,8 +8,9 @@ export interface Student {
         monthlyFee: number;
         referralDiscount: number;
         status: StudentStatus;
-        openStatus: boolean,
-        statusLoading: boolean
+        openStatus?: boolean,
+        statusLoading?: boolean
+        createdAt?: string;
 }
 export interface StudentForm {
         firstName: string;
@@ -28,4 +29,5 @@ export interface StudentsParams {
         page?: number;
         perPage?: number
         status?: StudentStatus
+        groupId?: number;
 }

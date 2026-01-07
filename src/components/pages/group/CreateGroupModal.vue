@@ -48,7 +48,12 @@
           ></v-select>
         </v-card-text>
         <v-card-text class="pb-0">
-          <v-text-field v-model="form.monthlyFee" label="MonthlyFee"></v-text-field>
+          <v-text-field
+            v-model="form.monthlyFee"
+            label="Oylik to'lov"
+            type="number"
+            variant="outlined"
+          ></v-text-field>
         </v-card-text>
         <v-card-text>
           <v-row>
@@ -132,13 +137,30 @@ const form = ref<GroupForm>({
 watch(open, (newValue: boolean) => {
   console.log(props.formForEdit)
   if (newValue && props.formForEdit?.id) {
-    form.value.name = props.formForEdit?.name
+    form.value.name = props.formForEdit?.name || ''
     form.value.centerId = props.formForEdit?.center?.id
     form.value.subjectId = props.formForEdit?.subject?.id
     form.value.roomId = props.formForEdit?.room?.id
     form.value.teacherId = props.formForEdit?.teacher?.id
-    form.value.monthlyFee = props.formForEdit?.monthlyFee
-    form.value.days = props.formForEdit?.schedules
+    form.value.monthlyFee = props.formForEdit?.monthlyFee ?? undefined
+
+    // Convert schedules to days format
+    if (props.formForEdit?.schedules && props.formForEdit.schedules.length > 0) {
+      days.value = props.formForEdit.schedules.map((schedule) => schedule.day)
+      if (props.formForEdit.schedules.length === 1) {
+        allTimes.value = props.formForEdit.schedules[0].startTime
+        differentTime.value = false
+      } else {
+        differentTime.value = true
+        times.value = props.formForEdit.schedules.map((schedule) => schedule.startTime)
+      }
+    } else {
+      days.value = []
+      allTimes.value = ''
+      times.value = []
+      differentTime.value = false
+    }
+
     getSubjects()
     getUsers()
     getRooms()
@@ -153,6 +175,10 @@ watch(open, (newValue: boolean) => {
       days: [],
       centerId: '',
     }
+    days.value = []
+    allTimes.value = ''
+    times.value = []
+    differentTime.value = false
   }
 })
 
@@ -221,19 +247,41 @@ function changedCenter() {
 }
 
 const submit = async () => {
-  form.value.monthlyFee = +form.value.monthlyFee
-  form.value.days = []
-  days.value.forEach((p, i) => {
-    form.value.days.push({
-      day: p,
-      startTime: differentTime.value ? times.value[i] : allTimes.value,
-    })
+  // Prepare form data
+  // Handle monthlyFee: if it's a valid number (including 0), use it; otherwise send null
+
+  const submitData: GroupForm = {
+    name: form.value.name,
+    centerId: form.value.centerId,
+    subjectId: form.value.subjectId,
+    teacherId: form.value.teacherId,
+    roomId: form.value.roomId,
+    monthlyFee: form.value.monthlyFee !== undefined && form.value.monthlyFee !== null && form.value.monthlyFee !== ''
+      ? +form.value.monthlyFee
+      : null,
+    days: [],
+  }
+
+  // Convert days and times to days array
+  days.value.forEach((day, i) => {
+    if (day) {
+      submitData.days?.push({
+        day: day,
+        startTime: differentTime.value ? (times.value[i] || '') : allTimes.value,
+      })
+    }
   })
+
+  // Remove empty days array if no days selected
+  if (submitData.days && submitData.days.length === 0) {
+    delete submitData.days
+  }
+
   try {
     if (props.formForEdit?.id) {
-      await updateGroup(form.value, props.formForEdit.id)
+      await updateGroup(submitData, props.formForEdit.id)
     } else {
-      await createGroup(form.value)
+      await createGroup(submitData)
     }
     open.value = false
     emits('updateData')

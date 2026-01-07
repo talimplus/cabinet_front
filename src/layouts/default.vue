@@ -22,7 +22,7 @@
     <v-app-bar>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
-      <v-app-bar-title>Application</v-app-bar-title>
+      <v-app-bar-title>Ta'lim Markazi</v-app-bar-title>
     </v-app-bar>
 
     <v-main>
@@ -36,16 +36,17 @@
       <script  setup lang="ts">
 import { ref } from 'vue'
 const items = [
-  { text: 'Users', icon: 'mdi-account', path: '/users' },
-  { text: 'Subjects', icon: 'mdi-clock', path: '/subjects' },
-  { text: 'Centers', icon: 'mdi-domain', path: '/centers' },
-  { text: 'Groups', icon: 'mdi-flag', path: '/groups' },
-  { text: 'Rooms', icon: 'mdi-flag', path: '/rooms' },
-  { text: 'Reception', icon: 'mdi-account-school', path: '/reception' },
-  { text: 'Students', icon: 'mdi-account-school', path: '/students' },
-  { text: 'Stopeed', icon: 'mdi-account-school', path: '/stopped' },
-  { text: 'Ignored', icon: 'mdi-account-school', path: '/ignored' },
-  { text: 'Finished', icon: 'mdi-account-school', path: '/finished' },
+  { text: 'Foydalanuvchilar', icon: 'mdi-account', path: '/users' },
+  { text: 'Fanlar', icon: 'mdi-clock', path: '/subjects' },
+  { text: 'Markazlar', icon: 'mdi-domain', path: '/centers' },
+  { text: 'Guruhlar', icon: 'mdi-flag', path: '/groups' },
+  { text: 'Xonalar', icon: 'mdi-flag', path: '/rooms' },
+  { text: 'Qabul', icon: 'mdi-account-school', path: '/reception' },
+  { text: 'O\'quvchilar', icon: 'mdi-account-school', path: '/students' },
+  { text: 'To\'xtatilgan', icon: 'mdi-account-school', path: '/stopped' },
+  { text: 'E\'tiborsiz', icon: 'mdi-account-school', path: '/ignored' },
+  { text: 'Tugallangan', icon: 'mdi-account-school', path: '/finished' },
+  { text: 'To\'lovlar', icon: 'mdi-cash', path: '/payments' },
 ]
 const drawer = ref(null)
 </script>

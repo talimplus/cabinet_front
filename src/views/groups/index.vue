@@ -14,6 +14,10 @@
         </div>
       </template>
 
+      <template v-slot:item.monthlyFee="{ item }">
+        {{ formatCurrency(item.monthlyFee) }}
+      </template>
+
       <template v-slot:item.actions="{ item }">
         <div class="d-flex">
           <v-btn
@@ -163,6 +167,16 @@ const headers = [
   { title: 'Ustoz', key: 'teacherFullName' },
   { title: 'Actions', key: 'actions' },
 ]
+
+const formatCurrency = (amount: number | null): string => {
+  if (amount === null || amount === undefined) return '—'
+  return new Intl.NumberFormat('uz-UZ', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+    .format(amount) + ' so\'m'
+}
 </script>
 
 <style scoped>

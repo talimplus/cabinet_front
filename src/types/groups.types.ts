@@ -33,7 +33,8 @@ export interface GroupForm {
         name?: string,
         subjectId?: number,
         teacherId?: number,
-        monthlyFee?: number,
+        roomId?: number,
+        monthlyFee?: number | null,
         days?: GroupFormDays[],
         centerId?: number
 }

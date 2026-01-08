@@ -1,34 +1,50 @@
 <template>
   <v-card>
-    <v-card-title class="mb-6 d-flex justify-space-between"> Stopped </v-card-title>
+    <v-card-title class="mb-6 d-flex justify-space-between"> To'xtatganlar </v-card-title>
     <v-data-table :items="students" :headers="headers" hide-default-footer>
+      <template v-slot:item.birthDate="{ item }">
+        {{ formatDate(item.birthDate) }}
+      </template>
+      <template v-slot:item.monthlyFee="{ item }">
+        {{ formatCurrency(item.monthlyFee) }}
+      </template>
+      <template v-slot:item.referralDiscount="{ item }">
+        {{ formatCurrency(item.referralDiscount) }}
+      </template>
       <template v-slot:item.status="{ item }">
-        <v-menu>
-          <template v-slot:activator="{ props }">
-            {{ item.status }}
-            <v-btn
-              @click="item.openStatus = true"
-              density="compact"
-              color="medium-emphasis"
-              icon="mdi-pencil"
-              size="small"
-              class="me-2"
-              variant="text"
-              :loading="item.statusLoading"
-              v-bind="props"
-            ></v-btn>
-          </template>
-          <v-list>
-            <v-list-item
-              v-for="(status, index) in statusList"
-              :key="index"
-              :value="index"
-              @click="changeStatus(status.value, item)"
-            >
-              <v-list-item-title>{{ status.title }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+        <div class="d-flex align-center gap-2">
+          <v-chip
+            :color="getStatusColor(item.status)"
+            size="small"
+            variant="flat"
+          >
+            {{ getStatusLabel(item.status) }}
+          </v-chip>
+          <v-menu>
+            <template v-slot:activator="{ props }">
+              <v-btn
+                @click="item.openStatus = true"
+                density="compact"
+                color="primary"
+                icon="mdi-pencil"
+                size="small"
+                variant="text"
+                :loading="item.statusLoading"
+                v-bind="props"
+              ></v-btn>
+            </template>
+            <v-list>
+              <v-list-item
+                v-for="(status, index) in statusList"
+                :key="index"
+                :value="index"
+                @click="changeStatus(status.value, item)"
+              >
+                <v-list-item-title>{{ status.title }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </div>
       </template>
       <template v-slot:item.action="{ item }">
         <v-btn
@@ -50,8 +66,8 @@
     ></CreateStudent>
   </v-card>
 </template>
-      
-      <script setup lang="ts">
+
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
@@ -115,13 +131,59 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
 
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'FirstName', key: 'firstName' },
-  { title: 'LastName', key: 'lastName' },
-  { title: 'Phone', key: 'phone' },
-  { title: 'birthDate', key: 'phone' },
-  { title: 'monthlyFee', key: 'monthlyFee' },
-  { title: 'referralDiscount', key: 'referralDiscount' },
-  { title: 'status', key: 'status' },
-  { title: 'action', key: 'action' },
+  { title: 'Ism', key: 'firstName' },
+  { title: 'Familiya', key: 'lastName' },
+  { title: 'Telefon', key: 'phone' },
+  { title: 'Tug\'ilgan sana', key: 'birthDate' },
+  { title: 'Oylik to\'lov', key: 'monthlyFee' },
+  { title: 'Referral chegirma', key: 'referralDiscount' },
+  { title: 'Holat', key: 'status' },
+  { title: 'Amallar', key: 'action' },
 ]
+
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+}
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('uz-UZ', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+    .format(amount) + ' so\'m'
+}
+
+const getStatusLabel = (status: StudentStatus): string => {
+  return studentStatusLabels[status] || status
+}
+
+const getStatusColor = (status: StudentStatus): string => {
+  switch (status) {
+    case StudentStatus.NEW:
+      return 'info'
+    case StudentStatus.ACTIVE:
+      return 'success'
+    case StudentStatus.IGNORED:
+      return 'warning'
+    case StudentStatus.STOPPED:
+      return 'error'
+    case StudentStatus.FINISHED:
+      return 'grey'
+    default:
+      return 'grey'
+  }
+}
 </script>
+
+<style scoped>
+.gap-2 {
+  gap: 8px;
+}
+</style>

@@ -19,14 +19,20 @@ export interface Payment {
   group: Group | null
   amountDue: number
   amountPaid: number
+  remainingAmount: number
   status: PaymentStatus
   forMonth: string
+  dueDate: string
+  hardDueDate: string
+  isOverdue: boolean
+  lessonsPlanned: number
+  lessonsBillable: number
   createdAt: string
 }
 
 export interface PaymentsResponse {
   data: Payment[]
-  meta: {
+  meta?: {
     total: number
     page: number
     perPage: number
@@ -35,8 +41,11 @@ export interface PaymentsResponse {
 }
 
 export interface PaymentsParams {
+  forMonth?: string
   page?: number
   perPage?: number
   status?: PaymentStatus | 'all'
+  search?: string
+  groupId?: number
 }
 

@@ -6,12 +6,22 @@ export interface Student {
         phone: string;
         birthDate: string;
         monthlyFee: number;
-        referralDiscount: number;
+        discountPercent?: number | string;
+        discountReason?: string | null;
         status: StudentStatus;
         openStatus?: boolean,
         statusLoading?: boolean
         createdAt?: string;
+        activatedAt?: string;
+        stoppedAt?: string | null;
 }
+export interface DiscountPeriod {
+  percent: number;
+  fromMonth: string;
+  toMonth: string;
+  reason: string;
+}
+
 export interface StudentForm {
         firstName: string;
         lastName: string;
@@ -21,6 +31,9 @@ export interface StudentForm {
         monthlyFee: number;
         centerId: number,
         groupIds: number[],
+        discountPercent?: number;
+        discountReason?: string;
+        discountPeriods?: DiscountPeriod[];
 }
 export interface StudentsParams {
         centerId?: number;

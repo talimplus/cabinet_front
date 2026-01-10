@@ -2,7 +2,7 @@ import http from '../baseHttp'
 import type { UserForm, UsersParams } from '@/types/users.types'
 
 export const fetchUsers = async (par: UsersParams) => {
-        return await http.get('/users', { params: par })
+        return await http.get('/users/employees', { params: par })
 }
 
 export const createUser = async (form: UserForm) => {

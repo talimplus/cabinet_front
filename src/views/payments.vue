@@ -107,9 +107,9 @@
                     {{ payment.lessonsBillable }} / {{ payment.lessonsPlanned }}
                   </span>
                 </td>
-                <td class="text-end">{{ formatCurrency(payment.amountDue) }}</td>
-                <td class="text-end">{{ formatCurrency(payment.amountPaid) }}</td>
-                <td class="text-end" :class="{ 'text-error font-weight-bold': payment.remainingAmount > 0 }">
+                <td>{{ formatCurrency(payment.amountDue) }}</td>
+                <td>{{ formatCurrency(payment.amountPaid) }}</td>
+                <td :class="{ 'text-error font-weight-bold': payment.remainingAmount > 0 }">
                   {{ formatCurrency(payment.remainingAmount) }}
                 </td>
                 <td>
@@ -632,9 +632,6 @@ onMounted(() => {
   background-color: rgba(244, 67, 54, 0.05);
 }
 
-.text-end {
-  text-align: right;
-}
 
 .gap-2 {
   gap: 8px;

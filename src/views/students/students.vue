@@ -8,8 +8,14 @@
       <template v-slot:item.monthlyFee="{ item }">
         {{ formatCurrency(item.monthlyFee) }}
       </template>
-      <template v-slot:item.referralDiscount="{ item }">
-        {{ formatCurrency(item.referralDiscount) }}
+      <template v-slot:item.discountPercent="{ item }">
+        <div v-if="item.discountPercent">
+          {{ item.discountPercent }}%
+          <span v-if="item.discountReason" class="text-caption text-medium-emphasis d-block">
+            {{ item.discountReason }}
+          </span>
+        </div>
+        <span v-else class="text-medium-emphasis">—</span>
       </template>
       <template v-slot:item.status="{ item }">
         <div class="d-flex align-center gap-2">
@@ -139,7 +145,7 @@ const headers = [
   { title: 'Telefon', key: 'phone' },
   { title: 'Tug\'ilgan sana', key: 'birthDate' },
   { title: 'Oylik to\'lov', key: 'monthlyFee' },
-  { title: 'Referral chegirma', key: 'referralDiscount' },
+  { title: 'Chegirma', key: 'discountPercent' },
   { title: 'Holat', key: 'status' },
   { title: 'Amallar', key: 'action' },
 ]

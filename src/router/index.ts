@@ -66,6 +66,16 @@ const router = createRouter({
           path: '/payments',
           name: 'payments',
           component: () => import('../views/payments.vue')
+        },
+        {
+          path: '/payroll',
+          name: 'payroll',
+          component: () => import('../views/payroll.vue')
+        },
+        {
+          path: '/expenses',
+          name: 'expenses',
+          component: () => import('../views/expenses.vue')
         }
       ]
     },

@@ -1,13 +1,13 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between"
-      >Users
-      <v-btn color="primary" @click="openModal = true">Create</v-btn>
+      >Ishchilar
+      <v-btn color="primary" @click="openModal = true">Yaratish</v-btn>
     </v-card-title>
     <v-row class="px-4">
       <v-col cols="3">
         <v-select
-          label="Centers"
+          label="Markazlar"
           variant="outlined"
           clearable
           :items="centers"
@@ -22,7 +22,7 @@
           @input="getUsers"
           variant="outlined"
           v-model="params.name"
-          label="FullName"
+          label="To'liq ism"
         ></v-text-field>
       </v-col>
       <v-col cols="3">
@@ -30,11 +30,14 @@
           @input="getUsers"
           variant="outlined"
           v-model="params.phone"
-          label="Phone Number"
+          label="Telefon raqami"
         ></v-text-field>
       </v-col>
     </v-row>
     <v-data-table :loading="laoding" :items="users" :headers="headers" hide-default-footer>
+      <template #item.commissionPercentage="{ item }">
+        <div v-if="item?.commissionPercentage">{{ item.commissionPercentage }}%</div>
+      </template>
       <template v-slot:item.actions="{ item }">
         <v-btn
           @click="editUser(item)"
@@ -139,21 +142,20 @@ watch(
   () => params.value.page,
   () => {
     getUsers()
-  }
+  },
 )
 
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'FirstName', key: 'firstName' },
-  { title: 'LastName', key: 'lastName' },
-  { title: 'Phone', key: 'phone' },
-  { title: 'Role', key: 'role' },
-  { title: 'Salary', key: 'salary' },
-  { title: 'ComissionPercentage', key: 'comissionPercentage' },
-  { title: 'Center', key: 'center.name' },
-  { title: 'Actions', key: 'actions' },
+  { title: 'Ism', key: 'firstName' },
+  { title: 'Familiya', key: 'lastName' },
+  { title: 'Telefon', key: 'phone' },
+  { title: 'Rol', key: 'role' },
+  { title: 'Maosh', key: 'salary' },
+  { title: 'Komissiya foizi', key: 'commissionPercentage' },
+  { title: 'Markaz', key: 'center.name' },
+  { title: 'Amallar', key: 'actions' },
 ]
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -36,7 +36,7 @@
       <script  setup lang="ts">
 import { ref } from 'vue'
 const items = [
-  { text: 'Foydalanuvchilar', icon: 'mdi-account', path: '/users' },
+  { text: 'Ishchilar', icon: 'mdi-account', path: '/users' },
   { text: 'Fanlar', icon: 'mdi-clock', path: '/subjects' },
   { text: 'Markazlar', icon: 'mdi-domain', path: '/centers' },
   { text: 'Guruhlar', icon: 'mdi-flag', path: '/groups' },
@@ -47,6 +47,8 @@ const items = [
   { text: 'E\'tiborsiz', icon: 'mdi-account-school', path: '/ignored' },
   { text: 'Tugallangan', icon: 'mdi-account-school', path: '/finished' },
   { text: 'To\'lovlar', icon: 'mdi-cash', path: '/payments' },
+  { text: 'Ish haqi', icon: 'mdi-cash-multiple', path: '/payroll' },
+  { text: 'Chiqimlar', icon: 'mdi-cash-minus', path: '/expenses' },
 ]
 const drawer = ref(null)
 </script>

@@ -1,10 +1,10 @@
 <template>
   <div class="login-container">
     <div class="login-left">
-      <div class="login-logo">
-        <v-icon size="40" color="green">mdi-school</v-icon>
-        <span class="logo-text">LITECH</span>
-      </div>
+        <div class="login-logo">
+          <v-icon size="40" color="#01c0c8">mdi-school</v-icon>
+          <span class="logo-text">LITECH</span>
+        </div>
       <div class="login-illustration">
         <img src="@/assets/images/login.png" alt="Login illustration" />
       </div>

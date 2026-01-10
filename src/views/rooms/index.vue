@@ -29,7 +29,8 @@
           ></v-select>
         </v-col>
       </v-row>
-      <v-data-table :loading="loading" :items="items" :headers="headers" hide-default-footer>
+      <v-card-text>
+        <v-data-table :loading="loading" :items="items" :headers="headers" hide-default-footer>
         <template v-slot:item.actions="{ item }">
           <div class="d-flex">
             <v-btn
@@ -53,7 +54,8 @@
             </v-btn>
           </div>
         </template>
-      </v-data-table>
+        </v-data-table>
+      </v-card-text>
       <CreateRoom
         :formForEdit="formForEdit"
         v-model:open="openModal"

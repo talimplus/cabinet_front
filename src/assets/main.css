@@ -1,0 +1,159 @@
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --border-radius: 12px;
+  --border-color: #e5e7eb;
+  --border-color-light: #f3f4f6;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Vuetify Card Overrides */
+.v-card {
+  border-radius: var(--border-radius) !important;
+}
+
+.v-card--variant-elevated {
+  box-shadow: var(--card-shadow) !important;
+}
+
+.v-card--variant-outlined {
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Vuetify Button Overrides */
+.v-btn {
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+
+/* Primary button text color - white */
+.v-btn--variant-flat.v-btn--color-primary,
+.v-btn--variant-elevated.v-btn--color-primary,
+.v-btn--variant-tonal.v-btn--color-primary {
+  color: white !important;
+}
+
+.v-btn--variant-flat.v-btn--color-primary .v-btn__content,
+.v-btn--variant-elevated.v-btn--color-primary .v-btn__content,
+.v-btn--variant-tonal.v-btn--color-primary .v-btn__content {
+  color: white !important;
+}
+
+.v-btn--variant-flat.v-btn--color-primary .v-icon,
+.v-btn--variant-elevated.v-btn--color-primary .v-icon,
+.v-btn--variant-tonal.v-btn--color-primary .v-icon {
+  color: white !important;
+}
+
+.v-btn--variant-flat.v-btn--color-primary .v-btn__prepend > .v-icon,
+.v-btn--variant-elevated.v-btn--color-primary .v-btn__prepend > .v-icon,
+.v-btn--variant-tonal.v-btn--color-primary .v-btn__prepend > .v-icon {
+  color: white !important;
+}
+
+.v-btn--variant-flat.v-btn--color-primary .v-btn__append > .v-icon,
+.v-btn--variant-elevated.v-btn--color-primary .v-btn__append > .v-icon,
+.v-btn--variant-tonal.v-btn--color-primary .v-btn__append > .v-icon {
+  color: white !important;
+}
+
+/* Vuetify Text Field Overrides */
+.v-text-field--variant-outlined :deep(.v-field) {
+  border-radius: 8px !important;
+  border-color: var(--border-color-light) !important;
+}
+
+.v-text-field--variant-outlined :deep(.v-field--focused) {
+  border-color: #01c0c8 !important;
+}
+
+.v-select--variant-outlined :deep(.v-field) {
+  border-radius: 8px !important;
+  border-color: var(--border-color-light) !important;
+}
+
+.v-select--variant-outlined :deep(.v-field--focused) {
+  border-color: #01c0c8 !important;
+}
+
+.v-date-input--variant-outlined :deep(.v-field) {
+  border-radius: 8px !important;
+  border-color: var(--border-color-light) !important;
+}
+
+.v-date-input--variant-outlined :deep(.v-field--focused) {
+  border-color: #01c0c8 !important;
+}
+
+.v-textarea--variant-outlined :deep(.v-field) {
+  border-radius: 8px !important;
+  border-color: var(--border-color-light) !important;
+}
+
+.v-textarea--variant-outlined :deep(.v-field--focused) {
+  border-color: #01c0c8 !important;
+}
+
+/* Vuetify Table Overrides */
+.v-data-table {
+  border-radius: var(--border-radius) !important;
+}
+
+.v-data-table :deep(.v-data-table__thead th) {
+  background-color: #f9fafb !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  border-bottom: 1px solid var(--border-color-light) !important;
+}
+
+.v-data-table :deep(.v-data-table__tbody td) {
+  border-bottom: 1px solid var(--border-color-light) !important;
+}
+
+.v-data-table :deep(.v-data-table__tbody tr:hover) {
+  background-color: #f9fafb !important;
+}
+
+/* Vuetify Dialog Overrides */
+.v-dialog > .v-card {
+  border-radius: var(--border-radius) !important;
+}
+
+/* Vuetify Chip Overrides */
+.v-chip {
+  border-radius: 6px !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

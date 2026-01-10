@@ -1,7 +1,14 @@
 <template>
-  <v-app id="inspire">
-    <v-navigation-drawer v-model="drawer">
-      <v-list density="compact">
+  <v-app id="inspire" class="app-container">
+    <v-navigation-drawer v-model="drawer" class="sidebar" width="280">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <v-icon size="32" color="#01c0c8">mdi-school</v-icon>
+          <span class="logo-text">LITECH</span>
+        </div>
+      </div>
+      <v-divider></v-divider>
+      <v-list density="compact" class="sidebar-menu">
         <!-- Statistics (standalone) -->
         <v-list-item
           v-for="item in standaloneItems"
@@ -86,20 +93,38 @@
           </v-list>
         </v-list-group>
       </v-list>
+
+      <!-- User Profile Card -->
+      <div class="sidebar-footer">
+        <v-card class="user-card" elevation="0">
+          <v-card-text class="d-flex align-center pa-3">
+            <v-avatar size="40" color="primary" class="mr-3">
+              <v-icon color="white">mdi-account</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <div class="text-body-2 font-weight-medium">
+                {{ userStore.user?.email || 'User' }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ getRoleLabel(userStore.user?.role || '') }}
+              </div>
+            </div>
+            <v-btn icon size="small" variant="text" @click="handleLogout">
+              <v-icon size="20">mdi-logout</v-icon>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+      </div>
     </v-navigation-drawer>
 
-    <v-app-bar>
-      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-
-      <v-app-bar-title>Ta'lim Markazi</v-app-bar-title>
-
+    <v-app-bar class="app-bar" elevation="1" height="70">
+      <v-app-bar-nav-icon @click="drawer = !drawer" size="large"></v-app-bar-nav-icon>
       <v-spacer></v-spacer>
-
       <v-menu>
         <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props" variant="text">
-            <v-avatar size="32" color="primary">
-              <v-icon color="white">mdi-account</v-icon>
+          <v-btn icon v-bind="props" variant="text" class="mr-2">
+            <v-avatar size="36" color="primary">
+              <v-icon color="white" size="20">mdi-account</v-icon>
             </v-avatar>
           </v-btn>
         </template>
@@ -120,8 +145,8 @@
       </v-menu>
     </v-app-bar>
 
-    <v-main>
-      <div class="py-6 px-4">
+    <v-main class="main-content">
+      <div class="content-wrapper">
         <router-view />
       </div>
     </v-main>
@@ -140,7 +165,6 @@ const userStore = useUserStore()
 // Menu items organized by groups
 const allItems = {
   standalone: [
-    { text: 'Profil', icon: 'mdi-account-circle', path: '/profile' },
     { text: 'Statistika', icon: 'mdi-chart-line', path: '/statistics' },
     { text: 'Ishchilar', icon: 'mdi-account', path: '/users' },
     { text: 'Guruhlar', icon: 'mdi-flag', path: '/groups' },
@@ -221,6 +245,17 @@ const hasSettingsGroup = computed(() => settingsGroupItems.value.length > 0)
 
 const drawer = ref(null)
 
+const getRoleLabel = (role: string): string => {
+  const roleLabels: Record<string, string> = {
+    admin: 'Administrator',
+    super_admin: 'Super Administrator',
+    teacher: "O'qituvchi",
+    reception: 'Qabul',
+    manager: 'Menejer',
+  }
+  return roleLabels[role] || role
+}
+
 const goToProfile = () => {
   router.push('/profile')
 }
@@ -241,3 +276,95 @@ const handleLogout = async () => {
   }
 }
 </script>
+
+<style scoped>
+.app-container {
+  background: #f5f7fa;
+}
+
+.sidebar {
+  background: white !important;
+  border-right: 1px solid #e5e7eb;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.sidebar-menu {
+  padding: 8px;
+}
+
+.sidebar-menu :deep(.v-list-item) {
+  border-radius: 8px;
+  margin: 0 8px 4px 8px;
+  min-height: 44px;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.sidebar-menu :deep(.v-list-item--active) {
+  background: #01c0c8 !important;
+  color: white !important;
+}
+
+.sidebar-menu :deep(.v-list-item--active .v-icon) {
+  color: white !important;
+}
+
+.sidebar-menu :deep(.v-list-item--active .v-list-item-title) {
+  color: white !important;
+  font-weight: 500;
+}
+
+.sidebar-menu :deep(.v-list-group__items .v-list-item) {
+  padding-left: 48px !important;
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+}
+
+.user-card {
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.app-bar {
+  background: white !important;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.main-content {
+  background: #f5f7fa;
+}
+
+.content-wrapper {
+  padding: 24px;
+  max-width: 100%;
+}
+
+@media (max-width: 960px) {
+  .content-wrapper {
+    padding: 16px;
+  }
+}
+</style>

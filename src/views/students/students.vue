@@ -19,7 +19,8 @@
         </v-col>
       </v-row>
     </v-card-text>
-    <v-data-table :items="students" :headers="headers" hide-default-footer>
+    <v-card-text>
+      <v-data-table :items="students" :headers="headers" hide-default-footer>
       <template v-slot:item.birthDate="{ item }">
         {{ formatDate(item.birthDate) }}
       </template>
@@ -106,7 +107,8 @@
           variant="text"
         ></v-btn>
       </template>
-    </v-data-table>
+      </v-data-table>
+    </v-card-text>
     <CreateStudent
       @updateData="getStudents"
       v-model:open="openModal"

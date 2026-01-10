@@ -2,8 +2,8 @@
   <div class="register-container">
     <div class="register-left">
       <div class="register-logo">
-        <v-icon size="40" color="white">mdi-school</v-icon>
-        <span class="logo-text">Ta'lim Markazi</span>
+        <v-icon size="40" color="#01c0c8">mdi-school</v-icon>
+        <span class="logo-text">LITECH</span>
       </div>
       <div class="register-illustration">
         <img src="@/assets/images/login.png" alt="Register illustration" />

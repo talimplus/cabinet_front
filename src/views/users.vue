@@ -37,7 +37,8 @@
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-data-table :loading="laoding" :items="users" :headers="headers" hide-default-footer>
+    <v-card-text>
+      <v-data-table :loading="laoding" :items="users" :headers="headers" hide-default-footer>
       <template #item.commissionPercentage="{ item }">
         <div v-if="item?.commissionPercentage">{{ item.commissionPercentage }}%</div>
       </template>
@@ -60,8 +61,9 @@
           variant="text"
         ></v-btn>
       </template>
-    </v-data-table>
-    <v-pagination v-model="params.page" :length="totalPages"></v-pagination>
+      </v-data-table>
+      <v-pagination v-model="params.page" :length="totalPages" class="mt-4"></v-pagination>
+    </v-card-text>
     <CreateUser
       @updateData="getUsers"
       @clearForm="clearFormForEdit"

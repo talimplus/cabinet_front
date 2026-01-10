@@ -28,7 +28,8 @@
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-data-table :headers="headers" :items="items" hide-default-footer>
+    <v-card-text>
+      <v-data-table :headers="headers" :items="items" hide-default-footer>
       <template v-slot:item.actions="{ item }">
         <div class="d-flex">
           <v-btn
@@ -50,8 +51,9 @@
           ></v-btn>
         </div>
       </template>
-    </v-data-table>
-    <v-pagination :length="totalPages" v-model="params.page"></v-pagination>
+      </v-data-table>
+      <v-pagination :length="totalPages" v-model="params.page" class="mt-4"></v-pagination>
+    </v-card-text>
     <CreateSubjects
       v-model:open="openModal"
       @updateData="getSubjects"

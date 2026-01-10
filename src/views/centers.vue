@@ -15,7 +15,8 @@
         ></v-text-field>
       </v-col>
     </v-row>
-    <v-data-table :items="items" :headers="headers" hide-default-footer :loading="loading">
+    <v-card-text>
+      <v-data-table :items="items" :headers="headers" hide-default-footer :loading="loading">
       <template v-slot:item.isDefault="{ item }">
         <v-icon v-if="item.isDefault" color="success" size="small">mdi-check-circle</v-icon>
         <span v-else class="text-medium-emphasis">—</span>
@@ -43,7 +44,8 @@
           </v-btn>
         </div>
       </template>
-    </v-data-table>
+      </v-data-table>
+    </v-card-text>
     <CenterCreate
       ref="centerFormRef"
       :formForEdit="formForEdit"

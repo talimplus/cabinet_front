@@ -5,12 +5,13 @@
 
       <!-- Filters -->
       <v-card-text class="pb-2">
-        <v-row>
+        <v-row dense>
           <v-col cols="12" md="3">
             <v-select
               v-model="selectedYear"
               :items="yearOptions"
               label="Yil"
+              hide-details
               variant="outlined"
               density="compact"
               @update:model-value="handleYearChange"
@@ -21,10 +22,26 @@
               v-model="selectedStatus"
               :items="statusOptions"
               label="Holat"
+              hide-details
               variant="outlined"
               density="compact"
               clearable
               @update:model-value="handleFilterChange"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="selectedCenterId"
+              :items="centerOptions"
+              item-title="title"
+              hide-details
+              item-value="value"
+              label="Markaz"
+              variant="outlined"
+              density="compact"
+              clearable
+              :loading="loadingCenters"
+              @update:model-value="handleCenterChange"
             ></v-select>
           </v-col>
           <v-col cols="12" md="3">
@@ -34,6 +51,7 @@
               label="Guruh"
               variant="outlined"
               density="compact"
+              hide-details
               clearable
               :loading="loadingGroups"
               @update:model-value="handleFilterChange"
@@ -56,7 +74,12 @@
       </v-card-text>
 
       <!-- Month Tabs -->
-      <v-tabs v-model="selectedMonthIndex" bg-color="primary" slider-color="white" @update:model-value="handleMonthChange">
+      <v-tabs
+        v-model="selectedMonthIndex"
+        bg-color="primary"
+        slider-color="white"
+        @update:model-value="handleMonthChange"
+      >
         <v-tab
           v-for="(month, index) in availableMonths"
           :key="month.value"
@@ -89,13 +112,18 @@
                 <th>To'langan</th>
                 <th>Qolgan</th>
                 <th>Holat</th>
+                <th>Tasdiqlash kutilmoqda</th>
                 <th>Muddat</th>
                 <th>Qat'iy muddat</th>
                 <th>Amallar</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="payment in payments" :key="payment.id" :class="{ 'row-overdue': payment.isOverdue }">
+              <tr
+                v-for="payment in payments"
+                :key="payment.id"
+                :class="{ 'row-overdue': payment.isOverdue }"
+              >
                 <td class="student-column sticky">
                   <div class="student-name">
                     {{ `${payment.student.firstName} ${payment.student.lastName}` }}
@@ -125,6 +153,30 @@
                   >
                     MUDDATI O'TGAN
                   </v-chip>
+                  <v-chip
+                    v-if="payment.hasPendingReceipt"
+                    color="warning"
+                    size="small"
+                    variant="flat"
+                    class="ml-2"
+                  >
+                    <v-icon start size="small">mdi-clock-outline</v-icon>
+                    Admin tasdiqlashi kutilmoqda
+                  </v-chip>
+                </td>
+                <td>
+                  <div v-if="payment.hasPendingReceipt && payment.pendingReceiptsCount">
+                    <div class="d-flex flex-column gap-1">
+                      <div class="text-caption text-medium-emphasis">
+                        <v-icon size="small" color="warning">mdi-receipt-text-check</v-icon>
+                        {{ payment.pendingReceiptsCount }} ta so'rov
+                      </div>
+                      <div class="text-body-2 font-weight-bold text-warning">
+                        {{ formatCurrency(payment.pendingAmount || 0) }}
+                      </div>
+                    </div>
+                  </div>
+                  <span v-else class="text-medium-emphasis">—</span>
                 </td>
                 <td>{{ formatDate(payment.dueDate) }}</td>
                 <td>{{ formatDate(payment.hardDueDate) }}</td>
@@ -167,7 +219,10 @@
         <v-card-title class="text-h6 pa-4"> To'liq to'lashni tasdiqlash </v-card-title>
         <v-card-text class="pa-4">
           <p class="text-body-1">
-            <strong>{{ markAsPaidDialog.payment?.student.firstName }} {{ markAsPaidDialog.payment?.student.lastName }}</strong>
+            <strong
+              >{{ markAsPaidDialog.payment?.student.firstName }}
+              {{ markAsPaidDialog.payment?.student.lastName }}</strong
+            >
             uchun to'lovni to'liq to'langan deb belgilashni tasdiqlaysizmi?
           </p>
           <div class="mt-4">
@@ -181,7 +236,11 @@
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
-          <v-btn variant="text" @click="markAsPaidDialog.show = false" :disabled="processingPayment">
+          <v-btn
+            variant="text"
+            @click="markAsPaidDialog.show = false"
+            :disabled="processingPayment"
+          >
             Bekor qilish
           </v-btn>
           <v-btn
@@ -205,7 +264,8 @@
             <div class="info-row mb-3">
               <span class="info-label">O'quvchi:</span>
               <span class="info-value">
-                {{ partialPaymentModal.payment?.student.firstName }} {{ partialPaymentModal.payment?.student.lastName }}
+                {{ partialPaymentModal.payment?.student.firstName }}
+                {{ partialPaymentModal.payment?.student.lastName }}
               </span>
             </div>
             <div class="info-row mb-3">
@@ -264,6 +324,8 @@ import { PaymentStatus } from '@/types/payments.types'
 import { fetchPayments, markAsPaid, payPartial } from '@/services/pages/payments'
 import { fetchAllGroups } from '@/services/pages/groups'
 import type { Group } from '@/types/groups.types'
+import { fetchAllCenters } from '@/services/pages/centers'
+import type { Center } from '@/types/centers.types'
 
 // Component name
 defineOptions({
@@ -275,11 +337,14 @@ const selectedYear = ref(new Date().getFullYear())
 const selectedMonthIndex = ref(new Date().getMonth())
 const selectedStatus = ref<PaymentStatus | 'all' | null>(null)
 const selectedGroupId = ref<number | null>(null)
+const selectedCenterId = ref<number | null>(null)
 const searchQuery = ref('')
 const payments = ref<Payment[]>([])
 const groups = ref<Group[]>([])
+const centers = ref<Center[]>([])
 const loading = ref(false)
 const loadingGroups = ref(false)
+const loadingCenters = ref(false)
 const processingPayment = ref(false)
 
 // Dialogs
@@ -341,20 +406,29 @@ const availableMonths = computed(() => {
 
 const statusOptions = [
   { title: 'Barchasi', value: 'all' },
-  { title: 'To\'langan', value: PaymentStatus.PAID },
+  { title: "To'langan", value: PaymentStatus.PAID },
   { title: 'Qisman', value: PaymentStatus.PARTIAL },
-  { title: 'To\'lanmagan', value: PaymentStatus.UNPAID },
+  { title: "To'lanmagan", value: PaymentStatus.UNPAID },
 ]
 
 const groupOptions = computed(() => {
-  return groups.value.map(group => ({
+  return groups.value.map((group) => ({
     title: group.name,
     value: group.id,
   }))
 })
 
+const centerOptions = computed(() => {
+  return centers.value.map((center) => ({
+    title: center.name,
+    value: center.id,
+  }))
+})
+
 const selectedMonth = computed(() => {
-  return availableMonths.value[selectedMonthIndex.value]?.value || monthNames[currentMonth.value].value
+  return (
+    availableMonths.value[selectedMonthIndex.value]?.value || monthNames[currentMonth.value].value
+  )
 })
 
 const remainingAmount = computed(() => {
@@ -363,7 +437,7 @@ const remainingAmount = computed(() => {
 
 const amountError = computed(() => {
   if (!partialPaymentModal.value.amount) return []
-  if (partialPaymentModal.value.amount <= 0) return ['Miqdor 0 dan katta bo\'lishi kerak']
+  if (partialPaymentModal.value.amount <= 0) return ["Miqdor 0 dan katta bo'lishi kerak"]
   if (partialPaymentModal.value.amount > remainingAmount.value) {
     return [`Miqdor qolgan summa ${formatCurrency(remainingAmount.value)} dan oshmasligi kerak`]
   }
@@ -371,8 +445,10 @@ const amountError = computed(() => {
 })
 
 const amountRules = [
-  (v: number) => v > 0 || 'Miqdor 0 dan katta bo\'lishi kerak',
-  (v: number) => v <= remainingAmount.value || `Miqdor ${formatCurrency(remainingAmount.value)} dan oshmasligi kerak`,
+  (v: number) => v > 0 || "Miqdor 0 dan katta bo'lishi kerak",
+  (v: number) =>
+    v <= remainingAmount.value ||
+    `Miqdor ${formatCurrency(remainingAmount.value)} dan oshmasligi kerak`,
 ]
 
 const canProcessPartialPayment = computed(() => {
@@ -394,13 +470,34 @@ const isPastMonth = (monthValue: string): boolean => {
 const loadGroups = async () => {
   loadingGroups.value = true
   try {
-    const response = await fetchAllGroups()
+    const response = await fetchAllGroups(selectedCenterId.value || undefined)
     groups.value = response.data || []
+    // Reset group selection if selected group is not in the new list
+    if (selectedGroupId.value && !groups.value.find((g) => g.id === selectedGroupId.value)) {
+      selectedGroupId.value = null
+    }
   } catch (error: any) {
     console.error('Guruhlarni yuklashda xatolik:', error)
     groups.value = []
   } finally {
     loadingGroups.value = false
+  }
+}
+
+const loadCenters = async () => {
+  loadingCenters.value = true
+  try {
+    const { data } = await fetchAllCenters()
+    centers.value = data
+    if (centers.value.length > 0 && !selectedCenterId.value) {
+      const defaultCenter = centers.value.find((c) => c.isDefault) || centers.value[0]
+      selectedCenterId.value = defaultCenter.id
+    }
+  } catch (error: any) {
+    console.error('Markazlarni yuklashda xatolik:', error)
+    centers.value = []
+  } finally {
+    loadingCenters.value = false
   }
 }
 
@@ -422,14 +519,27 @@ const loadPayments = async () => {
       params.groupId = selectedGroupId.value
     }
 
+    if (selectedCenterId.value) {
+      params.centerId = selectedCenterId.value
+    }
+
     const response = await fetchPayments(params)
     payments.value = response.data || []
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'To\'lovlarni yuklashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || "To'lovlarni yuklashda xatolik", 'error')
     payments.value = []
   } finally {
     loading.value = false
   }
+}
+
+const handleCenterChange = async () => {
+  // Reset group selection when center changes
+  selectedGroupId.value = null
+  // Reload groups for the new center
+  await loadGroups()
+  // Reload payments
+  loadPayments()
 }
 
 const handleFilterChange = () => {
@@ -461,11 +571,11 @@ const confirmMarkAsPaid = async () => {
   processingPayment.value = true
   try {
     await markAsPaid(markAsPaidDialog.value.payment.id)
-    showSnackbar('To\'lov to\'liq to\'langan deb belgilandi', 'success')
+    showSnackbar("To'lov to'liq to'langan deb belgilandi", 'success')
     markAsPaidDialog.value.show = false
     await loadPayments()
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'To\'lovni belgilashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || "To'lovni belgilashda xatolik", 'error')
   } finally {
     processingPayment.value = false
   }
@@ -494,7 +604,7 @@ const confirmPartialPayment = async () => {
   processingPayment.value = true
   try {
     if (!partialPaymentModal.value.amount || partialPaymentModal.value.amount <= 0) {
-      showSnackbar('Iltimos, to\'g\'ri miqdorni kiriting', 'error')
+      showSnackbar("Iltimos, to'g'ri miqdorni kiriting", 'error')
       return
     }
     if (partialPaymentModal.value.amount > remainingAmount.value) {
@@ -503,7 +613,10 @@ const confirmPartialPayment = async () => {
     }
 
     await payPartial(partialPaymentModal.value.payment.id, partialPaymentModal.value.amount)
-    showSnackbar(`${formatCurrency(partialPaymentModal.value.amount)} miqdoridagi qisman to'lov qabul qilindi`, 'success')
+    showSnackbar(
+      `${formatCurrency(partialPaymentModal.value.amount)} miqdoridagi qisman to'lov qabul qilindi`,
+      'success',
+    )
     partialPaymentModal.value = {
       show: false,
       payment: null,
@@ -511,7 +624,7 @@ const confirmPartialPayment = async () => {
     }
     await loadPayments()
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'To\'lovni qayta ishlashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || "To'lovni qayta ishlashda xatolik", 'error')
   } finally {
     processingPayment.value = false
   }
@@ -533,23 +646,24 @@ const getStatusColor = (status: PaymentStatus): string => {
 const getStatusLabel = (status: PaymentStatus): string => {
   switch (status) {
     case PaymentStatus.PAID:
-      return 'To\'langan'
+      return "To'langan"
     case PaymentStatus.PARTIAL:
       return 'Qisman'
     case PaymentStatus.UNPAID:
-      return 'To\'lanmagan'
+      return "To'lanmagan"
     default:
       return status
   }
 }
 
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('uz-UZ', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(amount) + ' so\'m'
+  return (
+    new Intl.NumberFormat('uz-UZ', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount) + " so'm"
+  )
 }
 
 const formatDate = (dateString: string): string => {
@@ -571,9 +685,12 @@ const showSnackbar = (message: string, color: 'success' | 'error' = 'success') =
 }
 
 // Lifecycle
-onMounted(() => {
-  loadGroups()
-  loadPayments()
+onMounted(async () => {
+  await loadCenters()
+  await loadGroups()
+  if (selectedCenterId.value) {
+    await loadPayments()
+  }
 })
 </script>
 
@@ -631,7 +748,6 @@ onMounted(() => {
 .row-overdue {
   background-color: rgba(244, 67, 54, 0.05);
 }
-
 
 .gap-2 {
   gap: 8px;

@@ -9,12 +9,17 @@
         <v-text-field
           @input="getCenters"
           v-model="params.name"
+          density="compact"
           variant="outlined"
           label="Center Name"
         ></v-text-field>
       </v-col>
     </v-row>
     <v-data-table :items="items" :headers="headers" hide-default-footer :loading="loading">
+      <template v-slot:item.isDefault="{ item }">
+        <v-icon v-if="item.isDefault" color="success" size="small">mdi-check-circle</v-icon>
+        <span v-else class="text-medium-emphasis">—</span>
+      </template>
       <template v-slot:item.actions="{ item }">
         <div class="d-flex">
           <v-btn
@@ -114,9 +119,9 @@ const remove = async (id: number) => {
 const headers = [
   { title: 'ID', key: 'id' },
   { title: 'Name', key: 'name' },
+  { title: 'Default', key: 'isDefault' },
   { title: 'Actions', key: 'actions' },
 ]
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

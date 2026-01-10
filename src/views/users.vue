@@ -10,6 +10,7 @@
           label="Markazlar"
           variant="outlined"
           clearable
+          density="compact"
           :items="centers"
           item-title="name"
           item-value="id"
@@ -21,6 +22,7 @@
         <v-text-field
           @input="getUsers"
           variant="outlined"
+          density="compact"
           v-model="params.name"
           label="To'liq ism"
         ></v-text-field>
@@ -28,6 +30,7 @@
       <v-col cols="3">
         <v-text-field
           @input="getUsers"
+          density="compact"
           variant="outlined"
           v-model="params.phone"
           label="Telefon raqami"
@@ -70,12 +73,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { fetchUsers, deleteUser } from '@/services/pages/users'
 import type { User, UsersParams } from '@/types/users.types'
 import CreateUser from '../components/pages/user/CreateUser.vue'
-import type { Center } from '@/types/center.types'
-import { fetchCenters } from '@/services/pages/centers'
+import type { Center } from '@/types/centers.types'
+import { fetchAllCenters } from '@/services/pages/centers'
 
 const centers = ref<Center[]>([])
 const users = ref<User[]>([])
@@ -110,20 +113,26 @@ const getUsers = async () => {
     laoding.value = false
   }
 }
-getUsers()
 
 const getCenters = async () => {
   try {
-    const {
-      data: { data },
-    } = await fetchCenters()
+    const { data } = await fetchAllCenters()
     centers.value = data
-    console.log(data)
+    if (centers.value.length > 0 && !params.value.centerId) {
+      const defaultCenter = centers.value.find((c) => c.isDefault) || centers.value[0]
+      params.value.centerId = defaultCenter.id
+    }
   } catch (err) {
     console.log(err)
   }
 }
-getCenters()
+
+onMounted(async () => {
+  await getCenters()
+  if (params.value.centerId) {
+    await getUsers()
+  }
+})
 
 const remove = async (id: number) => {
   try {

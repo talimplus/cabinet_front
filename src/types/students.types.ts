@@ -8,6 +8,7 @@ export interface Student {
         monthlyFee: number;
         discountPercent?: number | string;
         discountReason?: string | null;
+        discountPeriods?: DiscountPeriod[];
         status: StudentStatus;
         openStatus?: boolean,
         statusLoading?: boolean

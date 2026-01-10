@@ -4,6 +4,12 @@
       <v-card width="400" title="Create Center">
         <v-card-text>
           <v-text-field v-model="form.name" label="Center name"></v-text-field>
+          <v-checkbox
+            v-model="form.isDefault"
+            label="Default markaz"
+            density="compact"
+            class="mt-2"
+          ></v-checkbox>
         </v-card-text>
         <template v-slot:actions>
           <v-btn text="Cancel" @click="open = false"></v-btn>
@@ -17,9 +23,9 @@
 
 <script setup lang="ts">
 import { ref, defineProps, watch, defineEmits, defineModel, defineExpose } from 'vue'
-import type { CenterForm } from '@/types/center.types'
+import type { CenterForm } from '@/types/centers.types'
 import { createCenter, editCenter } from '@/services/pages/centers'
-import type { Center } from '@/types/center.types'
+import type { Center } from '@/types/centers.types'
 
 interface Props {
   test: { name: string }
@@ -41,6 +47,7 @@ const open = defineModel('open')
 const loading = ref(false)
 const form = ref<CenterForm>({
   name: '',
+  isDefault: false,
 })
 
 watch(
@@ -48,10 +55,12 @@ watch(
   (newValue) => {
     if (newValue && props.formForEdit?.id) {
       form.value.name = props.formForEdit.name
+      form.value.isDefault = props.formForEdit.isDefault || false
     } else {
       emits('clearEditForm')
       form.value = {
         name: '',
+        isDefault: false,
       }
     }
   }

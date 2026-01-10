@@ -400,6 +400,12 @@ const loadCenters = async () => {
   try {
     const response = await fetchAllCenters()
     centers.value = response.data || []
+    if (centers.value.length > 0 && !params.value.centerId) {
+      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
+      params.value.centerId = defaultCenter.id
+      // Load expenses after setting default center
+      await loadExpenses()
+    }
   } catch (error: any) {
     console.error('Markazlarni yuklashda xatolik:', error)
     centers.value = []
@@ -560,9 +566,13 @@ watch(() => forMonth.value, () => {
 })
 
 // Lifecycle
-onMounted(() => {
-  loadCenters()
-  loadExpenses()
+onMounted(async () => {
+  await loadCenters()
+  // If centerId is set, loadExpenses is already called in loadCenters
+  // Otherwise load expenses without center filter
+  if (!params.value.centerId) {
+    loadExpenses()
+  }
 })
 </script>
 

@@ -243,9 +243,9 @@ watch(open, (newValue) => {
     if ((props.formForEdit as any).discountPeriods && Array.isArray((props.formForEdit as any).discountPeriods) && (props.formForEdit as any).discountPeriods.length > 0) {
       form.value.discountPeriods = (props.formForEdit as any).discountPeriods.map((period: any) => ({
         ...period,
-        // Keep YYYY-MM format as is
-        fromMonth: period.fromMonth || '',
-        toMonth: period.toMonth || '',
+        // Convert YYYY-MM-DD to YYYY-MM format for month input
+        fromMonth: period.fromMonth ? (period.fromMonth.length === 10 ? period.fromMonth.substring(0, 7) : period.fromMonth) : '',
+        toMonth: period.toMonth ? (period.toMonth.length === 10 ? period.toMonth.substring(0, 7) : period.toMonth) : '',
       }))
       usePeriodDiscounts.value = true
     } else {
@@ -341,9 +341,16 @@ const submit = async () => {
   form.value.monthlyFee = +form.value.monthlyFee
   form.value.birthDate = dayjs(form.value.birthDate).format('YYYY-MM-DD')
 
-  // Filter out incomplete periods (fromMonth and toMonth are already in YYYY-MM format)
+  // Filter out incomplete periods and keep only required fields
   if (form.value.discountPeriods && form.value.discountPeriods.length > 0) {
-    form.value.discountPeriods = form.value.discountPeriods.filter(period => period.fromMonth && period.toMonth)
+    form.value.discountPeriods = form.value.discountPeriods
+      .filter(period => period.fromMonth && period.toMonth)
+      .map(period => ({
+        percent: period.percent,
+        fromMonth: period.fromMonth,
+        toMonth: period.toMonth,
+        reason: period.reason || '',
+      }))
   }
 
   // Clean up discount fields if not used
@@ -363,8 +370,8 @@ const submit = async () => {
         delete form.value.discountReason
       }
     }
-    // Remove discountPeriods if not using period discounts
-    delete form.value.discountPeriods
+    // Set discountPeriods to empty array if not using period discounts
+    form.value.discountPeriods = []
   }
 
   try {

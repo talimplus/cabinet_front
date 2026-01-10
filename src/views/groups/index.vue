@@ -4,6 +4,24 @@
       Groups
       <v-btn color="primary" @click="openFormModal = true">Create</v-btn>
     </v-card-title>
+    <v-card-text>
+      <v-row>
+        <v-col cols="12" md="4">
+          <v-select
+            v-model="params.centerId"
+            :items="centerOptions"
+            item-title="title"
+            item-value="value"
+            label="Markaz"
+            variant="outlined"
+            density="compact"
+            clearable
+            :loading="loadingCenters"
+            @update:model-value="getGroups"
+          ></v-select>
+        </v-col>
+      </v-row>
+    </v-card-text>
     <v-data-table :items="items" :headers="headers" hide-default-footer>
       <template v-slot:item.teacherFullName="{ item }">
         <div>{{ item.teacher.firstName + ' ' + item.teacher.lastName }}</div>
@@ -65,16 +83,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { fetchGroups, deleteGroup } from '@/services/pages/groups'
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
-import { fetchCenters } from '@/services/pages/centers'
+import { fetchCenters, fetchAllCenters } from '@/services/pages/centers'
 import { fetchSubjects } from '@/services/pages/subjects'
 import { fetchUsers } from '@/services/pages/users'
 import type { Group } from '@/types/groups.types'
-import type { Center } from '@/types/center.types'
+import type { Center } from '@/types/centers.types'
 import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
+import type { GroupsParams } from '@/types/groups.types'
 
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
@@ -83,6 +102,18 @@ const subjects = ref<Subject[]>([])
 const users = ref<User[]>([])
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
+const loadingCenters = ref(false)
+
+const params = ref<GroupsParams>({
+  centerId: undefined,
+})
+
+const centerOptions = computed(() => {
+  return centers.value.map(center => ({
+    title: center.name,
+    value: center.id,
+  }))
+})
 
 const edit = (room: Group) => {
   formForEdit.value = room
@@ -96,27 +127,36 @@ const getGroups = async () => {
   try {
     const {
       data: { data },
-    } = await fetchGroups()
+    } = await fetchGroups(params.value)
     items.value = data
     console.log(data)
   } catch (err) {
     console.log(err)
   }
 }
-getGroups()
 
-const getCenters = async () => {
+const loadCenters = async () => {
+  loadingCenters.value = true
   try {
-    const {
-      data: { data },
-    } = await fetchCenters()
+    const { data } = await fetchAllCenters()
     centers.value = data
+    if (centers.value.length > 0 && !params.value.centerId) {
+      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
+      params.value.centerId = defaultCenter.id
+    }
   } catch (err) {
     console.log(err)
   } finally {
+    loadingCenters.value = false
   }
 }
-getCenters()
+
+onMounted(async () => {
+  await loadCenters()
+  if (params.value.centerId) {
+    await getGroups()
+  }
+})
 
 const getUsers = async () => {
   try {

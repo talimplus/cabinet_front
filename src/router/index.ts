@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { getMe } from '@/services/pages/auth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -76,6 +78,21 @@ const router = createRouter({
           path: '/expenses',
           name: 'expenses',
           component: () => import('../views/expenses.vue')
+        },
+        {
+          path: '/statistics',
+          name: 'statistics',
+          component: () => import('../views/statistics.vue')
+        },
+        {
+          path: '/pending-receipts',
+          name: 'pending-receipts',
+          component: () => import('../views/pending-receipts.vue')
+        },
+        {
+          path: '/profile',
+          name: 'profile',
+          component: () => import('../views/profile.vue')
         }
       ]
     },
@@ -92,8 +109,128 @@ const router = createRouter({
   ],
 })
 
-// beforeeach
+// Role-based route guards
+const restrictedRoutesForReception = [
+  '/users',
+  '/statistics',
+  '/payroll',
+  '/expenses',
+  '/centers',
+  '/pending-receipts',
+]
+const restrictedRoutesForTeacher = [
+  '/users',
+  '/centers',
+  '/rooms',
+  '/reception',
+  '/students',
+  '/stopped',
+  '/ignored',
+  '/finished',
+  '/payments',
+  '/payroll',
+  '/expenses',
+  '/statistics',
+  '/pending-receipts',
+]
 
+// Admin-only routes (only admin and super_admin can access)
+const adminOnlyRoutes = ['/pending-receipts']
+
+router.beforeEach(async (to, from, next) => {
+  const token = localStorage.getItem('token')
+
+  // If no token and trying to access protected route, redirect to login
+  if (!token && to.path !== '/login' && to.path !== '/register') {
+    next('/login')
+    return
+  }
+
+  // If no token, allow access to login/register
+  if (!token) {
+    next()
+    return
+  }
+
+  // If token exists and on login/register, redirect based on role
+  if (token && (to.path === '/login' || to.path === '/register')) {
+    const userStore = useUserStore()
+    let user = userStore.user
+
+    // If user not loaded, try to load it
+    if (!user) {
+      try {
+        const response = await getMe()
+        if (response?.user) {
+          userStore.setUser(response.user)
+          user = response.user
+        }
+      } catch {
+        localStorage.removeItem('token')
+        next('/login')
+        return
+      }
+    }
+
+    // Redirect based on role
+    if (user) {
+      const userRole = user.role
+      if (userRole === 'admin' || userRole === 'super_admin') {
+        next('/statistics')
+      } else {
+        next('/profile')
+      }
+    } else {
+      next('/profile')
+    }
+    return
+  }
+
+  // Check role-based access for protected routes
+  const userStore = useUserStore()
+  let user = userStore.user
+
+  // If user is not loaded yet, try to load it
+  if (!user && to.path !== '/login' && to.path !== '/register') {
+    try {
+      const response = await getMe()
+      if (response?.user) {
+        userStore.setUser(response.user)
+        user = response.user
+      }
+    } catch {
+      localStorage.removeItem('token')
+      next('/login')
+      return
+    }
+  }
+
+  if (user) {
+    const userRole = user.role
+
+    // Check admin-only routes
+    if (adminOnlyRoutes.includes(to.path)) {
+      if (userRole !== 'admin' && userRole !== 'super_admin') {
+        next('/groups') // Redirect to allowed page
+        return
+      }
+    }
+
+    // Check reception role restrictions
+    if (userRole === 'reception' && restrictedRoutesForReception.includes(to.path)) {
+      next('/groups') // Redirect to allowed page
+      return
+    }
+
+    // Check teacher role restrictions
+    if (userRole === 'teacher' && restrictedRoutesForTeacher.includes(to.path)) {
+      next('/groups') // Redirect to allowed page
+      return
+    }
+  }
+
+  next()
+})
 
 export default router
 

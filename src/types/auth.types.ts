@@ -10,5 +10,5 @@ export interface RegisterForm {
 
 export interface LoginForm {
         email: string
-        password?: string
+        password: string
 }

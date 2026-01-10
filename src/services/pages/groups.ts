@@ -1,13 +1,14 @@
 import http from "../baseHttp";
-import type { GroupForm } from "@/types/groups.types";
+import type { GroupForm, GroupsParams } from "@/types/groups.types";
 import type { LessonDatesResponse, LessonDatesParams, SubmitAttendancePayload } from "@/types/attendance.types";
 
-export const fetchGroups = async () => {
-        return await http.get('/groups')
+export const fetchGroups = async (params?: GroupsParams) => {
+        return await http.get('/groups', { params })
 }
 
-export const fetchAllGroups = async () => {
-        return await http.get('/groups/all')
+export const fetchAllGroups = async (centerId?: number) => {
+        const params = centerId ? { centerId } : undefined
+        return await http.get('/groups/all', { params })
 }
 
 export const fetchGroupById = async (id: number | string) => {

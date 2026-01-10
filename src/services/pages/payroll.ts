@@ -1,10 +1,13 @@
 import http from '../baseHttp'
 import type { StaffSalary, PayStaffSalaryPayload } from '@/types/payroll.types'
 
-export const fetchStaffSalaries = async (forMonth?: string): Promise<StaffSalary[]> => {
+export const fetchStaffSalaries = async (forMonth?: string, centerId?: number): Promise<StaffSalary[]> => {
   const params: any = {}
   if (forMonth) {
     params.forMonth = forMonth
+  }
+  if (centerId) {
+    params.centerId = centerId
   }
   const response = await http.get('/staff-salaries', { params })
   return response.data

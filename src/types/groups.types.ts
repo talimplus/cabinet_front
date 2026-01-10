@@ -38,3 +38,7 @@ export interface GroupForm {
         days?: GroupFormDays[],
         centerId?: number
 }
+
+export interface GroupsParams {
+        centerId?: number;
+}

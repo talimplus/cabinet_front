@@ -64,11 +64,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { fetchSubjects, deleteSubject } from '@/services/pages/subjects'
 import type { Subject, SubjectsParams } from '@/types/subject.types'
-import { fetchCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/center.types'
+import { fetchAllCenters } from '@/services/pages/centers'
+import type { Center } from '@/types/centers.types'
 import CreateSubjects from '@/components/pages/subjects/CreateSubject.vue'
 
 const items = ref<Subject[]>([])
@@ -118,21 +118,26 @@ const getSubjects = async () => {
     console.log(err)
   }
 }
-getSubjects()
 
 const getCenters = async () => {
   try {
-    const {
-      data: { data },
-    } = await fetchCenters()
+    const { data } = await fetchAllCenters()
     centers.value = data
+    if (centers.value.length > 0 && !params.value.centerId) {
+      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
+      params.value.centerId = defaultCenter.id
+    }
   } catch (err) {
     console.log(err)
-  } finally {
   }
 }
 
-getCenters()
+onMounted(async () => {
+  await getCenters()
+  if (params.value.centerId) {
+    await getSubjects()
+  }
+})
 
 watch(
   () => params.value.page,

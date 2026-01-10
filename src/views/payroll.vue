@@ -16,6 +16,20 @@
               @update:model-value="handleYearChange"
             ></v-select>
           </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="selectedCenterId"
+              :items="centerOptions"
+              item-title="title"
+              item-value="value"
+              label="Markaz"
+              variant="outlined"
+              density="compact"
+              clearable
+              :loading="loadingCenters"
+              @update:model-value="handleFilterChange"
+            ></v-select>
+          </v-col>
         </v-row>
       </v-card-text>
 
@@ -199,6 +213,8 @@ import { ref, computed, onMounted } from 'vue'
 import type { StaffSalary } from '@/types/payroll.types'
 import { PayrollStatus } from '@/types/payroll.types'
 import { fetchStaffSalaries, payStaffSalary } from '@/services/pages/payroll'
+import { fetchAllCenters } from '@/services/pages/centers'
+import type { Center } from '@/types/centers.types'
 
 // Component name
 defineOptions({
@@ -207,9 +223,12 @@ defineOptions({
 
 // State
 const selectedYear = ref(new Date().getFullYear())
-const selectedMonthIndex = ref(new Date().getMonth())
+const selectedMonthIndex = ref(0) // Will be set after centers load
+const selectedCenterId = ref<number | null>(null)
 const staffSalaries = ref<StaffSalary[]>([])
+const centers = ref<Center[]>([])
 const loading = ref(false)
+const loadingCenters = ref(false)
 const processingPayment = ref(false)
 
 // Payment Modal
@@ -231,9 +250,37 @@ const snackbar = ref({
 const currentYear = computed(() => new Date().getFullYear())
 const currentMonth = computed(() => new Date().getMonth())
 
+// Get the earliest center's creation date
+const getEarliestCenterDate = computed(() => {
+  if (centers.value.length === 0) return null
+  
+  if (selectedCenterId.value) {
+    const center = centers.value.find(c => c.id === selectedCenterId.value)
+    if (center?.createdAt) {
+      const date = new Date(center.createdAt)
+      return { year: date.getFullYear(), month: date.getMonth() }
+    }
+  }
+  
+  // Find earliest center
+  const dates = centers.value
+    .map(c => c.createdAt ? new Date(c.createdAt) : null)
+    .filter(d => d !== null) as Date[]
+  
+  if (dates.length === 0) return null
+  
+  const earliest = dates.reduce((earliest, current) => 
+    current < earliest ? current : earliest
+  )
+  
+  return { year: earliest.getFullYear(), month: earliest.getMonth() }
+})
+
 const yearOptions = computed(() => {
   const years = []
-  for (let i = currentYear.value - 1; i <= currentYear.value + 1; i++) {
+  const startYear = getEarliestCenterDate.value?.year || currentYear.value - 1
+  
+  for (let i = startYear; i <= currentYear.value + 1; i++) {
     years.push({ title: i.toString(), value: i })
   }
   return years
@@ -256,9 +303,23 @@ const monthNames = [
 
 const availableMonths = computed(() => {
   const months = []
+  
+  // Determine start month based on selected year and center creation date
+  let startMonth = 0
+  if (getEarliestCenterDate.value) {
+    const earliestDate = getEarliestCenterDate.value
+    if (selectedYear.value === earliestDate.year) {
+      startMonth = earliestDate.month
+    } else if (selectedYear.value < earliestDate.year) {
+      // Selected year is before center creation, return empty
+      return []
+    }
+  }
+  
+  // Determine end month
   const maxMonth = selectedYear.value === currentYear.value ? currentMonth.value + 1 : 12
 
-  for (let i = 0; i < maxMonth; i++) {
+  for (let i = startMonth; i < maxMonth; i++) {
     months.push(monthNames[i])
   }
 
@@ -271,6 +332,13 @@ const selectedMonth = computed(() => {
 
 const forMonth = computed(() => {
   return `${selectedYear.value}-${selectedMonth.value}`
+})
+
+const centerOptions = computed(() => {
+  return centers.value.map((center) => ({
+    title: center.name,
+    value: center.id,
+  }))
 })
 
 const hasTeachers = computed(() => {
@@ -312,10 +380,39 @@ const isPastMonth = (monthValue: string): boolean => {
   return false
 }
 
+const loadCenters = async () => {
+  loadingCenters.value = true
+  try {
+    const { data } = await fetchAllCenters()
+    centers.value = data
+    if (centers.value.length > 0 && !selectedCenterId.value) {
+      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
+      selectedCenterId.value = defaultCenter.id
+    }
+    
+    // Update year and month based on center creation date
+    if (getEarliestCenterDate.value) {
+      const earliestDate = getEarliestCenterDate.value
+      // Default to current year if it's >= earliest center year, otherwise use earliest year
+      selectedYear.value = currentYear.value >= earliestDate.year ? currentYear.value : earliestDate.year
+      selectedMonthIndex.value = 0
+    } else {
+      // If no centers, default to current year
+      selectedYear.value = currentYear.value
+      selectedMonthIndex.value = currentMonth.value
+    }
+  } catch (error: any) {
+    console.error('Markazlarni yuklashda xatolik:', error)
+    centers.value = []
+  } finally {
+    loadingCenters.value = false
+  }
+}
+
 const loadStaffSalaries = async () => {
   loading.value = true
   try {
-    const response = await fetchStaffSalaries(forMonth.value)
+    const response = await fetchStaffSalaries(forMonth.value, selectedCenterId.value || undefined)
     staffSalaries.value = Array.isArray(response) ? response : []
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || 'Ish haqi ma\'lumotlarini yuklashda xatolik', 'error')
@@ -326,13 +423,26 @@ const loadStaffSalaries = async () => {
 }
 
 const handleYearChange = () => {
-  if (selectedMonthIndex.value >= availableMonths.value.length) {
+  // Reset month index when year changes
+  if (availableMonths.value.length > 0) {
+    selectedMonthIndex.value = 0
+  } else {
     selectedMonthIndex.value = 0
   }
   loadStaffSalaries()
 }
 
 const handleMonthChange = () => {
+  loadStaffSalaries()
+}
+
+const handleFilterChange = () => {
+  // Update year and month when center changes
+  if (getEarliestCenterDate.value) {
+    const earliestDate = getEarliestCenterDate.value
+    selectedYear.value = earliestDate.year
+    selectedMonthIndex.value = 0
+  }
   loadStaffSalaries()
 }
 
@@ -478,8 +588,11 @@ const showSnackbar = (message: string, color: 'success' | 'error' = 'success') =
 }
 
 // Lifecycle
-onMounted(() => {
-  loadStaffSalaries()
+onMounted(async () => {
+  await loadCenters()
+  if (selectedCenterId.value) {
+    await loadStaffSalaries()
+  }
 })
 </script>
 

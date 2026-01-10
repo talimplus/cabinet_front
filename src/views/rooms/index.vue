@@ -66,17 +66,18 @@
 
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import CreateRoom from '@/components/pages/room/CreateRoom.vue'
 import { fetchRooms } from '@/services/pages/rooms'
-import { fetchCenters } from '@/services/pages/centers'
+import { fetchAllCenters } from '@/services/pages/centers'
 import { deleteRoom } from '@/services/pages/rooms'
 import type { Room, RoomParams } from '@/types/room.types'
+import type { Center } from '@/types/centers.types'
 
 const formForEdit = ref<Room>()
 const openModal = ref(false)
 const items = ref<Room[]>([])
-const centers = ref([])
+const centers = ref<Center[]>([])
 const loading = ref(false)
 
 const params = ref<RoomParams>({
@@ -84,8 +85,8 @@ const params = ref<RoomParams>({
   name: '',
 })
 
-const edit = (center: Center) => {
-  formForEdit.value = center
+const edit = (room: Room) => {
+  formForEdit.value = room
   openModal.value = true
 }
 
@@ -107,21 +108,27 @@ const getRooms = async () => {
     loading.value = false
   }
 }
-getRooms()
 
 const getCenters = async () => {
   try {
-    const {
-      data: { data },
-    } = await fetchCenters()
+    const { data } = await fetchAllCenters()
     centers.value = data
+    if (centers.value.length > 0 && !params.value.centerId) {
+      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
+      params.value.centerId = defaultCenter.id
+    }
   } catch (err) {
     console.log(err)
-  } finally {
   }
 }
 
-getCenters()
+onMounted(async () => {
+  await getCenters()
+  if (params.value.centerId) {
+    await getRooms()
+  }
+})
+
 const remove = async (id: number) => {
   try {
     await deleteRoom(id)

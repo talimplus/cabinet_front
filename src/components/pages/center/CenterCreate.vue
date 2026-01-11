@@ -15,14 +15,13 @@
           <v-btn text="Cancel" @click="open = false"></v-btn>
           <v-btn :loading="loading" type="submit" color="primary" text="Save"></v-btn>
         </template>
-        {{ number }}
       </v-card>
     </form>
   </v-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, watch, defineEmits, defineModel, defineExpose } from 'vue'
+import { ref, defineProps, watch, defineEmits, defineModel } from 'vue'
 import type { CenterForm } from '@/types/centers.types'
 import { createCenter, editCenter } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
@@ -41,7 +40,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emits = defineEmits<Emits>()
-const open = defineModel('open')
+const open = defineModel('open', {default: false})
 
 // const dialog = ref(false)
 const loading = ref(false)

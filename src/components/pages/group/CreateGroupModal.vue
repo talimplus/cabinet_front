@@ -96,7 +96,7 @@ import { computed, defineModel, ref, defineProps, defineEmits, watch } from 'vue
 import { WeekDay } from '@/types/groups.enum'
 import { fetchSubjects } from '@/services/pages/subjects'
 import { fetchUsers } from '@/services/pages/users'
-import { createGroup, fetchAllGroups, updateGroup } from '@/services/pages/groups'
+import { createGroup, updateGroup } from '@/services/pages/groups'
 import { fetchRooms } from '@/services/pages/rooms'
 import type { GroupFormDays, GroupForm } from '@/types/groups.types'
 import type { Center } from '@/types/center.types'

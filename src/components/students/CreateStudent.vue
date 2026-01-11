@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineModel, defineEmits, watch } from 'vue'
-import type { StudentForm, DiscountPeriod } from '@/types/students.types'
+import type { StudentForm } from '@/types/students.types'
 import type { Center } from '@/types/center.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllGroups } from '@/services/pages/groups'

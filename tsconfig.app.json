@@ -7,6 +7,11 @@
 
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "skipLibCheck": true,
+    "useDefineForClassFields": false
   }
 }

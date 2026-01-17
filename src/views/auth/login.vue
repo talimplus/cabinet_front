@@ -20,30 +20,38 @@
           <span class="divider-text">or sign in with</span>
         </v-divider>
 
-        <v-form @submit.prevent="submit" ref="formRef">
-          <v-text-field
-            v-model="form.email"
-            label="Email"
-            type="email"
-            variant="outlined"
-            density="comfortable"
-            :rules="[rules.required, rules.email]"
-            :disabled="loading"
-            class="mb-4"
-            prepend-inner-icon="mdi-email-outline"
-          ></v-text-field>
+        <Form @submit="submit" ref="formRef">
+          <Field name="email" rules="required|email" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.email"
+              label="Email"
+              type="email"
+              variant="outlined"
+              density="comfortable"
+              :disabled="loading"
+              class="mb-4"
+              prepend-inner-icon="mdi-email-outline"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
 
-          <v-text-field
-            v-model="form.password"
-            label="Password"
-            type="password"
-            variant="outlined"
-            density="comfortable"
-            :rules="[rules.required]"
-            :disabled="loading"
-            class="mb-4"
-            prepend-inner-icon="mdi-lock-outline"
-          ></v-text-field>
+          <Field name="password" rules="required" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.password"
+              label="Password"
+              type="password"
+              variant="outlined"
+              density="comfortable"
+              :disabled="loading"
+              class="mb-4"
+              prepend-inner-icon="mdi-lock-outline"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
 
           <v-btn
             color="primary"
@@ -56,7 +64,7 @@
           >
             Sign In
           </v-btn>
-        </v-form>
+        </Form>
 
         <div class="login-footer">
           <span class="footer-text">New to Ta'lim Markazi?</span>
@@ -69,6 +77,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Form, Field } from 'vee-validate'
 import type { LoginForm } from '@/types/auth.types'
 import { login } from '@/services/pages/auth'
 import { useUserStore } from '@/stores/user'
@@ -85,18 +94,7 @@ const form = ref<LoginForm>({
   password: '',
 })
 
-const rules = {
-  required: (v: string) => !!v || 'Maydon to\'ldirilishi shart',
-  email: (v: string) => {
-    if (!v) return true
-    return /.+@.+\..+/.test(v) || 'Email noto\'g\'ri formatda'
-  },
-}
-
 const submit = async () => {
-  const { valid } = await formRef.value?.validate()
-  if (!valid) return
-
   loading.value = true
   try {
     const { data } = await login(form.value)
@@ -113,8 +111,11 @@ const submit = async () => {
       }
     }
   } catch (err: any) {
+    const errors = err?.response?.data?.errors
+    if (errors) {
+      formRef.value?.setErrors(errors)
+    }
     console.error('Login error:', err)
-    // You can add error notification here
   } finally {
     loading.value = false
   }

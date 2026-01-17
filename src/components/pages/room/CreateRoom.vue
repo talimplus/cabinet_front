@@ -1,30 +1,44 @@
 <template>
   <v-dialog width="500" v-model="open">
-    <form action="" @submit.prevent="submit">
+    <Form @submit="submit" ref="roomFormRef">
       <v-card title="Create Room">
         <v-card-text>
-          <v-text-field v-model="form.name" label="Room name"></v-text-field>
+          <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.name"
+              label="Room name"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
         </v-card-text>
         <v-card-text>
-          <v-select
-            v-model="form.centerId"
-            :items="centers"
-            label="Centers"
-            item-title="name"
-            item-value="id"
-          ></v-select>
+          <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
+            <v-select
+              v-model="form.centerId"
+              :items="centers"
+              label="Centers"
+              item-title="name"
+              item-value="id"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-select>
+          </Field>
         </v-card-text>
         <v-card-actions>
           <v-btn text="Cancel" @click="open = false"></v-btn>
           <v-btn type="submit" :loading="loading" text="submit" color="primary"></v-btn>
         </v-card-actions>
       </v-card>
-    </form>
+    </Form>
   </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, defineProps, defineModel, defineEmits, watch } from 'vue'
+import { Form, Field } from 'vee-validate'
 import { createRoom, updateRoom } from '@/services/pages/rooms.ts'
 import { fetchCenters } from '@/services/pages/centers'
 import type { RoomForm } from '@/types/room.types'
@@ -44,6 +58,7 @@ interface Props {
 const emits = defineEmits<Emits>()
 const props = defineProps<Props>()
 const open = defineModel('open', { type: Boolean })
+const roomFormRef = ref()
 
 const form = ref<RoomForm>({
   name: '',
@@ -88,6 +103,10 @@ const submit = async () => {
     open.value = false
     emits('updateData')
   } catch (err) {
+    const errors = (err as any)?.response?.data?.errors
+    if (errors) {
+      roomFormRef.value?.setErrors(errors)
+    }
     console.log(err)
   } finally {
     loading.value = false

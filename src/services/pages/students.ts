@@ -4,8 +4,8 @@ import { StudentStatus } from "@/types/students.enum";
 export const fetchStudents = async (par?: StudentsParams) => {
         return await http.get('/students', { params: par })
 }
-export const fetchAllStudents = async () => {
-        return await http.get('/students/all')
+export const fetchAllStudents = async (params?: StudentsParams) => {
+        return await http.get('/students/all', { params })
 }
 
 

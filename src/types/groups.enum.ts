@@ -7,3 +7,9 @@ export enum WeekDay {
         SATURDAY = 'saturday',
         SUNDAY = 'sunday',
 }
+
+export enum GroupStatus {
+        NEW = 'new',
+        STARTED = 'started',
+        FINISHED = 'finished',
+}

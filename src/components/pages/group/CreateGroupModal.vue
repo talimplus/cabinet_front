@@ -1,83 +1,155 @@
 <template>
   <v-dialog v-model="open" width="750">
-    <form @submit.prevent="submit">
+    <Form @submit="submit" ref="groupFormRef">
       <v-card>
         <v-card-text class="pb-1">
-          <v-text-field v-model="form.name" label="Group Name"></v-text-field>
+          <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.name"
+              label="Group Name"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
         </v-card-text>
         <v-card-text>
-          <v-select
-            v-model="form.centerId"
-            :items="centers"
-            label="Centers"
-            item-title="name"
-            item-value="id"
-            @update:modelValue="changedCenter"
-          ></v-select>
+          <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
+            <v-select
+              v-model="form.centerId"
+              :items="centers"
+              label="Centers"
+              item-title="name"
+              item-value="id"
+              @update:modelValue="changedCenter"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-select>
+          </Field>
         </v-card-text>
         <v-card-text class="pt-0">
-          <v-select
-            v-model="form.subjectId"
-            :items="subjects"
-            label="Subjects"
-            :disabled="!form.centerId"
-            item-title="name"
-            item-value="id"
-          ></v-select>
+          <Field name="subjectId" v-slot="{ handleChange, handleBlur, errors }">
+            <v-select
+              v-model="form.subjectId"
+              :items="subjects"
+              label="Subjects"
+              :disabled="!form.centerId"
+              item-title="name"
+              item-value="id"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-select>
+          </Field>
         </v-card-text>
 
         <v-card-text class="pt-0">
-          <v-select
-            v-model="form.roomId"
-            :items="rooms"
-            label="Rooms"
-            :disabled="!form.centerId"
-            item-title="name"
-            item-value="id"
-          ></v-select>
+          <Field name="roomId" v-slot="{ handleChange, handleBlur, errors }">
+            <v-select
+              v-model="form.roomId"
+              :items="rooms"
+              label="Rooms"
+              :disabled="!form.centerId"
+              item-title="name"
+              item-value="id"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-select>
+          </Field>
         </v-card-text>
 
         <v-card-text class="pt-0">
-          <v-select
-            v-model="form.teacherId"
-            :items="users"
-            :disabled="!form.centerId"
-            label="Teacher"
-            item-title="fullName"
-            item-value="id"
-          ></v-select>
+          <Field name="teacherId" v-slot="{ handleChange, handleBlur, errors }">
+            <v-select
+              v-model="form.teacherId"
+              :items="users"
+              :disabled="!form.centerId"
+              label="Teacher"
+              item-title="fullName"
+              item-value="id"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-select>
+          </Field>
         </v-card-text>
         <v-card-text class="pb-0">
-          <v-text-field
-            v-model="form.monthlyFee"
-            label="Oylik to'lov"
-            type="number"
-            variant="outlined"
-          ></v-text-field>
+          <Field name="monthlyFee" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.monthlyFee"
+              label="Oylik to'lov"
+              type="number"
+              variant="outlined"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
+        </v-card-text>
+        <v-card-text class="pt-0">
+          <Field name="durationMonths" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.durationMonths"
+              label="Dars necha oy davom etishi"
+              type="number"
+              variant="outlined"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
         </v-card-text>
         <v-card-text>
           <v-row>
             <v-col :cols="6">
-              <v-autocomplete
-                placeholder="Select Lesson Days"
-                :items="dayList"
-                multiple
-                chips
-                v-model="days"
-              />
+              <Field name="days" v-slot="{ handleChange, handleBlur, errors }">
+                <v-autocomplete
+                  placeholder="Select Lesson Days"
+                  :items="dayList"
+                  multiple
+                  chips
+                  v-model="days"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                />
+              </Field>
             </v-col>
             <v-col :cols="6" class="d-flex align-center">
-              <v-text-field
-                v-if="!differentTime"
-                placeholder="Group Name"
-                type="time"
-                v-model="allTimes"
-              ></v-text-field>
-              <v-checkbox label="Alohida tanlash" v-model="differentTime" />
+              <Field name="allTimes" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-if="!differentTime"
+                  placeholder="Group Name"
+                  type="time"
+                  v-model="allTimes"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
+              <Field name="differentTime" v-slot="{ handleChange, handleBlur }">
+                <v-checkbox
+                  label="Alohida tanlash"
+                  v-model="differentTime"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                />
+              </Field>
             </v-col>
             <template v-if="differentTime">
               <v-col :cols="6" v-for="(day, i) in days" :key="`day-${i}`">
-                <v-text-field :label="day" type="time" v-model="times[i]" />
+                <Field :name="`times.${i}`" v-slot="{ handleChange, handleBlur, errors }">
+                  <v-text-field
+                    :label="day"
+                    type="time"
+                    v-model="times[i]"
+                    :error-messages="errors"
+                    @update:model-value="handleChange"
+                    @blur="handleBlur"
+                  />
+                </Field>
               </v-col>
             </template>
           </v-row>
@@ -87,12 +159,13 @@
           <v-btn type="submit" color="primary" text="Submit"></v-btn>
         </template>
       </v-card>
-    </form>
+    </Form>
   </v-dialog>
 </template>
 
 <script lang="ts" setup>
 import { computed, defineModel, ref, defineProps, defineEmits, watch } from 'vue'
+import { Form, Field } from 'vee-validate'
 import { WeekDay } from '@/types/groups.enum'
 import { fetchSubjects } from '@/services/pages/subjects'
 import { fetchUsers } from '@/services/pages/users'
@@ -124,12 +197,14 @@ const emits = defineEmits<Emits>()
 
 const open = defineModel('open', { type: Boolean })
 const differentTime = ref(false)
+const groupFormRef = ref()
 const form = ref<GroupForm>({
   name: '',
   subjectId: undefined,
   teacherId: undefined,
   roomId: undefined,
   monthlyFee: undefined,
+  durationMonths: undefined,
   days: [],
   centerId: '',
 })
@@ -143,6 +218,7 @@ watch(open, (newValue: boolean) => {
     form.value.roomId = props.formForEdit?.room?.id
     form.value.teacherId = props.formForEdit?.teacher?.id
     form.value.monthlyFee = props.formForEdit?.monthlyFee ?? undefined
+    form.value.durationMonths = props.formForEdit?.durationMonths ?? undefined
 
     // Convert schedules to days format
     if (props.formForEdit?.schedules && props.formForEdit.schedules.length > 0) {
@@ -172,6 +248,7 @@ watch(open, (newValue: boolean) => {
       teacherId: undefined,
       roomId: undefined,
       monthlyFee: undefined,
+      durationMonths: undefined,
       days: [],
       centerId: '',
     }
@@ -259,6 +336,9 @@ const submit = async () => {
     monthlyFee: form.value.monthlyFee !== undefined && form.value.monthlyFee !== null && form.value.monthlyFee !== ''
       ? +form.value.monthlyFee
       : null,
+    durationMonths: form.value.durationMonths !== undefined && form.value.durationMonths !== null && form.value.durationMonths !== ''
+      ? +form.value.durationMonths
+      : null,
     days: [],
   }
 
@@ -277,6 +357,10 @@ const submit = async () => {
     delete submitData.days
   }
 
+  if (submitData.durationMonths === null || Number.isNaN(submitData.durationMonths)) {
+    delete submitData.durationMonths
+  }
+
   try {
     if (props.formForEdit?.id) {
       await updateGroup(submitData, props.formForEdit.id)
@@ -286,6 +370,10 @@ const submit = async () => {
     open.value = false
     emits('updateData')
   } catch (err) {
+    const errors = (err as any)?.response?.data?.errors
+    if (errors) {
+      groupFormRef.value?.setErrors(errors)
+    }
     console.log(err)
   }
 }

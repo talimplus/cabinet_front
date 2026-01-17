@@ -20,62 +20,82 @@
           <v-divider></v-divider>
 
           <v-card-text class="pa-6">
-            <v-form ref="formRef" v-model="formValid">
+            <Form ref="formRef" @submit="saveProfile">
               <v-row>
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="form.firstName"
-                    label="Ism"
-                    variant="outlined"
-                    density="comfortable"
-                    :rules="[rules.required]"
-                    :disabled="loading || saving"
-                  ></v-text-field>
+                  <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
+                    <v-text-field
+                      v-model="form.firstName"
+                      label="Ism"
+                      variant="outlined"
+                      density="comfortable"
+                      :disabled="loading || saving"
+                      :error-messages="errors"
+                      @update:model-value="handleChange"
+                      @blur="handleBlur"
+                    ></v-text-field>
+                  </Field>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="form.lastName"
-                    label="Familiya"
-                    variant="outlined"
-                    density="comfortable"
-                    :rules="[rules.required]"
-                    :disabled="loading || saving"
-                  ></v-text-field>
+                  <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
+                    <v-text-field
+                      v-model="form.lastName"
+                      label="Familiya"
+                      variant="outlined"
+                      density="comfortable"
+                      :disabled="loading || saving"
+                      :error-messages="errors"
+                      @update:model-value="handleChange"
+                      @blur="handleBlur"
+                    ></v-text-field>
+                  </Field>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="form.login"
-                    label="Login"
-                    variant="outlined"
-                    density="comfortable"
-                    :rules="[rules.required]"
-                    :disabled="loading || saving"
-                  ></v-text-field>
+                  <Field name="login" v-slot="{ handleChange, handleBlur, errors }">
+                    <v-text-field
+                      v-model="form.login"
+                      label="Login"
+                      variant="outlined"
+                      density="comfortable"
+                      :disabled="loading || saving"
+                      :error-messages="errors"
+                      @update:model-value="handleChange"
+                      @blur="handleBlur"
+                    ></v-text-field>
+                  </Field>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="form.phone"
-                    label="Telefon"
-                    variant="outlined"
-                    density="comfortable"
-                    :rules="[rules.required, rules.phone]"
-                    :disabled="loading || saving"
-                  ></v-text-field>
+                  <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
+                    <v-text-field
+                      v-model="form.phone"
+                      label="Telefon"
+                      variant="outlined"
+                      density="comfortable"
+                      :disabled="loading || saving"
+                      :error-messages="errors"
+                      @update:model-value="handleChange"
+                      @blur="handleBlur"
+                    ></v-text-field>
+                  </Field>
                 </v-col>
                 <v-col cols="12">
                   <v-divider class="my-4"></v-divider>
                   <div class="text-subtitle-1 font-weight-medium mb-2">Parolni o'zgartirish</div>
-                  <v-text-field
-                    v-model="form.password"
-                    label="Yangi parol"
-                    type="password"
-                    variant="outlined"
-                    density="comfortable"
-                    hint="Parolni o'zgartirmaslik uchun bo'sh qoldiring"
-                    persistent-hint
-                    :rules="[rules.passwordOptional]"
-                    :disabled="loading || saving"
-                  ></v-text-field>
+                  <Field name="password" v-slot="{ handleChange, handleBlur, errors }">
+                    <v-text-field
+                      v-model="form.password"
+                      label="Yangi parol"
+                      type="password"
+                      variant="outlined"
+                      density="comfortable"
+                      hint="Parolni o'zgartirmaslik uchun bo'sh qoldiring"
+                      persistent-hint
+                      :disabled="loading || saving"
+                      :error-messages="errors"
+                      @update:model-value="handleChange"
+                      @blur="handleBlur"
+                    ></v-text-field>
+                  </Field>
                 </v-col>
               </v-row>
 
@@ -106,7 +126,7 @@
                   ></v-text-field>
                 </v-col>
               </v-row>
-            </v-form>
+            </Form>
           </v-card-text>
 
           <v-divider></v-divider>
@@ -123,9 +143,9 @@
             <v-btn
               color="primary"
               variant="flat"
-              @click="saveProfile"
+              @click="formRef?.submitForm()"
               :loading="saving"
-              :disabled="loading || !hasChanges || !formValid"
+              :disabled="loading || !hasChanges"
             >
               Saqlash
             </v-btn>
@@ -146,6 +166,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { Form, Field } from 'vee-validate'
 import type { UserProfile, UpdateProfileForm } from '@/types/user.types'
 import { getUserMe, updateUserMe } from '@/services/pages/users'
 
@@ -184,7 +205,6 @@ const initialForm = ref<UpdateProfileForm>({
 
 const loading = ref(false)
 const saving = ref(false)
-const formValid = ref(false)
 const formRef = ref()
 
 // Snackbar
@@ -193,20 +213,6 @@ const snackbar = ref({
   message: '',
   color: 'success' as 'success' | 'error',
 })
-
-// Rules
-const rules = {
-  required: (v: string) => !!v || 'Maydon to\'ldirilishi shart',
-  phone: (v: string) => {
-    if (!v) return true
-    const phoneRegex = /^\+?998\d{9}$/
-    return phoneRegex.test(v.replace(/\s/g, '')) || 'Telefon raqami noto\'g\'ri formatda'
-  },
-  passwordOptional: (v: string) => {
-    if (!v) return true
-    return v.length >= 6 || 'Parol kamida 6 belgidan iborat bo\'lishi kerak'
-  },
-}
 
 // Computed
 const hasChanges = computed(() => {
@@ -245,13 +251,10 @@ const loadProfile = async () => {
 
 const resetForm = () => {
   form.value = { ...initialForm.value }
-  formRef.value?.resetValidation()
+  formRef.value?.resetForm?.({ values: form.value })
 }
 
 const saveProfile = async () => {
-  const { valid } = await formRef.value?.validate()
-  if (!valid) return
-
   saving.value = true
   try {
     const updateData: UpdateProfileForm = {
@@ -270,6 +273,10 @@ const saveProfile = async () => {
     showSnackbar('Profil muvaffaqiyatli yangilandi', 'success')
     await loadProfile()
   } catch (error: any) {
+    const errors = error?.response?.data?.errors
+    if (errors) {
+      formRef.value?.setErrors(errors)
+    }
     showSnackbar(error.response?.data?.message || 'Profilni yangilashda xatolik', 'error')
   } finally {
     saving.value = false

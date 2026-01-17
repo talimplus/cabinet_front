@@ -118,58 +118,76 @@
           {{ expenseModal.isEdit ? 'Chiqimni tahrirlash' : 'Yangi chiqim' }}
         </v-card-title>
         <v-card-text class="pa-4">
-          <v-form ref="expenseFormRef">
-            <v-select
-              v-model="expenseForm.centerId"
-              :items="centerOptions"
-              label="Markaz"
-              variant="outlined"
-              density="compact"
-              :rules="[v => !!v || 'Markazni tanlang']"
-              class="mb-3"
-            ></v-select>
+          <Form ref="expenseFormRef" @submit="saveExpense">
+            <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
+              <v-select
+                v-model="expenseForm.centerId"
+                :items="centerOptions"
+                label="Markaz"
+                variant="outlined"
+                density="compact"
+                class="mb-1"
+                :error-messages="errors"
+                @update:model-value="handleChange"
+                @blur="handleBlur"
+              ></v-select>
+            </Field>
 
-            <v-text-field
-              v-model="expenseForm.name"
-              label="Nomi"
-              variant="outlined"
-              density="compact"
-              :rules="[v => !!v || 'Nomini kiriting']"
-              class="mb-3"
-            ></v-text-field>
+            <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
+              <v-text-field
+                v-model="expenseForm.name"
+                label="Nomi"
+                variant="outlined"
+                density="compact"
+                class="mb-1"
+                :error-messages="errors"
+                @update:model-value="handleChange"
+                @blur="handleBlur"
+              ></v-text-field>
+            </Field>
 
-            <v-text-field
-              v-model.number="expenseForm.amount"
-              label="Summa"
-              type="number"
-              variant="outlined"
-              density="compact"
-              suffix="so'm"
-              :rules="[
-                v => !!v || 'Summani kiriting',
-                v => v > 0 || 'Summa 0 dan katta bo\'lishi kerak'
-              ]"
-              class="mb-3"
-            ></v-text-field>
+            <Field name="amount" v-slot="{ handleChange, handleBlur, errors }">
+              <v-text-field
+                v-model.number="expenseForm.amount"
+                label="Summa"
+                type="number"
+                variant="outlined"
+                density="compact"
+                suffix="so'm"
+                class="mb-1"
+                :error-messages="errors"
+                @update:model-value="handleChange"
+                @blur="handleBlur"
+              ></v-text-field>
+            </Field>
 
-            <v-textarea
-              v-model="expenseForm.description"
-              label="Tavsif"
-              variant="outlined"
-              density="compact"
-              rows="3"
-              class="mb-3"
-            ></v-textarea>
+            <Field name="description" v-slot="{ handleChange, handleBlur, errors }">
+              <v-textarea
+                v-model="expenseForm.description"
+                label="Tavsif"
+                variant="outlined"
+                density="compact"
+                rows="3"
+                class="mb-1"
+                :error-messages="errors"
+                @update:model-value="handleChange"
+                @blur="handleBlur"
+              ></v-textarea>
+            </Field>
 
-            <v-select
-              v-model="expenseForm.forMonth"
-              :items="monthOptions"
-              label="Oy"
-              variant="outlined"
-              density="compact"
-              :rules="[v => !!v || 'Oyni tanlang']"
-            ></v-select>
-          </v-form>
+            <Field name="forMonth" v-slot="{ handleChange, handleBlur, errors }">
+              <v-select
+                v-model="expenseForm.forMonth"
+                :items="monthOptions"
+                label="Oy"
+                variant="outlined"
+                density="compact"
+                :error-messages="errors"
+                @update:model-value="handleChange"
+                @blur="handleBlur"
+              ></v-select>
+            </Field>
+          </Form>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
@@ -179,8 +197,8 @@
           <v-btn
             color="primary"
             variant="flat"
-            @click="saveExpense"
             :loading="processing"
+            @click="expenseFormRef?.submitForm()"
           >
             Saqlash
           </v-btn>
@@ -226,6 +244,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { Form, Field } from 'vee-validate'
 import type { Expense, ExpenseForm, ExpensesParams } from '@/types/expenses.types'
 import { fetchExpenses, createExpense, updateExpense, deleteExpense } from '@/services/pages/expenses'
 import { fetchAllCenters } from '@/services/pages/centers'
@@ -484,9 +503,6 @@ const closeExpenseModal = () => {
 }
 
 const saveExpense = async () => {
-  const { valid } = await expenseFormRef.value.validate()
-  if (!valid) return
-
   processing.value = true
   try {
     if (expenseModal.value.isEdit && expenseModal.value.expenseId) {
@@ -506,6 +522,10 @@ const saveExpense = async () => {
       forMonth: '',
     }
   } catch (error: any) {
+    const errors = error?.response?.data?.errors
+    if (errors) {
+      expenseFormRef.value?.setErrors(errors)
+    }
     showSnackbar(error.response?.data?.message || 'Chiqimni saqlashda xatolik', 'error')
   } finally {
     processing.value = false

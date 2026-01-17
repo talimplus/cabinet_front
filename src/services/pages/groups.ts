@@ -27,6 +27,10 @@ export const updateGroup = async (form: GroupForm, id: number) => {
         return await http.put(`/groups/${id}`, form)
 }
 
+export const changeGroupStatus = async (id: number, status: string) => {
+        return await http.put(`/groups/change-status/${id}`, { status })
+}
+
 // Attendance APIs
 export const fetchLessonDates = async (groupId: number | string, params?: LessonDatesParams): Promise<LessonDatesResponse> => {
         const response = await http.get(`/groups/${groupId}/attendance/lesson-dates`, { params })

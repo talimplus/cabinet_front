@@ -1,31 +1,45 @@
 <template>
   <v-dialog width="auto" v-model="open">
-    <v-form @submit.prevent="submit">
+    <Form @submit="submit" ref="subjectFormRef">
       <v-card width="400" title="Create Subject">
         <v-card-text class="pb-1">
-          <v-text-field v-model="form.name" label="Subject name"></v-text-field>
+          <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
+            <v-text-field
+              v-model="form.name"
+              label="Subject name"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-text-field>
+          </Field>
         </v-card-text>
         <v-card-text class="pt-0">
-          <v-select
-            v-model="form.centerId"
-            :items="centers"
-            label="Centers"
-            item-title="name"
-            item-value="id"
-          ></v-select>
+          <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
+            <v-select
+              v-model="form.centerId"
+              :items="centers"
+              label="Centers"
+              item-title="name"
+              item-value="id"
+              :error-messages="errors"
+              @update:model-value="handleChange"
+              @blur="handleBlur"
+            ></v-select>
+          </Field>
         </v-card-text>
         <template v-slot:actions>
           <v-btn @click="open = false">Cancel</v-btn>
           <v-btn type="submit" color="primary" text="Save"></v-btn>
         </template>
       </v-card>
-    </v-form>
+    </Form>
   </v-dialog>
 </template>
 
 
 <script setup lang="ts">
 import { ref, defineModel, defineEmits, defineProps, watch } from 'vue'
+import { Form, Field } from 'vee-validate'
 import { createSubjects, editSubject } from '@/services/pages/subjects'
 import type { SubjectForm, Subject } from '@/types/subject.types'
 import type { Center } from '@/types/center.types'
@@ -41,6 +55,7 @@ interface Props {
 const props = defineProps<Props>()
 const emits = defineEmits<Emits>()
 const open = defineModel('open')
+const subjectFormRef = ref()
 
 const form = ref<SubjectForm>({
   name: '',
@@ -75,6 +90,10 @@ const submit = async () => {
     open.value = false
     emits('updateData')
   } catch (err) {
+    const errors = (err as any)?.response?.data?.errors
+    if (errors) {
+      subjectFormRef.value?.setErrors(errors)
+    }
     console.log(err)
   }
 }

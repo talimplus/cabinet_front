@@ -4,12 +4,21 @@ export interface Student {
         firstName: string;
         lastName: string;
         phone: string;
+        secondPhone?: string | null;
         birthDate: string;
         monthlyFee: number;
+        comment?: string | null;
+        heardAboutUs?: string | null;
+        preferredTime?: 'morning' | 'evening' | string | null;
+        preferredDays?: string[] | null;
+        passportSeries?: string | null;
+        passportNumber?: string | null;
+        jshshir?: string | null;
         discountPercent?: number | string;
         discountReason?: string | null;
         discountPeriods?: DiscountPeriod[];
         status: StudentStatus;
+        groupIds?: number[];
         openStatus?: boolean,
         statusLoading?: boolean
         createdAt?: string;
@@ -27,11 +36,19 @@ export interface StudentForm {
         firstName: string;
         lastName: string;
         phone: string;
+        secondPhone?: string;
         birthDate: string;
-        referrerId: number;
-        monthlyFee: number;
-        centerId: number,
-        groupIds: number[],
+        referrerId?: number;
+        monthlyFee?: number;
+        comment?: string;
+        heardAboutUs?: string;
+        preferredTime?: 'morning' | 'evening' | string;
+        preferredDays?: string[];
+        passportSeries?: string;
+        passportNumber?: string;
+        jshshir?: string;
+        centerId?: number,
+        groupIds?: number[],
         discountPercent?: number;
         discountReason?: string;
         discountPeriods?: DiscountPeriod[];

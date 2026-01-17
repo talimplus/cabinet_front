@@ -2,7 +2,7 @@ import type { Center } from '@/types/centers.types.ts'
 import type { Teacher } from '@/types/teacher.types.ts'
 import type { Subject } from '@/types/subject.types.ts'
 import type { Room } from '@/types/rooms.types.ts'
-import { WeekDay } from '@/types/groups.enum'
+import { WeekDay, GroupStatus } from '@/types/groups.enum'
 
 
 export interface GroupSchedule {
@@ -20,7 +20,9 @@ export interface Group {
         subject: Subject;
         teacher: Teacher | null;
         room?: Room | null;
-        status?: string;
+        status?: GroupStatus;
+        durationMonths?: number | null;
+        statusLoading?: boolean;
         schedules?: GroupSchedule[];
         startDate?: string;
         endDate?: string | null;
@@ -35,6 +37,7 @@ export interface GroupForm {
         teacherId?: number,
         roomId?: number,
         monthlyFee?: number | null,
+        durationMonths?: number | null,
         days?: GroupFormDays[],
         centerId?: number
 }

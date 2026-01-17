@@ -20,98 +20,130 @@
           <span class="divider-text">or sign up with</span>
         </v-divider>
 
-        <v-form @submit.prevent="submit" ref="formRef">
+        <Form @submit="submit" ref="formRef">
           <v-row>
             <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.firstName"
-                label="First Name"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-account-outline"
-              ></v-text-field>
+              <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.firstName"
+                  label="First Name"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-account-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.lastName"
-                label="Last Name"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-account-outline"
-              ></v-text-field>
+              <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.lastName"
+                  label="Last Name"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-account-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12">
-              <v-text-field
-                v-model="form.email"
-                label="Email"
-                type="email"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required, rules.email]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-email-outline"
-              ></v-text-field>
+              <Field name="email" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.email"
+                  label="Email"
+                  type="email"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-email-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.phone"
-                label="Phone"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required, rules.phone]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-phone-outline"
-              ></v-text-field>
+              <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.phone"
+                  label="Phone"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-phone-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.organizationName"
-                label="Organization Name"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-office-building-outline"
-              ></v-text-field>
+              <Field name="organizationName" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.organizationName"
+                  label="Organization Name"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-office-building-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12">
-              <v-text-field
-                v-model="form.centerName"
-                label="Center Name"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-domain"
-              ></v-text-field>
+              <Field name="centerName" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.centerName"
+                  label="Center Name"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-domain"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.password"
-                label="Password"
-                type="password"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required, rules.password]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-lock-outline"
-              ></v-text-field>
+              <Field name="password" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="form.password"
+                  label="Password"
+                  type="password"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-lock-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
             <v-col cols="12" md="6">
-              <v-text-field
-                v-model="confirmPass"
-                label="Confirm Password"
-                type="password"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required, rules.passwordMatch]"
-                :disabled="loading"
-                prepend-inner-icon="mdi-lock-check-outline"
-              ></v-text-field>
+              <Field name="confirmPassword" v-slot="{ handleChange, handleBlur, errors }">
+                <v-text-field
+                  v-model="confirmPass"
+                  label="Confirm Password"
+                  type="password"
+                  variant="outlined"
+                  density="comfortable"
+                  :disabled="loading"
+                  prepend-inner-icon="mdi-lock-check-outline"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-text-field>
+              </Field>
             </v-col>
           </v-row>
 
@@ -126,7 +158,7 @@
           >
             Complete Registration
           </v-btn>
-        </v-form>
+        </Form>
 
         <div class="register-footer">
           <span class="footer-text">Already have an account?</span>
@@ -139,6 +171,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Form, Field } from 'vee-validate'
 import type { RegisterForm } from '@/types/auth.types'
 import { register } from '@/services/pages/auth'
 import { useRouter } from 'vue-router'
@@ -159,38 +192,17 @@ const form = ref<RegisterForm>({
   centerName: '',
 })
 
-const rules = {
-  required: (v: string) => !!v || "Maydon to'ldirilishi shart",
-  email: (v: string) => {
-    if (!v) return true
-    return /.+@.+\..+/.test(v) || "Email noto'g'ri formatda"
-  },
-  phone: (v: string) => {
-    if (!v) return true
-    const phoneRegex = /^\+?998\d{9}$/
-    return phoneRegex.test(v.replace(/\s/g, '')) || "Telefon raqami noto'g'ri formatda"
-  },
-  password: (v: string) => {
-    if (!v) return true
-    return v.length >= 6 || "Parol kamida 6 belgidan iborat bo'lishi kerak"
-  },
-  passwordMatch: (v: string) => {
-    if (!v) return true
-    return v === form.value.password || 'Parollar mos kelmaydi'
-  },
-}
-
 const submit = async () => {
-  const { valid } = await formRef.value?.validate()
-  if (!valid) return
-
   loading.value = true
   try {
     await register(form.value)
     router.push('/login')
   } catch (err: any) {
+    const errors = err?.response?.data?.errors
+    if (errors) {
+      formRef.value?.setErrors(errors)
+    }
     console.error('Register error:', err)
-    // You can add error notification here
   } finally {
     loading.value = false
   }

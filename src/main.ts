@@ -3,6 +3,8 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import VueApexCharts from 'vue3-apexcharts'
+import { defineRule } from 'vee-validate'
+import { required, email } from '@vee-validate/rules'
 
 import App from './App.vue'
 import router from './router'
@@ -12,6 +14,9 @@ import { getMe } from './services/pages/auth'
 
 const app = createApp(App)
 const pinia = createPinia()
+
+defineRule('required', required)
+defineRule('email', email)
 
 app.use(pinia)
 app.use(router)

@@ -36,6 +36,45 @@
         {{ formatCurrency(item.monthlyFee) }}
       </template>
 
+      <template v-slot:item.status="{ item }">
+        <div class="d-flex align-center gap-2">
+          <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
+            {{ getStatusLabel(item.status) }}
+          </v-chip>
+          <v-menu v-if="getStatusOptions(item.status).length > 0">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                density="compact"
+                color="primary"
+                icon="mdi-pencil"
+                size="small"
+                variant="text"
+                :loading="item.statusLoading"
+                v-bind="props"
+              ></v-btn>
+            </template>
+            <v-list>
+              <v-list-item
+                v-for="(status, index) in getStatusOptions(item.status)"
+                :key="index"
+                @click="changeStatus(status.value, item)"
+              >
+                <v-list-item-title>{{ status.title }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-btn
+            v-else
+            density="compact"
+            color="primary"
+            icon="mdi-pencil"
+            size="small"
+            variant="text"
+            disabled
+          ></v-btn>
+        </div>
+      </template>
+
       <template v-slot:item.actions="{ item }">
         <div class="d-flex">
           <v-btn
@@ -84,7 +123,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { fetchGroups, deleteGroup } from '@/services/pages/groups'
+import { fetchGroups, deleteGroup, changeGroupStatus } from '@/services/pages/groups'
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
 import { fetchCenters, fetchAllCenters } from '@/services/pages/centers'
 import { fetchSubjects } from '@/services/pages/subjects'
@@ -94,6 +133,7 @@ import type { Center } from '@/types/centers.types'
 import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { GroupsParams } from '@/types/groups.types'
+import { GroupStatus } from '@/types/groups.enum'
 
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
@@ -128,7 +168,10 @@ const getGroups = async () => {
     const {
       data: { data },
     } = await fetchGroups(params.value)
-    items.value = data
+    items.value = data.map((item: Group) => ({
+      ...item,
+      statusLoading: false,
+    }))
     console.log(data)
   } catch (err) {
     console.log(err)
@@ -197,12 +240,25 @@ const remove = async (id: number) => {
   }
 }
 
+const changeStatus = async (status: GroupStatus, item: Group) => {
+  item.statusLoading = true
+  try {
+    await changeGroupStatus(item.id, status)
+    await getGroups()
+  } catch (err) {
+    console.log(err)
+  } finally {
+    item.statusLoading = false
+  }
+}
+
 const headers = [
   { title: 'ID', key: 'id' },
   { title: 'Nomi', key: 'name' },
   { title: 'Fan', key: 'subject.name' },
   { title: 'Dars vaqtlari', key: 'schedules' },
   { title: 'Kurs Summasi', key: 'monthlyFee' },
+  { title: 'Status', key: 'status' },
   { title: 'Xona', key: 'room.name' },
   { title: 'Ustoz', key: 'teacherFullName' },
   { title: 'Actions', key: 'actions' },
@@ -216,6 +272,42 @@ const formatCurrency = (amount: number | null): string => {
     maximumFractionDigits: 0,
   })
     .format(amount) + ' so\'m'
+}
+
+const getStatusLabel = (status?: GroupStatus): string => {
+  const labels: Record<string, string> = {
+    [GroupStatus.NEW]: 'Yangi',
+    [GroupStatus.STARTED]: 'Boshlangan',
+    [GroupStatus.FINISHED]: 'Tugagan',
+  }
+  if (!status) return '—'
+  return labels[status] || status
+}
+
+const getStatusColor = (status?: GroupStatus): string => {
+  switch (status) {
+    case GroupStatus.NEW:
+      return 'info'
+    case GroupStatus.STARTED:
+      return 'success'
+    case GroupStatus.FINISHED:
+      return 'grey'
+    default:
+      return 'grey'
+  }
+}
+
+const getStatusOptions = (status?: GroupStatus) => {
+  if (status === GroupStatus.NEW) {
+    return [{ title: getStatusLabel(GroupStatus.STARTED), value: GroupStatus.STARTED }]
+  }
+  if (status === GroupStatus.STARTED) {
+    return [
+      { title: getStatusLabel(GroupStatus.NEW), value: GroupStatus.NEW },
+      { title: getStatusLabel(GroupStatus.FINISHED), value: GroupStatus.FINISHED },
+    ]
+  }
+  return []
 }
 </script>
 

@@ -2,8 +2,7 @@ import router from '@/router/index';
 import axios from 'axios';
 
 const http = axios.create({
-  // baseURL: 'https://api.talimplus.uz',
-  baseURL: 'http://localhost:3004',
+  baseURL: import.meta.env.VITE_API_URL
 })
 
 http.interceptors.request.use(function (config) {

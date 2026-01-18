@@ -27,16 +27,6 @@
       <template v-slot:item.monthlyFee="{ item }">
         {{ formatCurrency(item.monthlyFee) }}
       </template>
-      <template v-slot:item.passport="{ item }">
-        <span v-if="item.passportSeries || item.passportNumber">
-          {{ `${item.passportSeries || ''} ${item.passportNumber || ''}`.trim() }}
-        </span>
-        <span v-else class="text-medium-emphasis">—</span>
-      </template>
-      <template v-slot:item.jshshir="{ item }">
-        <span v-if="item.jshshir">{{ item.jshshir }}</span>
-        <span v-else class="text-medium-emphasis">—</span>
-      </template>
       <template v-slot:item.discountPercent="{ item }">
         <div v-if="item.discountPeriods && item.discountPeriods.length > 0">
           <div v-for="(period, index) in item.discountPeriods" :key="index" class="mb-1">
@@ -102,17 +92,6 @@
           </v-menu>
         </div>
       </template>
-      <template v-slot:item.action="{ item }">
-        <v-btn
-          @click="editStudent(item)"
-          density="compact"
-          color="medium-emphasis"
-          icon="mdi-pencil"
-          size="small"
-          class="me-2"
-          variant="text"
-        ></v-btn>
-      </template>
       </v-data-table>
     </v-card-text>
     <CreateStudent
@@ -132,7 +111,6 @@ import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
-import { useUserStore } from '@/stores/user'
 
 const statusList = computed(() => {
   return [{ title: studentStatusLabels[StudentStatus.NEW], value: StudentStatus.NEW }]
@@ -143,8 +121,6 @@ const students = ref<Student[]>([])
 const formForEdit = ref<Student>({})
 const centers = ref<Center[]>([])
 const loadingCenters = ref(false)
-const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 const params = ref<StudentsParams>({
   centerId: undefined,
@@ -223,31 +199,16 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
   }
 }
 
-const headers = computed(() => {
-  const baseHeaders = [
-    { title: 'ID', key: 'id' },
-    { title: 'Ism', key: 'firstName' },
-    { title: 'Familiya', key: 'lastName' },
-    { title: 'Telefon', key: 'phone' },
-  ]
-
-  if (isAdmin.value) {
-    baseHeaders.push(
-      { title: 'Passport', key: 'passport' },
-      { title: 'JSHSHIR', key: 'jshshir' },
-    )
-  }
-
-  baseHeaders.push(
-    { title: "Tug'ilgan sana", key: 'birthDate' },
-    { title: "Oylik to'lov", key: 'monthlyFee' },
-    { title: 'Chegirma', key: 'discountPercent' },
-    { title: 'Holat', key: 'status' },
-    { title: 'Amallar', key: 'action' },
-  )
-
-  return baseHeaders
-})
+const headers = [
+  { title: 'ID', key: 'id' },
+  { title: 'Ism', key: 'firstName' },
+  { title: 'Familiya', key: 'lastName' },
+  { title: 'Telefon', key: 'phone' },
+  { title: "Tug'ilgan sana", key: 'birthDate' },
+  { title: "Oylik to'lov", key: 'monthlyFee' },
+  { title: 'Chegirma', key: 'discountPercent' },
+  { title: 'Holat', key: 'status' },
+]
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'

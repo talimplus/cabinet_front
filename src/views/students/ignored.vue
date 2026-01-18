@@ -17,6 +17,19 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
+        <v-col cols="12" md="4">
+          <v-select
+            v-model="params.returnLikelihood"
+            :items="returnLikelihoodOptions"
+            item-title="title"
+            item-value="value"
+            label="Qaytish ehtimoli"
+            clearable
+            variant="outlined"
+            density="compact"
+            @update:model-value="getStudents"
+          ></v-select>
+        </v-col>
       </v-row>
     </v-card-text>
     <v-card-text>
@@ -24,51 +37,17 @@
       <template v-slot:item.birthDate="{ item }">
         {{ formatDate(item.birthDate) }}
       </template>
-      <template v-slot:item.monthlyFee="{ item }">
-        {{ formatCurrency(item.monthlyFee) }}
+      <template v-slot:item.returnLikelihood="{ item }">
+        {{ getReturnLikelihoodLabel(item.returnLikelihood) }}
       </template>
-      <template v-slot:item.passport="{ item }">
-        <span v-if="item.passportSeries || item.passportNumber">
-          {{ `${item.passportSeries || ''} ${item.passportNumber || ''}`.trim() }}
-        </span>
-        <span v-else class="text-medium-emphasis">—</span>
-      </template>
-      <template v-slot:item.jshshir="{ item }">
-        <span v-if="item.jshshir">{{ item.jshshir }}</span>
-        <span v-else class="text-medium-emphasis">—</span>
-      </template>
-      <template v-slot:item.discountPercent="{ item }">
-        <div v-if="item.discountPeriods && item.discountPeriods.length > 0">
-          <div v-for="(period, index) in item.discountPeriods" :key="index" class="mb-1">
-            <span>{{ period.percent }}%</span>
-            <span v-if="period.reason" class="text-caption text-medium-emphasis">
-              -
-              <v-tooltip v-if="period.reason.length > 20" location="top">
-                <template v-slot:activator="{ props }">
-                  <span v-bind="props" class="discount-reason-text">
-                    {{ truncateText(period.reason, 20) }}
-                  </span>
-                </template>
-                <span>{{ period.reason }}</span>
-              </v-tooltip>
-              <span v-else>{{ period.reason }}</span>
-            </span>
-          </div>
-        </div>
-        <div v-else-if="item.discountPercent">
-          {{ item.discountPercent }}%
-          <span v-if="item.discountReason" class="text-caption text-medium-emphasis d-block">
-            <v-tooltip v-if="item.discountReason.length > 20" location="top">
-              <template v-slot:activator="{ props }">
-                <span v-bind="props" class="discount-reason-text">
-                  {{ truncateText(item.discountReason, 20) }}
-                </span>
-              </template>
-              <span>{{ item.discountReason }}</span>
-            </v-tooltip>
-            <span v-else>{{ item.discountReason }}</span>
-          </span>
-        </div>
+      <template v-slot:item.comment="{ item }">
+        <v-tooltip v-if="item.comment && item.comment.length > 30" location="top">
+          <template v-slot:activator="{ props }">
+            <span v-bind="props">{{ truncateText(item.comment, 30) }}</span>
+          </template>
+          <span>{{ item.comment }}</span>
+        </v-tooltip>
+        <span v-else-if="item.comment">{{ item.comment }}</span>
         <span v-else class="text-medium-emphasis">—</span>
       </template>
       <template v-slot:item.status="{ item }">
@@ -102,17 +81,6 @@
           </v-menu>
         </div>
       </template>
-      <template v-slot:item.action="{ item }">
-        <v-btn
-          @click="editStudent(item)"
-          density="compact"
-          color="medium-emphasis"
-          icon="mdi-pencil"
-          size="small"
-          class="me-2"
-          variant="text"
-        ></v-btn>
-      </template>
       </v-data-table>
     </v-card-text>
     <CreateStudent
@@ -132,7 +100,6 @@ import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
-import { useUserStore } from '@/stores/user'
 
 const statusList = computed(() => {
   return [{ title: studentStatusLabels[StudentStatus.NEW], value: StudentStatus.NEW }]
@@ -143,8 +110,6 @@ const students = ref<Student[]>([])
 const formForEdit = ref<Student>({})
 const centers = ref<Center[]>([])
 const loadingCenters = ref(false)
-const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 const params = ref<StudentsParams>({
   centerId: undefined,
@@ -154,6 +119,7 @@ const params = ref<StudentsParams>({
   page: 1,
   perPage: 10,
   groupId: undefined,
+  returnLikelihood: undefined,
 })
 
 const centerOptions = computed(() => {
@@ -162,6 +128,12 @@ const centerOptions = computed(() => {
     value: center.id,
   }))
 })
+
+const returnLikelihoodOptions = [
+  { title: 'Qaytmaydi', value: 'never' },
+  { title: 'Balki', value: 'maybe' },
+  { title: 'Albatta', value: 'sure' },
+]
 
 function clearFormForEdit() {
   formForEdit.value = {}
@@ -223,31 +195,16 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
   }
 }
 
-const headers = computed(() => {
-  const baseHeaders = [
-    { title: 'ID', key: 'id' },
-    { title: 'Ism', key: 'firstName' },
-    { title: 'Familiya', key: 'lastName' },
-    { title: 'Telefon', key: 'phone' },
-  ]
-
-  if (isAdmin.value) {
-    baseHeaders.push(
-      { title: 'Passport', key: 'passport' },
-      { title: 'JSHSHIR', key: 'jshshir' },
-    )
-  }
-
-  baseHeaders.push(
-    { title: "Tug'ilgan sana", key: 'birthDate' },
-    { title: "Oylik to'lov", key: 'monthlyFee' },
-    { title: 'Chegirma', key: 'discountPercent' },
-    { title: 'Holat', key: 'status' },
-    { title: 'Amallar', key: 'action' },
-  )
-
-  return baseHeaders
-})
+const headers = [
+  { title: 'ID', key: 'id' },
+  { title: 'Ism', key: 'firstName' },
+  { title: 'Familiya', key: 'lastName' },
+  { title: 'Telefon', key: 'phone' },
+  { title: "Tug'ilgan sana", key: 'birthDate' },
+  { title: 'Qaytish ehtimoli', key: 'returnLikelihood' },
+  { title: 'Izoh', key: 'comment' },
+  { title: 'Holat', key: 'status' },
+]
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'
@@ -257,16 +214,6 @@ const formatDate = (dateString: string): string => {
     month: '2-digit',
     day: '2-digit',
   })
-}
-
-const formatCurrency = (amount: number): string => {
-  return (
-    new Intl.NumberFormat('uz-UZ', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount) + " so'm"
-  )
 }
 
 const truncateText = (text: string, maxLength: number): string => {
@@ -293,6 +240,20 @@ const getStatusColor = (status: StudentStatus): string => {
       return 'grey'
     default:
       return 'grey'
+  }
+}
+
+const getReturnLikelihoodLabel = (value: string | null | undefined): string => {
+  if (!value) return '—'
+  switch (value) {
+    case 'never':
+      return 'Qaytmaydi'
+    case 'maybe':
+      return 'Balki'
+    case 'sure':
+      return 'Albatta'
+    default:
+      return value
   }
 }
 </script>

@@ -361,7 +361,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="open = false" text="Cancel"></v-btn>
-          <v-btn color="primary" type="submit" :loading="loading" text="Save"></v-btn>
+          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" text="Save"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>
@@ -619,7 +619,11 @@ const submit = async () => {
       delete form.value.monthlyFee
     }
   }
-  form.value.birthDate = dayjs(form.value.birthDate).format('YYYY-MM-DD')
+  if (form.value.birthDate) {
+    form.value.birthDate = dayjs(form.value.birthDate).format('YYYY-MM-DD')
+  } else {
+    delete form.value.birthDate
+  }
 
   // Filter out incomplete periods and keep only required fields
   if (form.value.discountPeriods && form.value.discountPeriods.length > 0) {

@@ -191,12 +191,29 @@
                     <div class="info-row">
                       <span class="info-label">Status:</span>
                       <v-chip
+                        class="status-chip"
                         :color="getGroupStatusColor(group.status)"
                         size="small"
                         variant="flat"
                       >
                         {{ group.status || 'Active' }}
                       </v-chip>
+                    </div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="info-row">
+                      <span class="info-label">Duration (months):</span>
+                      <span class="info-value">
+                        {{ group.durationMonths ?? '—' }}
+                      </span>
+                    </div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="info-row">
+                      <span class="info-label">Start Date:</span>
+                      <span class="info-value">
+                        {{ group.startDate ? formatDate(group.startDate) : '—' }}
+                      </span>
                     </div>
                   </v-col>
                 </v-row>
@@ -768,5 +785,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 8px 0;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-self: flex-start;
 }
 </style>

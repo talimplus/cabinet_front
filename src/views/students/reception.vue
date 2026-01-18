@@ -20,6 +20,19 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
+        <v-col cols="12" md="4">
+          <v-select
+            v-model="params.returnLikelihood"
+            :items="returnLikelihoodOptions"
+            item-title="title"
+            item-value="value"
+            label="Qaytish ehtimoli"
+            clearable
+            variant="outlined"
+            density="compact"
+            @update:model-value="getStudents"
+          ></v-select>
+        </v-col>
       </v-row>
     </v-card-text>
     <v-card-text>
@@ -29,16 +42,6 @@
       </template>
       <template v-slot:item.monthlyFee="{ item }">
         {{ formatCurrency(item.monthlyFee) }}
-      </template>
-      <template v-slot:item.passport="{ item }">
-        <span v-if="item.passportSeries || item.passportNumber">
-          {{ `${item.passportSeries || ''} ${item.passportNumber || ''}`.trim() }}
-        </span>
-        <span v-else class="text-medium-emphasis">—</span>
-      </template>
-      <template v-slot:item.jshshir="{ item }">
-        <span v-if="item.jshshir">{{ item.jshshir }}</span>
-        <span v-else class="text-medium-emphasis">—</span>
       </template>
       <template v-slot:item.discountPercent="{ item }">
         <div v-if="item.discountPeriods && item.discountPeriods.length > 0">
@@ -124,6 +127,37 @@
       :formForEdit="formForEdit"
       @clearForm="clearFormForEdit"
     ></CreateStudent>
+    <v-dialog v-model="returnDialog.show" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6 pa-4">Qaytish ehtimoli</v-card-title>
+        <v-card-text class="pa-4">
+          <v-select
+            v-model="returnDialog.value"
+            :items="returnLikelihoodOptions"
+            item-title="title"
+            item-value="value"
+            label="Qaytish ehtimoli"
+            variant="outlined"
+            density="compact"
+          ></v-select>
+          <v-textarea
+            v-model="returnDialog.comment"
+            label="Izoh"
+            rows="3"
+            variant="outlined"
+            density="compact"
+            class="mt-3"
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="closeReturnDialog">Bekor qilish</v-btn>
+          <v-btn color="primary" variant="flat" @click="confirmReturnDialog" :loading="returnDialog.loading">
+            Saqlash
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template #actions>
@@ -141,7 +175,6 @@ import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
-import { useUserStore } from '@/stores/user'
 
 const statusList = computed(() => {
   return [
@@ -155,8 +188,6 @@ const students = ref<Student[]>([])
 const formForEdit = ref<Student>({})
 const centers = ref<Center[]>([])
 const loadingCenters = ref(false)
-const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 const snackbar = ref({
   show: false,
   message: '',
@@ -171,6 +202,7 @@ const params = ref<StudentsParams>({
   page: 1,
   perPage: 10,
   groupId: undefined,
+  returnLikelihood: undefined,
 })
 
 const centerOptions = computed(() => {
@@ -179,6 +211,12 @@ const centerOptions = computed(() => {
     value: center.id,
   }))
 })
+
+const returnLikelihoodOptions = [
+  { title: 'Qaytmaydi', value: 'never' },
+  { title: 'Balki', value: 'maybe' },
+  { title: 'Albatta', value: 'sure' },
+]
 
 function clearFormForEdit() {
   formForEdit.value = {}
@@ -244,6 +282,18 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
     return
   }
 
+  if (status === StudentStatus.STOPPED || status === StudentStatus.IGNORED) {
+    returnDialog.value = {
+      show: true,
+      loading: false,
+      value: undefined,
+      comment: item.comment || '',
+      status,
+      studentId: item.id,
+    }
+    return
+  }
+
   item.statusLoading = true
   try {
     await updateStudentStatus(status, item.id)
@@ -255,31 +305,56 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
   }
 }
 
-const headers = computed(() => {
-  const baseHeaders = [
-    { title: 'ID', key: 'id' },
-    { title: 'Ism', key: 'firstName' },
-    { title: 'Familiya', key: 'lastName' },
-    { title: 'Telefon', key: 'phone' },
-  ]
-
-  if (isAdmin.value) {
-    baseHeaders.push(
-      { title: 'Passport', key: 'passport' },
-      { title: 'JSHSHIR', key: 'jshshir' },
-    )
-  }
-
-  baseHeaders.push(
-    { title: "Tug'ilgan sana", key: 'birthDate' },
-    { title: "Oylik to'lov", key: 'monthlyFee' },
-    { title: 'Chegirma', key: 'discountPercent' },
-    { title: 'Holat', key: 'status' },
-    { title: 'Amallar', key: 'action' },
-  )
-
-  return baseHeaders
+const returnDialog = ref({
+  show: false,
+  loading: false,
+  value: undefined as 'never' | 'maybe' | 'sure' | undefined,
+  comment: '',
+  status: undefined as StudentStatus | undefined,
+  studentId: undefined as number | undefined,
 })
+
+const closeReturnDialog = () => {
+  returnDialog.value = {
+    show: false,
+    loading: false,
+    value: undefined,
+    comment: '',
+    status: undefined,
+    studentId: undefined,
+  }
+}
+
+const confirmReturnDialog = async () => {
+  if (!returnDialog.value.value || !returnDialog.value.status || !returnDialog.value.studentId) {
+    return
+  }
+  returnDialog.value.loading = true
+  try {
+    await updateStudentStatus(returnDialog.value.status, returnDialog.value.studentId, {
+      returnLikelihood: returnDialog.value.value,
+      comment: returnDialog.value.comment || undefined,
+    })
+    closeReturnDialog()
+    await getStudents()
+  } catch (err) {
+    console.log(err)
+  } finally {
+    returnDialog.value.loading = false
+  }
+}
+
+const headers = [
+  { title: 'ID', key: 'id' },
+  { title: 'Ism', key: 'firstName' },
+  { title: 'Familiya', key: 'lastName' },
+  { title: 'Telefon', key: 'phone' },
+  { title: "Tug'ilgan sana", key: 'birthDate' },
+  { title: "Oylik to'lov", key: 'monthlyFee' },
+  { title: 'Chegirma', key: 'discountPercent' },
+  { title: 'Holat', key: 'status' },
+  { title: 'Amallar', key: 'action' },
+]
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'

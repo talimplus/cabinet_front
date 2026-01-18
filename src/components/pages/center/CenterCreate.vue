@@ -27,7 +27,7 @@
         </v-card-text>
         <template v-slot:actions>
           <v-btn text="Cancel" @click="open = false"></v-btn>
-          <v-btn :loading="loading" type="submit" color="primary" text="Save"></v-btn>
+          <v-btn :loading="loading" :disabled="loading" type="submit" color="primary" text="Save"></v-btn>
         </template>
       </v-card>
     </Form>

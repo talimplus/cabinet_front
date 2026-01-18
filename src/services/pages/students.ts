@@ -17,6 +17,10 @@ export const updateStudent = async (form: StudentForm, id: number) => {
         return await http.put(`/students/${id}`, form)
 }
 
-export const updateStudentStatus = async (status: StudentStatus, id: number) => {
-        return await http.put(`/students/change-status/${id}?status=${status}`)
+export const updateStudentStatus = async (
+        status: StudentStatus,
+        id: number,
+        body?: { returnLikelihood?: string }
+) => {
+        return await http.put(`/students/change-status/${id}?status=${status}`, body || {})
 }

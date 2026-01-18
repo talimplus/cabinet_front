@@ -29,7 +29,7 @@
         </v-card-text>
         <v-card-actions>
           <v-btn text="Cancel" @click="open = false"></v-btn>
-          <v-btn type="submit" :loading="loading" text="submit" color="primary"></v-btn>
+          <v-btn type="submit" :loading="loading" :disabled="loading" text="submit" color="primary"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>

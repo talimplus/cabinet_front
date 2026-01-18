@@ -18,6 +18,7 @@ export interface Student {
         discountReason?: string | null;
         discountPeriods?: DiscountPeriod[];
         status: StudentStatus;
+        returnLikelihood?: 'never' | 'maybe' | 'sure' | string | null;
         groupIds?: number[];
         openStatus?: boolean,
         statusLoading?: boolean
@@ -57,6 +58,7 @@ export interface StudentsParams {
         centerId?: number;
         name?: string;
         phone?: string;
+        returnLikelihood?: 'never' | 'maybe' | 'sure';
         page?: number;
         perPage?: number
         status?: StudentStatus

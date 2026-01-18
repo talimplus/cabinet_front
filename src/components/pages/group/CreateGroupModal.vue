@@ -156,7 +156,7 @@
         </v-card-text>
         <template v-slot:actions>
           <v-btn @click="open = false">Cancel</v-btn>
-          <v-btn type="submit" color="primary" text="Submit"></v-btn>
+          <v-btn type="submit" color="primary" text="Submit" :loading="loading" :disabled="loading"></v-btn>
         </template>
       </v-card>
     </Form>
@@ -197,6 +197,7 @@ const emits = defineEmits<Emits>()
 
 const open = defineModel('open', { type: Boolean })
 const differentTime = ref(false)
+const loading = ref(false)
 const groupFormRef = ref()
 const form = ref<GroupForm>({
   name: '',
@@ -362,6 +363,7 @@ const submit = async () => {
   }
 
   try {
+    loading.value = true
     if (props.formForEdit?.id) {
       await updateGroup(submitData, props.formForEdit.id)
     } else {
@@ -375,6 +377,8 @@ const submit = async () => {
       groupFormRef.value?.setErrors(errors)
     }
     console.log(err)
+  } finally {
+    loading.value = false
   }
 }
 </script>

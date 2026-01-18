@@ -109,7 +109,14 @@
                 {{ getRoleLabel(userStore.user?.role || '') }}
               </div>
             </div>
-            <v-btn icon size="small" variant="text" @click="handleLogout">
+            <v-btn
+              icon
+              size="small"
+              variant="text"
+              :loading="logoutLoading"
+              :disabled="logoutLoading"
+              @click="handleLogout"
+            >
               <v-icon size="20">mdi-logout</v-icon>
             </v-btn>
           </v-card-text>
@@ -135,7 +142,7 @@
             </template>
             <v-list-item-title>Profil</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="handleLogout">
+          <v-list-item @click="handleLogout" :disabled="logoutLoading">
             <template v-slot:prepend>
               <v-icon>mdi-logout</v-icon>
             </template>
@@ -182,6 +189,7 @@ const allItems = {
   ],
   students: [
     { text: 'Qabul', icon: 'mdi-account-school', path: '/reception' },
+    { text: 'Leads', icon: 'mdi-account-plus', path: '/leads' },
     { text: "O'quvchilar", icon: 'mdi-account-school', path: '/students' },
     { text: "To'xtatilgan", icon: 'mdi-account-school', path: '/stopped' },
     { text: "E'tiborsiz", icon: 'mdi-account-school', path: '/ignored' },
@@ -244,6 +252,7 @@ const hasStudentsGroup = computed(() => studentsGroupItems.value.length > 0)
 const hasSettingsGroup = computed(() => settingsGroupItems.value.length > 0)
 
 const drawer = ref(null)
+const logoutLoading = ref(false)
 
 const getRoleLabel = (role: string): string => {
   const roleLabels: Record<string, string> = {
@@ -261,6 +270,8 @@ const goToProfile = () => {
 }
 
 const handleLogout = async () => {
+  if (logoutLoading.value) return
+  logoutLoading.value = true
   try {
     await logout()
   } catch (error) {
@@ -273,6 +284,7 @@ const handleLogout = async () => {
     userStore.clearUser()
     // Redirect to login page
     router.push('/login')
+    logoutLoading.value = false
   }
 }
 </script>

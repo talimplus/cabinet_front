@@ -115,7 +115,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="open = false" text="Cancel"></v-btn>
-          <v-btn color="primary" type="submit" :loading="loading" text="Save"></v-btn>
+          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" text="Save"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>

@@ -29,7 +29,7 @@
         </v-card-text>
         <template v-slot:actions>
           <v-btn @click="open = false">Cancel</v-btn>
-          <v-btn type="submit" color="primary" text="Save"></v-btn>
+          <v-btn type="submit" color="primary" text="Save" :loading="loading" :disabled="loading"></v-btn>
         </template>
       </v-card>
     </Form>
@@ -56,6 +56,7 @@ const props = defineProps<Props>()
 const emits = defineEmits<Emits>()
 const open = defineModel('open')
 const subjectFormRef = ref()
+const loading = ref(false)
 
 const form = ref<SubjectForm>({
   name: '',
@@ -81,6 +82,7 @@ watch(
 
 const submit = async () => {
   try {
+    loading.value = true
     if (props.formForEdit?.id) {
       await editSubject(form.value, props.formForEdit.id)
     } else {
@@ -95,6 +97,8 @@ const submit = async () => {
       subjectFormRef.value?.setErrors(errors)
     }
     console.log(err)
+  } finally {
+    loading.value = false
   }
 }
 </script>

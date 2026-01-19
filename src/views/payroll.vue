@@ -178,7 +178,37 @@
             rows="3"
             counter
             maxlength="500"
+            class="mb-3"
           ></v-textarea>
+
+          <!-- Payment History -->
+          <div v-if="paymentModal.staff?.paymentHistory && paymentModal.staff.paymentHistory.length > 0" class="mb-2">
+            <div class="text-caption text-medium-emphasis mb-2">Oldingi to'lovlar:</div>
+            <v-card variant="outlined" class="payment-history-card">
+              <v-card-text class="pa-2">
+                <div
+                  v-for="(payment, index) in paymentModal.staff.paymentHistory"
+                  :key="payment.id"
+                  class="payment-history-item"
+                  :class="{ 'mb-2': index < paymentModal.staff.paymentHistory.length - 1 }"
+                >
+                  <div class="d-flex justify-space-between align-start">
+                    <div class="flex-grow-1">
+                      <div class="text-body-2 font-weight-medium">
+                        {{ formatCurrency(payment.amount) }}
+                      </div>
+                      <div v-if="payment.comment" class="text-caption text-medium-emphasis mt-1">
+                        {{ payment.comment }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-1">
+                        {{ formatDate(payment.paidAt) }} - {{ payment.paidBy.firstName }} {{ payment.paidBy.lastName }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
@@ -579,6 +609,18 @@ const formatCurrency = (amount: number): string => {
     .format(amount) + ' so\'m'
 }
 
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 const showSnackbar = (message: string, color: 'success' | 'error' = 'success') => {
   snackbar.value = {
     show: true,
@@ -665,5 +707,19 @@ onMounted(async () => {
 .info-value {
   color: rgba(0, 0, 0, 0.87);
   font-size: 1rem;
+}
+
+.payment-history-card {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.payment-history-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.payment-history-item:last-child {
+  border-bottom: none;
 }
 </style>

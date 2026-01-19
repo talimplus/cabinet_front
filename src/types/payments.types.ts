@@ -86,3 +86,21 @@ export interface PendingReceiptsResponse {
   }
 }
 
+export interface PaymentCalculationResponse {
+  paymentId: number
+  studentId: number
+  studentName: string
+  forMonth: string
+  plannedStudyUntilDate: string
+  lessonsPlanned: number
+  lessonsBillable: number
+  discountPercent: number
+  amountDue: number
+  currentAmountDue: number
+  difference: number
+}
+
+export interface UpdatePaymentPayload {
+  plannedStudyUntilDate?: string
+}
+

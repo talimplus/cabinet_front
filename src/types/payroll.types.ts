@@ -16,6 +16,18 @@ export interface StaffUser {
   createdAt: string
 }
 
+export interface PaymentHistoryItem {
+  id: number
+  amount: number
+  comment: string | null
+  paidAt: string
+  paidBy: {
+    id: number
+    firstName: string
+    lastName: string
+  }
+}
+
 export interface StaffSalary {
   id: number
   userId: number
@@ -27,6 +39,7 @@ export interface StaffSalary {
   comment: string | null
   createdAt: string
   user: StaffUser
+  paymentHistory?: PaymentHistoryItem[]
   // These fields are only present for teachers
   earningForMonth?: string
   earningBaseSalarySnapshot?: number

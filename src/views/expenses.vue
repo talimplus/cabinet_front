@@ -78,6 +78,9 @@
             <template v-slot:item.forMonth="{ item }">
               {{ formatMonth(item.forMonth) }}
             </template>
+            <template v-slot:item.createdAt="{ item }">
+              {{ formatDate(item.createdAt) }}
+            </template>
             <template v-slot:item.center="{ item }">
               {{ item.center?.name || '—' }}
             </template>
@@ -117,8 +120,8 @@
         <v-card-title class="text-h6 pa-4">
           {{ expenseModal.isEdit ? 'Chiqimni tahrirlash' : 'Yangi chiqim' }}
         </v-card-title>
-        <v-card-text class="pa-4">
-          <Form ref="expenseFormRef" @submit="saveExpense">
+        <Form ref="expenseFormRef" @submit="saveExpense">
+          <v-card-text class="pa-4">
             <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
               <v-select
                 v-model="expenseForm.centerId"
@@ -136,7 +139,7 @@
             <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
               <v-text-field
                 v-model="expenseForm.name"
-                label="Nomi"
+                label="Chiqim nomi"
                 variant="outlined"
                 density="compact"
                 class="mb-1"
@@ -187,22 +190,22 @@
                 @blur="handleBlur"
               ></v-select>
             </Field>
-          </Form>
-        </v-card-text>
-        <v-card-actions class="pa-4">
-          <v-spacer></v-spacer>
-          <v-btn variant="text" @click="closeExpenseModal" :disabled="processing">
-            Bekor qilish
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            :loading="processing"
-            @click="expenseFormRef?.submitForm()"
-          >
-            Saqlash
-          </v-btn>
-        </v-card-actions>
+          </v-card-text>
+          <v-card-actions class="pa-4">
+            <v-spacer></v-spacer>
+            <v-btn variant="text" @click="closeExpenseModal" :disabled="processing">
+              Bekor qilish
+            </v-btn>
+            <v-btn
+              color="primary"
+              variant="flat"
+              type="submit"
+              :loading="processing"
+            >
+              Saqlash
+            </v-btn>
+          </v-card-actions>
+        </Form>
       </v-card>
     </v-dialog>
 
@@ -246,7 +249,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Form, Field } from 'vee-validate'
 import type { Expense, ExpenseForm, ExpensesParams } from '@/types/expenses.types'
-import { fetchExpenses, createExpense, updateExpense, deleteExpense } from '@/services/pages/expenses'
+import { fetchExpenses, fetchExpenseById, createExpense, updateExpense, deleteExpense } from '@/services/pages/expenses'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 
@@ -358,10 +361,15 @@ const centerOptions = computed(() => {
 
 const monthOptions = computed(() => {
   const options = []
-  for (let year = currentYear.value - 1; year <= currentYear.value + 1; year++) {
-    for (let month = 0; month < 12; month++) {
-      const monthValue = `${year}-${String(month + 1).padStart(2, '0')}`
-      const monthLabel = `${monthNames[month].label} ${year}`
+  const now = new Date()
+  const currentYearNum = now.getFullYear()
+  const currentMonthNum = now.getMonth() + 1 // 1-12
+  
+  for (let year = currentYearNum - 1; year <= currentYearNum; year++) {
+    const maxMonth = year === currentYearNum ? currentMonthNum : 12
+    for (let month = 1; month <= maxMonth; month++) {
+      const monthValue = `${year}-${String(month).padStart(2, '0')}`
+      const monthLabel = `${monthNames[month - 1].label} ${year}`
       options.push({ title: monthLabel, value: monthValue })
     }
   }
@@ -375,6 +383,7 @@ const headers = [
   { title: 'Summa', key: 'amount' },
   { title: 'Tavsif', key: 'description' },
   { title: 'Oy', key: 'forMonth' },
+  { title: 'Kun', key: 'createdAt' },
   { title: 'Amallar', key: 'actions' },
 ]
 
@@ -461,8 +470,9 @@ const openCreateModal = () => {
     isEdit: false,
     expenseId: null,
   }
+  const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
   expenseForm.value = {
-    centerId: 0,
+    centerId: defaultCenter?.id || 0,
     name: '',
     amount: 0,
     description: '',
@@ -478,12 +488,17 @@ const editExpense = async (expense: Expense) => {
       isEdit: true,
       expenseId: expense.id,
     }
+    // Handle forMonth format: YYYY-MM-DD -> YYYY-MM or keep YYYY-MM
+    const forMonthValue = expenseData.forMonth?.length > 7 
+      ? expenseData.forMonth.substring(0, 7) 
+      : expenseData.forMonth || ''
+    
     expenseForm.value = {
       centerId: expenseData.centerId,
-      name: expenseData.name,
-      amount: expenseData.amount,
-      description: expenseData.description,
-      forMonth: expenseData.forMonth.substring(0, 7), // YYYY-MM-DD -> YYYY-MM
+      name: expenseData.name || '',
+      amount: expenseData.amount || 0,
+      description: expenseData.description || '',
+      forMonth: forMonthValue,
     }
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || 'Chiqimni yuklashda xatolik', 'error')
@@ -568,6 +583,16 @@ const formatMonth = (monthString: string): string => {
   const [year, month] = monthString.substring(0, 7).split('-')
   const monthIndex = parseInt(month) - 1
   return `${monthNames[monthIndex]?.label || month} ${year}`
+}
+
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
 }
 
 const showSnackbar = (message: string, color: 'success' | 'error' = 'success') => {

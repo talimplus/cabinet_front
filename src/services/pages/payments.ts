@@ -65,3 +65,12 @@ export const confirmReceipt = async (id: number) => {
   return await http.put(`/payments/confirm-receipt/${id}`)
 }
 
+export const calculatePayment = async (id: number, plannedStudyUntilDate: string) => {
+  const response = await http.put(`/payments/calculate/${id}`, { plannedStudyUntilDate })
+  return response.data
+}
+
+export const updatePayment = async (id: number, payload: { plannedStudyUntilDate?: string }) => {
+  return await http.put(`/payments/${id}`, payload)
+}
+

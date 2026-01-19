@@ -256,7 +256,7 @@
     </v-dialog>
 
     <!-- Partial Payment Modal -->
-    <v-dialog v-model="partialPaymentModal.show" max-width="500" persistent>
+    <v-dialog v-model="partialPaymentModal.show" max-width="600" persistent>
       <v-card>
         <v-card-title class="text-h6 pa-4"> Qisman to'lov </v-card-title>
         <v-card-text class="pa-4">
@@ -276,6 +276,99 @@
             </div>
           </div>
 
+          <!-- Calculator Section -->
+          <div class="mb-4">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-body-2 font-weight-medium">O'qishni to'xtatish sanasi</span>
+              <v-btn
+                color="primary"
+                size="small"
+                variant="flat"
+                prepend-icon="mdi-calculator"
+                @click="openDatePicker"
+                :disabled="partialPaymentModal.calculating"
+                :loading="partialPaymentModal.calculating"
+              >
+                Hisoblash
+              </v-btn>
+            </div>
+            <v-date-input
+              v-if="partialPaymentModal.showDatePicker"
+              v-model="partialPaymentModal.plannedStudyUntilDate"
+              label="Sanani tanlang"
+              variant="outlined"
+              density="compact"
+              @update:model-value="handleDateChange"
+              class="mb-2"
+            ></v-date-input>
+            <v-btn
+              v-if="partialPaymentModal.plannedStudyUntilDate"
+              size="small"
+              variant="text"
+              color="error"
+              @click="clearDate"
+              class="mt-2"
+            >
+              Sanani tozalash
+            </v-btn>
+          </div>
+
+          <!-- Calculation Results -->
+          <v-card
+            v-if="partialPaymentModal.calculation"
+            variant="outlined"
+            class="mb-4 calculation-results"
+          >
+            <v-card-title class="text-subtitle-1 pa-3"> Hisoblash natijalari </v-card-title>
+            <v-card-text class="pa-3">
+              <div class="info-row mb-2">
+                <span class="info-label">Rejalashtirilgan darslar:</span>
+                <span class="info-value">
+                  {{ partialPaymentModal.calculation.lessonsPlanned }}
+                </span>
+              </div>
+              <div class="info-row mb-2">
+                <span class="info-label">To'lovga yaroqli darslar:</span>
+                <span class="info-value">
+                  {{ partialPaymentModal.calculation.lessonsBillable }}
+                </span>
+              </div>
+              <div class="info-row mb-2">
+                <span class="info-label">Chegirma:</span>
+                <span class="info-value">
+                  {{ partialPaymentModal.calculation.discountPercent }}%
+                </span>
+              </div>
+              <v-divider class="my-3"></v-divider>
+              <div class="info-row mb-2">
+                <span class="info-label">Hozirgi to'lov summasi:</span>
+                <span class="info-value font-weight-medium">
+                  {{ formatCurrency(partialPaymentModal.calculation.currentAmountDue) }}
+                </span>
+              </div>
+              <div class="info-row mb-2">
+                <span class="info-label">Hisoblangan to'lov summasi:</span>
+                <span class="info-value font-weight-medium text-primary">
+                  {{ formatCurrency(partialPaymentModal.calculation.amountDue) }}
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label font-weight-bold">Farq:</span>
+                <span
+                  class="info-value font-weight-bold"
+                  :class="{
+                    'text-success': partialPaymentModal.calculation.difference < 0,
+                    'text-error': partialPaymentModal.calculation.difference > 0,
+                  }"
+                >
+                  {{ formatCurrency(Math.abs(partialPaymentModal.calculation.difference)) }}
+                  <span v-if="partialPaymentModal.calculation.difference < 0"> (qaytariladi)</span>
+                  <span v-else-if="partialPaymentModal.calculation.difference > 0"> (qo'shimcha)</span>
+                </span>
+              </div>
+            </v-card-text>
+          </v-card>
+
           <v-text-field
             v-model.number="partialPaymentModal.amount"
             label="To'lov miqdori"
@@ -287,6 +380,9 @@
             :rules="amountRules"
             suffix="so'm"
             :error-messages="amountError"
+            :disabled="!!partialPaymentModal.calculation"
+            :hint="partialPaymentModal.calculation ? 'Hisoblangan summa avtomatik to\'ldirildi' : ''"
+            persistent-hint
           ></v-text-field>
         </v-card-text>
         <v-card-actions class="pa-4">
@@ -319,9 +415,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { Payment } from '@/types/payments.types'
+import type { Payment, PaymentCalculationResponse } from '@/types/payments.types'
 import { PaymentStatus } from '@/types/payments.types'
-import { fetchPayments, markAsPaid, payPartial } from '@/services/pages/payments'
+import { fetchPayments, markAsPaid, payPartial, calculatePayment, updatePayment } from '@/services/pages/payments'
 import { fetchAllGroups } from '@/services/pages/groups'
 import type { Group } from '@/types/groups.types'
 import { fetchAllCenters } from '@/services/pages/centers'
@@ -357,6 +453,10 @@ const partialPaymentModal = ref({
   show: false,
   payment: null as Payment | null,
   amount: 0 as number,
+  plannedStudyUntilDate: null as string | null,
+  showDatePicker: false as boolean,
+  calculation: null as PaymentCalculationResponse | null,
+  calculating: false as boolean,
 })
 
 // Snackbar
@@ -586,6 +686,10 @@ const openPartialPaymentModal = (payment: Payment) => {
     show: true,
     payment,
     amount: 0,
+    plannedStudyUntilDate: null,
+    showDatePicker: false,
+    calculation: null,
+    calculating: false,
   }
 }
 
@@ -595,6 +699,37 @@ const closePartialPaymentModal = () => {
     show: false,
     payment: null,
     amount: 0,
+    plannedStudyUntilDate: null,
+    showDatePicker: false,
+    calculation: null,
+    calculating: false,
+  }
+}
+
+const openDatePicker = () => {
+  partialPaymentModal.value.showDatePicker = true
+}
+
+const clearDate = () => {
+  partialPaymentModal.value.plannedStudyUntilDate = null
+  partialPaymentModal.value.calculation = null
+  partialPaymentModal.value.amount = 0
+}
+
+const handleDateChange = async (date: string | null) => {
+  if (!date || !partialPaymentModal.value.payment) return
+  
+  partialPaymentModal.value.calculating = true
+  try {
+    const calculation = await calculatePayment(partialPaymentModal.value.payment.id, date)
+    partialPaymentModal.value.calculation = calculation
+    // Auto-fill amount with calculated amount
+    partialPaymentModal.value.amount = calculation.amountDue
+  } catch (error: any) {
+    showSnackbar(error.response?.data?.message || 'Hisoblashda xatolik', 'error')
+    partialPaymentModal.value.calculation = null
+  } finally {
+    partialPaymentModal.value.calculating = false
   }
 }
 
@@ -612,6 +747,13 @@ const confirmPartialPayment = async () => {
       return
     }
 
+    // If plannedStudyUntilDate is set, update payment first
+    if (partialPaymentModal.value.plannedStudyUntilDate) {
+      await updatePayment(partialPaymentModal.value.payment.id, {
+        plannedStudyUntilDate: partialPaymentModal.value.plannedStudyUntilDate,
+      })
+    }
+
     await payPartial(partialPaymentModal.value.payment.id, partialPaymentModal.value.amount)
     showSnackbar(
       `${formatCurrency(partialPaymentModal.value.amount)} miqdoridagi qisman to'lov qabul qilindi`,
@@ -621,6 +763,10 @@ const confirmPartialPayment = async () => {
       show: false,
       payment: null,
       amount: 0,
+      plannedStudyUntilDate: null,
+      showDatePicker: false,
+      calculation: null,
+      calculating: false,
     }
     await loadPayments()
   } catch (error: any) {
@@ -768,5 +914,9 @@ onMounted(async () => {
 .info-value {
   color: rgba(0, 0, 0, 0.87);
   font-size: 1rem;
+}
+
+.calculation-results {
+  background-color: rgba(1, 192, 200, 0.05);
 }
 </style>

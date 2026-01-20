@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'1
+import { ref } from 'vue'
 import { Form, Field } from 'vee-validate'
 import type { RegisterForm } from '@/types/auth.types'
 import { register } from '@/services/pages/auth'

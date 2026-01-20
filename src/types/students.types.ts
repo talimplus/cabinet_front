@@ -63,4 +63,6 @@ export interface StudentsParams {
         perPage?: number
         status?: StudentStatus
         groupId?: number;
+        preferredTime?: 'morning' | 'evening';
+        preferredDays?: string[];
 }

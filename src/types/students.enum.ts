@@ -6,6 +6,11 @@ export enum StudentStatus {
         FINISHED = 'finished'
 }
 
+export enum StudentPreferredTime {
+  MORNING = 'morning',
+  EVENING = 'evening',
+}
+
 export const studentStatusLabels = {
         [StudentStatus.NEW]: "Kutmoqda",
         [StudentStatus.ACTIVE]: "O'qimoqda",

@@ -435,7 +435,7 @@ const getCenters = async () => {
 }
 getCenters()
 
-watch(open, (newValue) => {
+watch(open, async (newValue) => {
   if (newValue && props.formForEdit?.id) {
     form.value.firstName = props.formForEdit.firstName
     form.value.lastName = props.formForEdit.lastName
@@ -457,10 +457,18 @@ watch(open, (newValue) => {
       identityTab.value = 'passport'
     }
     form.value.centerId = props.formForEdit.centerId
-    form.value.groupIds = props.formForEdit.groupIds || []
+    // Load groups first, then set groupIds
     if (form.value.centerId) {
-      getGroups(form.value.centerId)
-      getStudents(form.value.centerId)
+      await getGroups(form.value.centerId)
+      await getStudents(form.value.centerId)
+    }
+    // Set groupIds after groups are loaded
+    // Ensure groupIds is an array
+    const groupIdsValue = props.formForEdit.groupIds
+    if (Array.isArray(groupIdsValue) && groupIdsValue.length > 0) {
+      form.value.groupIds = [...groupIdsValue]
+    } else {
+      form.value.groupIds = []
     }
 
     // Load discount fields if they exist

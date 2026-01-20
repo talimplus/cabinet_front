@@ -6,7 +6,7 @@
     </v-card-title>
     <v-card-text>
       <v-row>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="3">
           <v-select
             v-model="params.centerId"
             :items="centerOptions"
@@ -20,7 +20,7 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="3">
           <v-select
             v-model="params.returnLikelihood"
             :items="returnLikelihoodOptions"
@@ -33,47 +33,55 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
+        <v-col cols="12" md="3">
+          <v-select
+            v-model="params.preferredTime"
+            :items="preferredTimeOptions"
+            item-title="title"
+            item-value="value"
+            label="Qaysi vaqtda o'qimoqchi"
+            clearable
+            variant="outlined"
+            density="compact"
+            @update:model-value="getStudents"
+          ></v-select>
+        </v-col>
+        <v-col cols="12" md="3">
+          <v-autocomplete
+            v-model="params.preferredDays"
+            :items="dayOptions"
+            item-title="title"
+            item-value="value"
+            label="Qaysi kunlari o'qimoqchi"
+            multiple
+            chips
+            clearable
+            variant="outlined"
+            density="compact"
+            @update:model-value="getStudents"
+          ></v-autocomplete>
+        </v-col>
       </v-row>
     </v-card-text>
     <v-card-text>
       <v-data-table :items="students" :headers="headers" hide-default-footer>
-      <template v-slot:item.birthDate="{ item }">
-        {{ formatDate(item.birthDate) }}
-      </template>
       <template v-slot:item.monthlyFee="{ item }">
         {{ formatCurrency(item.monthlyFee) }}
       </template>
-      <template v-slot:item.discountPercent="{ item }">
-        <div v-if="item.discountPeriods && item.discountPeriods.length > 0">
-          <div v-for="(period, index) in item.discountPeriods" :key="index" class="mb-1">
-            <span>{{ period.percent }}%</span>
-            <span v-if="period.reason" class="text-caption text-medium-emphasis">
-              -
-              <v-tooltip v-if="period.reason.length > 20" location="top">
-                <template v-slot:activator="{ props }">
-                  <span v-bind="props" class="discount-reason-text">
-                    {{ truncateText(period.reason, 20) }}
-                  </span>
-                </template>
-                <span>{{ period.reason }}</span>
-              </v-tooltip>
-              <span v-else>{{ period.reason }}</span>
-            </span>
-          </div>
-        </div>
-        <div v-else-if="item.discountPercent">
-          {{ item.discountPercent }}%
-          <span v-if="item.discountReason" class="text-caption text-medium-emphasis d-block">
-            <v-tooltip v-if="item.discountReason.length > 20" location="top">
-              <template v-slot:activator="{ props }">
-                <span v-bind="props" class="discount-reason-text">
-                  {{ truncateText(item.discountReason, 20) }}
-                </span>
-              </template>
-              <span>{{ item.discountReason }}</span>
-            </v-tooltip>
-            <span v-else>{{ item.discountReason }}</span>
-          </span>
+      <template v-slot:item.preferredTime="{ item }">
+        {{ getPreferredTimeLabel(item.preferredTime) }}
+      </template>
+      <template v-slot:item.preferredDays="{ item }">
+        <div v-if="item.preferredDays && item.preferredDays.length > 0" class="d-flex flex-wrap gap-1">
+          <v-chip
+            v-for="day in item.preferredDays"
+            :key="day"
+            size="small"
+            variant="flat"
+            color="primary"
+          >
+            {{ getDayLabel(day) }}
+          </v-chip>
         </div>
         <span v-else class="text-medium-emphasis">—</span>
       </template>
@@ -171,10 +179,11 @@
 import { ref, computed, onMounted } from 'vue'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
-import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
+import { StudentStatus, StudentPreferredTime, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
+import { WeekDay } from '@/types/groups.enum'
 
 const statusList = computed(() => {
   return [
@@ -203,6 +212,8 @@ const params = ref<StudentsParams>({
   perPage: 10,
   groupId: undefined,
   returnLikelihood: undefined,
+  preferredTime: undefined,
+  preferredDays: undefined,
 })
 
 const centerOptions = computed(() => {
@@ -216,6 +227,21 @@ const returnLikelihoodOptions = [
   { title: 'Qaytmaydi', value: 'never' },
   { title: 'Balki', value: 'maybe' },
   { title: 'Albatta', value: 'sure' },
+]
+
+const preferredTimeOptions = [
+  { title: 'Ertalab', value: StudentPreferredTime.MORNING },
+  { title: 'Kechqurun', value: StudentPreferredTime.EVENING },
+]
+
+const dayOptions = [
+  { title: 'Dushanba', value: WeekDay.MONDAY },
+  { title: 'Seshanba', value: WeekDay.TUESDAY },
+  { title: 'Chorshanba', value: WeekDay.WEDNESDAY },
+  { title: 'Payshanba', value: WeekDay.THURSDAY },
+  { title: 'Juma', value: WeekDay.FRIDAY },
+  { title: 'Shanba', value: WeekDay.SATURDAY },
+  { title: 'Yakshanba', value: WeekDay.SUNDAY },
 ]
 
 function clearFormForEdit() {
@@ -349,9 +375,9 @@ const headers = [
   { title: 'Ism', key: 'firstName' },
   { title: 'Familiya', key: 'lastName' },
   { title: 'Telefon', key: 'phone' },
-  { title: "Tug'ilgan sana", key: 'birthDate' },
   { title: "Oylik to'lov", key: 'monthlyFee' },
-  { title: 'Chegirma', key: 'discountPercent' },
+  { title: "Qaysi vaqtda o'qimoqchi", key: 'preferredTime' },
+  { title: "Qaysi kunlari o'qimoqchi", key: 'preferredDays' },
   { title: 'Holat', key: 'status' },
   { title: 'Amallar', key: 'action' },
 ]
@@ -401,6 +427,31 @@ const getStatusColor = (status: StudentStatus): string => {
     default:
       return 'grey'
   }
+}
+
+const getPreferredTimeLabel = (time: string | null | undefined): string => {
+  if (!time) return '—'
+  switch (time) {
+    case 'morning':
+      return 'Ertalab'
+    case 'evening':
+      return 'Kechqurun'
+    default:
+      return time
+  }
+}
+
+const getDayLabel = (day: string): string => {
+  const dayLabels: Record<string, string> = {
+    monday: 'Dushanba',
+    tuesday: 'Seshanba',
+    wednesday: 'Chorshanba',
+    thursday: 'Payshanba',
+    friday: 'Juma',
+    saturday: 'Shanba',
+    sunday: 'Yakshanba',
+  }
+  return dayLabels[day.toLowerCase()] || day
 }
 </script>
 

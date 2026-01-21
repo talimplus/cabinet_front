@@ -233,6 +233,19 @@
                 ></v-textarea>
               </Field>
             </v-col>
+            <v-col cols="6">
+              <Field name="followUpDate" v-slot="{ handleChange, handleBlur, errors }">
+                <v-date-input
+                  label="Keyinroq sanasi"
+                  prepend-icon=""
+                  prepend-inner-icon="$calendar"
+                  v-model="form.followUpDate"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-date-input>
+              </Field>
+            </v-col>
           </v-row>
         </v-card-text>
         <v-card-actions>
@@ -318,6 +331,7 @@ const form = ref<LeadForm>({
   status: LeadStatus.NEW,
   groupIds: [],
   centerId: undefined,
+  followUpDate: undefined,
 })
 
 const identityTab = ref<'passport' | 'jshshir'>('passport')
@@ -381,6 +395,7 @@ watch(open, (newValue) => {
       status: props.formForEdit.status || LeadStatus.NEW,
       groupIds: props.formForEdit.groupIds || [],
       centerId: props.formForEdit.centerId || userStore.user?.centerId,
+      followUpDate: props.formForEdit.followUpDate || undefined,
     }
 
     if (form.value.jshshir && !form.value.passportSeries && !form.value.passportNumber) {
@@ -415,6 +430,7 @@ watch(open, (newValue) => {
       status: LeadStatus.NEW,
       groupIds: [],
       centerId: undefined,
+      followUpDate: undefined,
     }
     identityTab.value = 'passport'
     groups.value = []

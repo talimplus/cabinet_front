@@ -67,6 +67,16 @@
             @update:model-value="getLeads"
           ></v-text-field>
         </v-col>
+        <v-col cols="12" md="3">
+          <v-date-input
+            v-model="params.followUpDate"
+            label="Keyinroq sanasi"
+            variant="outlined"
+            density="compact"
+            clearable
+            @update:model-value="getLeads"
+          ></v-date-input>
+        </v-col>
       </v-row>
     </v-card-text>
 
@@ -74,6 +84,9 @@
       <v-data-table :items="leads" :headers="headers" hide-default-footer>
         <template v-slot:item.fullName="{ item }">
           {{ `${item.firstName || ''} ${item.lastName || ''}`.trim() || '—' }}
+        </template>
+        <template v-slot:item.followUpDate="{ item }">
+          {{ formatDate(item.followUpDate) }}
         </template>
         <template v-slot:item.status="{ item }">
           <div class="d-flex align-center gap-2">
@@ -199,6 +212,7 @@ const params = ref<LeadsParams>({
   phone: '',
   status: undefined,
   groupId: undefined,
+  followUpDate: undefined,
   page: 1,
   perPage: 10,
 })
@@ -207,6 +221,7 @@ const statusOptions = [
   { title: 'Yangi', value: LeadStatus.NEW },
   { title: 'Rad etilgan', value: LeadStatus.DISCARDED },
   { title: "Konvert bo'lgan", value: LeadStatus.CONVERTED },
+  { title: 'Keyinroq', value: LeadStatus.LATER },
 ]
 
 const centerOptions = computed(() => {
@@ -250,7 +265,21 @@ const loadGroups = async (centerId?: number) => {
 
 const getLeads = async () => {
   try {
-    const { data } = await fetchLeads(params.value)
+    // Format followUpDate to YYYY-MM-DD if it exists
+    const queryParams = { ...params.value }
+    if (queryParams.followUpDate) {
+      const date = new Date(queryParams.followUpDate)
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        queryParams.followUpDate = `${year}-${month}-${day}`
+      }
+    } else {
+      delete queryParams.followUpDate
+    }
+    
+    const { data } = await fetchLeads(queryParams)
     const list = data?.data || data || []
     leads.value = list.map((item: Lead) => ({
       ...item,
@@ -287,6 +316,7 @@ const getStatusLabel = (status?: LeadStatus): string => {
     [LeadStatus.NEW]: 'Yangi',
     [LeadStatus.DISCARDED]: 'Rad etilgan',
     [LeadStatus.CONVERTED]: "Konvert bo'lgan",
+    [LeadStatus.LATER]: 'Keyinroq',
   }
   if (!status) return '—'
   return labels[status] || status
@@ -300,6 +330,8 @@ const getStatusColor = (status?: LeadStatus): string => {
       return 'error'
     case LeadStatus.CONVERTED:
       return 'success'
+    case LeadStatus.LATER:
+      return 'warning'
     default:
       return 'grey'
   }
@@ -346,8 +378,19 @@ const headers = [
   { title: 'Ism', key: 'fullName' },
   { title: 'Telefon', key: 'phone' },
   { title: 'Status', key: 'status' },
+  { title: 'Keyinroq sanasi', key: 'followUpDate' },
   { title: 'Amallar', key: 'actions' },
 ]
+
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+}
 
 onMounted(async () => {
   await loadCenters()

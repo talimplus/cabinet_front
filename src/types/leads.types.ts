@@ -20,6 +20,7 @@ export interface Lead {
   status?: LeadStatus
   groupIds?: number[]
   centerId?: number
+  followUpDate?: string | null
   createdAt?: string
   updatedAt?: string
   statusLoading?: boolean
@@ -44,6 +45,7 @@ export interface LeadForm {
   status?: LeadStatus
   groupIds?: number[]
   centerId?: number
+  followUpDate?: string
 }
 
 export interface LeadsParams {
@@ -52,6 +54,7 @@ export interface LeadsParams {
   phone?: string
   status?: LeadStatus
   groupId?: number
+  followUpDate?: string
   page?: number
   perPage?: number
 }

@@ -1,4 +1,9 @@
 import { StudentStatus } from "./students.enum";
+export interface Subject {
+  id: number;
+  name: string;
+}
+
 export interface Student {
         id: number;
         firstName: string;
@@ -20,6 +25,7 @@ export interface Student {
         status: StudentStatus;
         returnLikelihood?: 'never' | 'maybe' | 'sure' | string | null;
         groupIds?: number[];
+        subject?: Subject | null;
         openStatus?: boolean,
         statusLoading?: boolean
         createdAt?: string;
@@ -50,6 +56,7 @@ export interface StudentForm {
         jshshir?: string;
         centerId?: number,
         groupIds?: number[],
+        subjectId?: number,
         discountPercent?: number;
         discountReason?: string;
         discountPeriods?: DiscountPeriod[];
@@ -65,4 +72,5 @@ export interface StudentsParams {
         groupId?: number;
         preferredTime?: 'morning' | 'evening';
         preferredDays?: string[];
+        subjectId?: number;
 }

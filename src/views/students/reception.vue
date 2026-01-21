@@ -22,14 +22,15 @@
         </v-col>
         <v-col cols="12" md="3">
           <v-select
-            v-model="params.returnLikelihood"
-            :items="returnLikelihoodOptions"
+            v-model="params.subjectId"
+            :items="subjectOptions"
             item-title="title"
             item-value="value"
-            label="Qaytish ehtimoli"
+            label="Fan"
             clearable
             variant="outlined"
             density="compact"
+            :loading="loadingSubjects"
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
@@ -84,6 +85,9 @@
           </v-chip>
         </div>
         <span v-else class="text-medium-emphasis">—</span>
+      </template>
+      <template v-slot:item.subject="{ item }">
+        {{ item.subject?.name || '—' }}
       </template>
       <template v-slot:item.status="{ item }">
         <div class="d-flex align-center gap-2">
@@ -184,6 +188,8 @@ import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
 import { WeekDay } from '@/types/groups.enum'
+import { fetchAllSubjects } from '@/services/pages/subjects'
+import type { Subject } from '@/types/subject.types'
 
 const statusList = computed(() => {
   return [
@@ -196,7 +202,9 @@ const openModal = ref(false)
 const students = ref<Student[]>([])
 const formForEdit = ref<Student>({})
 const centers = ref<Center[]>([])
+const subjects = ref<Subject[]>([])
 const loadingCenters = ref(false)
+const loadingSubjects = ref(false)
 const snackbar = ref({
   show: false,
   message: '',
@@ -211,9 +219,9 @@ const params = ref<StudentsParams>({
   page: 1,
   perPage: 10,
   groupId: undefined,
-  returnLikelihood: undefined,
   preferredTime: undefined,
   preferredDays: undefined,
+  subjectId: undefined,
 })
 
 const centerOptions = computed(() => {
@@ -223,11 +231,12 @@ const centerOptions = computed(() => {
   }))
 })
 
-const returnLikelihoodOptions = [
-  { title: 'Qaytmaydi', value: 'never' },
-  { title: 'Balki', value: 'maybe' },
-  { title: 'Albatta', value: 'sure' },
-]
+const subjectOptions = computed(() => {
+  return subjects.value.map((subject) => ({
+    title: subject.name,
+    value: subject.id,
+  }))
+})
 
 const preferredTimeOptions = [
   { title: 'Ertalab', value: StudentPreferredTime.MORNING },
@@ -269,6 +278,18 @@ const loadCenters = async () => {
   }
 }
 
+const loadSubjects = async () => {
+  loadingSubjects.value = true
+  try {
+    const { data } = await fetchAllSubjects()
+    subjects.value = data
+  } catch (err) {
+    console.log(err)
+  } finally {
+    loadingSubjects.value = false
+  }
+}
+
 const getStudents = async () => {
   if (!params.value.centerId) return
   try {
@@ -287,6 +308,7 @@ const getStudents = async () => {
 
 onMounted(async () => {
   await loadCenters()
+  await loadSubjects()
   if (params.value.centerId) {
     await getStudents()
   }
@@ -375,6 +397,7 @@ const headers = [
   { title: 'Ism', key: 'firstName' },
   { title: 'Familiya', key: 'lastName' },
   { title: 'Telefon', key: 'phone' },
+  { title: 'Fan', key: 'subject' },
   { title: "Oylik to'lov", key: 'monthlyFee' },
   { title: "Qaysi vaqtda o'qimoqchi", key: 'preferredTime' },
   { title: "Qaysi kunlari o'qimoqchi", key: 'preferredDays' },

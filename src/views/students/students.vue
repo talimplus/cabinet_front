@@ -17,19 +17,6 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
-        <v-col cols="12" md="4">
-          <v-select
-            v-model="params.returnLikelihood"
-            :items="returnLikelihoodOptions"
-            item-title="title"
-            item-value="value"
-            label="Qaytish ehtimoli"
-            clearable
-            variant="outlined"
-            density="compact"
-            @update:model-value="getStudents"
-          ></v-select>
-        </v-col>
       </v-row>
     </v-card-text>
     <v-card-text>
@@ -192,7 +179,6 @@ const params = ref<StudentsParams>({
   page: 1,
   perPage: 10,
   groupId: undefined,
-  returnLikelihood: undefined,
 })
 
 const centerOptions = computed(() => {
@@ -202,11 +188,6 @@ const centerOptions = computed(() => {
   }))
 })
 
-const returnLikelihoodOptions = [
-  { title: 'Qaytmaydi', value: 'never' },
-  { title: 'Balki', value: 'maybe' },
-  { title: 'Albatta', value: 'sure' },
-]
 
 function clearFormForEdit() {
   formForEdit.value = {}

@@ -6,6 +6,11 @@ export const fetchSubjects = async (params: SubjectsParams) => {
         })
 }
 
+export const fetchAllSubjects = async () => {
+        const response = await http.get('/subjects')
+        return response.data
+}
+
 export const createSubjects = async (form: SubjectForm) => {
         return await http.post('/subjects', form)
 }

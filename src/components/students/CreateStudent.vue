@@ -154,6 +154,20 @@
                 ></v-select>
               </Field>
             </v-col>
+            <v-col cols="6">
+              <Field name="subjectId" v-slot="{ handleChange, handleBlur, errors }">
+                <v-select
+                  :items="subjects"
+                  item-title="name"
+                  item-value="id"
+                  v-model="form.subjectId"
+                  label="Fan"
+                  :error-messages="errors"
+                  @update:model-value="handleChange"
+                  @blur="handleBlur"
+                ></v-select>
+              </Field>
+            </v-col>
             <v-col cols="12">
               <v-tabs v-model="identityTab" density="compact" color="primary">
                 <v-tab value="passport">Passport</v-tab>
@@ -381,10 +395,13 @@ import type { Student } from '@/types/students.types'
 import { StudentStatus } from '@/types/students.enum'
 import { WeekDay } from '@/types/groups.enum'
 import dayjs from 'dayjs'
+import { fetchSubjects } from '@/services/pages/subjects'
+import type { Subject } from '@/types/subject.types'
 
 const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
 const students = ref<Student[]>([])
+const subjects = ref<Subject[]>([])
 const open = defineModel('open')
 const props = defineProps<Props>()
 const loading = ref(false)
@@ -409,6 +426,7 @@ const form = ref<StudentForm>({
   status: StudentStatus.NEW,
   centerId: undefined,
   groupIds: [],
+  subjectId: undefined,
   discountPercent: undefined,
   discountReason: undefined,
   discountPeriods: [],
@@ -433,7 +451,19 @@ const getCenters = async () => {
     console.log(err)
   }
 }
+
+const getSubjects = async () => {
+  try {
+    const response = await fetchSubjects({ perPage: 999 })
+    subjects.value = response?.data?.data || []
+  } catch (err) {
+    console.log(err)
+    subjects.value = []
+  }
+}
+
 getCenters()
+getSubjects()
 
 watch(open, async (newValue) => {
   if (newValue && props.formForEdit?.id) {
@@ -457,6 +487,7 @@ watch(open, async (newValue) => {
       identityTab.value = 'passport'
     }
     form.value.centerId = props.formForEdit.centerId
+    form.value.subjectId = (props.formForEdit as any).subjectId || (props.formForEdit as any).subject?.id || undefined
     // Load groups first, then set groupIds
     if (form.value.centerId) {
       await getGroups(form.value.centerId)
@@ -512,6 +543,7 @@ watch(open, async (newValue) => {
       jshshir: '',
       centerId: undefined,
       groupIds: [],
+      subjectId: undefined,
       discountPercent: undefined,
       discountReason: undefined,
       discountPeriods: [],

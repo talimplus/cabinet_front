@@ -1,6 +1,11 @@
 import http from "../baseHttp";
 import type { GroupForm, GroupsParams } from "@/types/groups.types";
-import type { LessonDatesResponse, LessonDatesParams, SubmitAttendancePayload } from "@/types/attendance.types";
+import type {
+  LessonDatesResponse,
+  LessonDatesParams,
+  SubmitAttendancePayload,
+  RescheduleAttendancePayload,
+} from "@/types/attendance.types";
 
 export const fetchGroups = async (params?: GroupsParams) => {
         return await http.get('/groups', { params })
@@ -39,4 +44,11 @@ export const fetchLessonDates = async (groupId: number | string, params?: Lesson
 
 export const submitAttendance = async (groupId: number | string, payload: SubmitAttendancePayload) => {
         return await http.post(`/groups/${groupId}/attendance/submit`, payload)
+}
+
+export const rescheduleAttendance = async (
+  groupId: number | string,
+  payload: RescheduleAttendancePayload,
+) => {
+        return await http.post(`/groups/${groupId}/attendance/reschedule`, payload)
 }

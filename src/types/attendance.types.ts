@@ -12,11 +12,17 @@ export interface AttendanceByDate {
   items?: AttendanceItem[] // Legacy support
 }
 
+export interface LessonDateOverride {
+  type: 'cancelled' | 'extra'
+  reason?: string
+}
+
 export interface LessonDatesResponse {
   timezone: string
   today: string
   lessonDates: string[]
   attendanceByDate: Record<string, AttendanceByDate>
+  overridesByDate?: Record<string, LessonDateOverride>
 }
 
 export interface SubmitAttendancePayload {
@@ -29,4 +35,9 @@ export interface LessonDatesParams {
   count?: number
   from?: string
   to?: string
+}
+
+export interface RescheduleAttendancePayload {
+  toDate: string
+  reason?: string
 }

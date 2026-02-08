@@ -37,8 +37,8 @@
                   @update:model-value="loadAttendance"
                 ></v-date-input>
               </v-col>
-              <v-col cols="12" md="4" class="d-flex">
-            <v-btn
+              <v-col cols="12" md="4" class="d-flex align-center" style="gap: 8px">
+                <v-btn
                   color="secondary"
                   variant="outlined"
                   @click="clearFilters"
@@ -72,6 +72,24 @@
                       >
                         <div class="date-header">
                           {{ formatDateHeader(date) }}
+                          <div
+                            v-if="getOverrideType(date)"
+                            class="override-label"
+                            :class="{
+                              cancelled: isCancelledDate(date),
+                              extra: isExtraDate(date),
+                            }"
+                          >
+                            {{ getOverrideLabel(date) }}
+                          </div>
+                          <v-btn
+                            v-if="canRescheduleDate(date)"
+                            size="x-small"
+                            variant="text"
+                            color="primary"
+                            icon="mdi-calendar-sync"
+                            @click.stop="openReschedule(date)"
+                          ></v-btn>
                         </div>
                       </th>
                     </tr>
@@ -91,8 +109,9 @@
                           'cell-today': isToday(date),
                           'cell-past': isPast(date),
                           'cell-future': isFuture(date),
+                          'cell-cancelled': isCancelledDate(date),
                         }"
-                        @click="handleCellClick(student.id, date)"
+                        @click="handleCellClick($event, student.id, date)"
                       >
                         <div class="cell-content">
                           <v-icon
@@ -264,42 +283,83 @@
       </v-window>
     </v-card>
 
-    <!-- Attendance Confirmation Dialog -->
-    <v-dialog v-model="attendanceDialog.show" max-width="400">
+    <!-- Attendance Quick Actions -->
+    <v-menu
+      v-model="attendanceDialog.show"
+      :activator="attendanceDialog.activator"
+      :close-on-content-click="false"
+      location="bottom"
+      offset="6"
+    >
+      <v-card class="pa-2" elevation="4">
+        <div class="attendance-quick-actions">
+          <v-btn
+            color="success"
+            variant="text"
+            icon="mdi-check"
+            @click="markAttendance('present')"
+            :loading="submittingAttendance"
+          ></v-btn>
+          <v-btn
+            color="error"
+            variant="text"
+            icon="mdi-close"
+            @click="markAttendance('absent')"
+            :loading="submittingAttendance"
+          ></v-btn>
+        </div>
+      </v-card>
+    </v-menu>
+
+    <!-- Reschedule Dialog -->
+    <v-dialog v-model="rescheduleDialog.show" max-width="520">
       <v-card>
-        <v-card-title class="text-h6 pa-4"> Mark Attendance </v-card-title>
+        <v-card-title class="text-h6 pa-4"> Reschedule Lesson </v-card-title>
         <v-card-text class="pa-4">
-          <p class="text-body-1 mb-4">
-            Is <strong>{{ getStudentName(attendanceDialog.studentId) }}</strong> present?
-          </p>
+          <v-row>
+            <v-col cols="12">
+              <div class="text-body-2 text-medium-emphasis mb-2">From: Bugun</div>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-date-input
+                v-model="rescheduleDialog.toDate"
+                label="To Date"
+                density="compact"
+                variant="outlined"
+                :allowed-dates="isAllowedRescheduleDate"
+              ></v-date-input>
+            </v-col>
+            <v-col cols="12">
+              <v-textarea
+                v-model="rescheduleDialog.reason"
+                label="Reason (optional)"
+                density="compact"
+                variant="outlined"
+                rows="2"
+              ></v-textarea>
+            </v-col>
+          </v-row>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
           <v-btn
-            color="success"
+            color="primary"
             variant="flat"
-            @click="markAttendance('present')"
-            :loading="submittingAttendance"
+            @click="submitReschedule"
+            :loading="rescheduleDialog.loading"
+            :disabled="!canSubmitReschedule"
           >
-            Present
+            Save
           </v-btn>
-          <v-btn
-            color="error"
-            variant="flat"
-            @click="markAttendance('absent')"
-            :loading="submittingAttendance"
-          >
-            Absent
-          </v-btn>
-          <v-btn variant="text" @click="attendanceDialog.show = false"> Cancel </v-btn>
+          <v-btn variant="text" @click="rescheduleDialog.show = false"> Cancel </v-btn>
         </v-card-actions>
-  </v-card>
+      </v-card>
     </v-dialog>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import type { Student } from '@/types/students.types'
 import type { Group } from '@/types/groups.types'
@@ -308,7 +368,7 @@ import type {
   AttendanceStatus,
   SubmitAttendancePayload,
 } from '@/types/attendance.types'
-import { fetchGroupById, fetchLessonDates, submitAttendance } from '@/services/pages/groups'
+import { fetchGroupById, fetchLessonDates, submitAttendance, rescheduleAttendance } from '@/services/pages/groups'
 import { fetchStudents } from '@/services/pages/students'
 import type { StudentsParams } from '@/types/students.types'
 import { StudentStatus } from '@/types/students.enum'
@@ -336,16 +396,30 @@ const attendanceData = ref<LessonDatesResponse | null>(null)
 const loadingAttendance = ref(false)
 const lessonDates = computed(() => attendanceData.value?.lessonDates || [])
 const today = computed(() => attendanceData.value?.today || '')
+const overridesByDate = computed(() => attendanceData.value?.overridesByDate || {})
 
 // Date filters
 const dateFrom = ref('')
 const dateTo = ref('')
+
+// Reschedule dialog
+const rescheduleDialog = ref({
+  show: false,
+  toDate: '',
+  reason: '',
+  loading: false,
+})
+const canSubmitReschedule = computed(() => {
+  const toDate = formatDateForAPI(rescheduleDialog.value.toDate)
+  return Boolean(toDate && !rescheduleDialog.value.loading)
+})
 
 // Attendance dialog
 const attendanceDialog = ref({
   show: false,
   studentId: 0,
   lessonDate: '',
+  activator: null as HTMLElement | null,
 })
 
 const submittingAttendance = ref(false)
@@ -435,13 +509,23 @@ const loadAttendance = async () => {
 }
 
 // Cell click handler
-const handleCellClick = (studentId: number, lessonDate: string) => {
-  if (!isToday(lessonDate) || isFuture(lessonDate)) return
+const handleCellClick = async (event: MouseEvent, studentId: number, lessonDate: string) => {
+  if (!isToday(lessonDate) || isFuture(lessonDate) || isCancelledDate(lessonDate)) return
+
+  const sameTarget =
+    attendanceDialog.value.studentId === studentId &&
+    attendanceDialog.value.lessonDate === lessonDate
+
+  if (attendanceDialog.value.show && sameTarget) {
+    attendanceDialog.value.show = false
+    await nextTick()
+  }
 
   attendanceDialog.value = {
     show: true,
     studentId,
     lessonDate,
+    activator: event.currentTarget as HTMLElement,
   }
 }
 
@@ -514,6 +598,7 @@ const markAttendance = async (status: AttendanceStatus) => {
 
 // Get cell icon
 const getCellIcon = (studentId: number, date: string): string => {
+  if (isCancelledDate(date)) return 'mdi-cancel'
   if (isFuture(date)) return 'mdi-circle-outline'
 
   const attendance = attendanceData.value?.attendanceByDate[date]
@@ -528,6 +613,7 @@ const getCellIcon = (studentId: number, date: string): string => {
 
 // Get cell icon color
 const getCellIconColor = (studentId: number, date: string): string => {
+  if (isCancelledDate(date)) return 'grey'
   // Future dates: grey
   if (isFuture(date)) return 'grey'
 
@@ -558,6 +644,51 @@ const isToday = (date: string): boolean => {
 const isFuture = (date: string): boolean => {
   if (!today.value) return false
   return date > today.value
+}
+
+const getOverrideType = (date: string): 'cancelled' | 'extra' | undefined => {
+  return overridesByDate.value?.[date]?.type
+}
+
+const isCancelledDate = (date: string): boolean => {
+  return getOverrideType(date) === 'cancelled'
+}
+
+const isExtraDate = (date: string): boolean => {
+  return getOverrideType(date) === 'extra'
+}
+
+const getOverrideLabel = (date: string): string => {
+  const type = getOverrideType(date)
+  if (type === 'cancelled') return 'Bekor qilindi'
+  if (type === 'extra') return "Ko'chirilgan dars"
+  return ''
+}
+
+const hasAttendanceForDate = (date: string): boolean => {
+  const attendance = attendanceData.value?.attendanceByDate?.[date]
+  return Boolean(attendance?.exists)
+}
+
+const canRescheduleDate = (date: string): boolean => {
+  return (
+    isToday(date) &&
+    lessonDates.value.includes(date) &&
+    !isCancelledDate(date) &&
+    !hasAttendanceForDate(date)
+  )
+}
+
+const openReschedule = (date: string) => {
+  if (!canRescheduleDate(date)) return
+  rescheduleDialog.value.show = true
+}
+
+const isAllowedRescheduleDate = (date: string): boolean => {
+  const formatted = formatDateForAPI(date)
+  if (!formatted || !today.value) return false
+  if (formatted <= today.value) return false
+  return !lessonDates.value.includes(formatted)
 }
 
 // Format date header
@@ -591,12 +722,6 @@ const formatTime = (time: string): string => {
   return time
 }
 
-// Get student name
-const getStudentName = (studentId: number): string => {
-  const student = students.value.find((s) => s.id === studentId)
-  return student ? `${student.firstName} ${student.lastName}` : 'Student'
-}
-
 // Get status color
 const getStatusColor = (status: string): string => {
   switch (status) {
@@ -619,6 +744,32 @@ const getGroupStatusColor = (status: string | undefined): string => {
   if (lower === 'inactive') return 'warning'
   if (lower === 'archived') return 'grey'
   return 'primary'
+}
+
+const submitReschedule = async () => {
+  const groupId = route.params.id
+  if (!groupId || Array.isArray(groupId)) return
+
+  const toDate = formatDateForAPI(rescheduleDialog.value.toDate)
+  if (!toDate) return
+
+  rescheduleDialog.value.loading = true
+  try {
+    await rescheduleAttendance(Number(groupId), {
+      toDate,
+      reason: rescheduleDialog.value.reason?.trim() || undefined,
+    })
+
+    rescheduleDialog.value.show = false
+    rescheduleDialog.value.toDate = ''
+    rescheduleDialog.value.reason = ''
+
+    await loadAttendance()
+  } catch (error) {
+    console.error('Failed to reschedule attendance:', error)
+  } finally {
+    rescheduleDialog.value.loading = false
+  }
 }
 
 
@@ -752,11 +903,42 @@ onMounted(() => {
   opacity: 0.5;
 }
 
+.attendance-cell.cell-cancelled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.attendance-cell.cell-cancelled:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  cursor: not-allowed;
+}
+
+.override-label {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.override-label.cancelled {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.override-label.extra {
+  color: rgba(1, 192, 200, 0.9);
+}
+
 .cell-content {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 32px;
+}
+
+.attendance-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .student-name {

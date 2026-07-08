@@ -2,8 +2,7 @@
   <div class="register-container">
     <div class="register-left">
       <div class="register-logo">
-        <v-icon size="40" color="#01c0c8">mdi-school</v-icon>
-        <span class="logo-text">LITECH</span>
+        <img src="/talimplus-logo.svg" alt="TalimPlus" class="logo-img" />
       </div>
       <div class="register-illustration">
         <img src="@/assets/images/login.png" alt="Register illustration" />
@@ -12,7 +11,7 @@
     <div class="register-right">
       <div class="register-form-wrapper">
         <div class="register-header">
-          <h1 class="register-title">Welcome to Ta'lim Markazi</h1>
+          <h1 class="register-title">Welcome to TalimPlus</h1>
           <p class="register-subtitle">Create Your Account</p>
         </div>
 
@@ -238,10 +237,9 @@ const submit = async () => {
   z-index: 10;
 }
 
-.logo-text {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1976d2;
+.logo-img {
+  height: 64px;
+  width: auto;
 }
 
 .register-illustration {

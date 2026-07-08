@@ -3,8 +3,7 @@
     <v-navigation-drawer v-model="drawer" class="sidebar" width="280">
       <div class="sidebar-header">
         <div class="sidebar-logo">
-          <v-icon size="32" color="#01c0c8">mdi-school</v-icon>
-          <span class="logo-text">LITECH</span>
+          <img src="/talimplus-logo.svg" alt="TalimPlus" class="logo-img" />
         </div>
       </div>
       <v-divider></v-divider>
@@ -309,10 +308,9 @@ const handleLogout = async () => {
   gap: 12px;
 }
 
-.logo-text {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1a1a1a;
+.logo-img {
+  height: 40px;
+  width: auto;
 }
 
 .sidebar-menu {

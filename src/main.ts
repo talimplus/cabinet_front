@@ -1,5 +1,3 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import VueApexCharts from 'vue3-apexcharts'
@@ -11,6 +9,9 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 import { useUserStore } from './stores/user'
 import { getMe } from './services/pages/auth'
+
+// Import global overrides AFTER Vuetify styles so they win on equal specificity
+import './assets/main.css'
 
 const app = createApp(App)
 const pinia = createPinia()

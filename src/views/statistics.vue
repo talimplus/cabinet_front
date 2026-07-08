@@ -1,13 +1,15 @@
 <template>
   <div class="statistics-page">
-    <v-card class="page-card" elevation="0">
-      <v-card-title class="page-title">
-        <span class="text-h5 font-weight-bold">Statistika Dashboard</span>
-      </v-card-title>
-      
-      <v-card-text class="pa-6">
-        <!-- Filters -->
-        <v-row class="mb-6">
+    <!-- Page header -->
+    <div class="page-header">
+      <h1 class="page-title">Statistika</h1>
+      <p class="page-subtitle">Markaz bo'yicha umumiy ko'rsatkichlar</p>
+    </div>
+
+    <!-- Filters -->
+    <v-card class="filters-card mb-6">
+      <v-card-text>
+        <v-row>
           <v-col cols="12" md="4">
             <v-select
               v-model="filters.centerId"
@@ -44,14 +46,16 @@
             ></v-text-field>
           </v-col>
         </v-row>
+      </v-card-text>
+    </v-card>
 
-        <!-- Loading State -->
-        <div v-if="loading" class="text-center py-12">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-        </div>
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-12">
+      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+    </div>
 
-        <!-- Dashboard Content -->
-        <div v-else-if="dashboard">
+    <!-- Dashboard Content -->
+    <div v-else-if="dashboard">
           <!-- Summary Cards -->
           <v-row class="mb-6">
             <v-col cols="12" sm="6" md="4" lg="2">
@@ -321,13 +325,11 @@
           </v-row>
         </div>
 
-        <!-- Empty State -->
-        <div v-else class="text-center py-12">
-          <v-icon size="64" color="grey">mdi-chart-line</v-icon>
-          <div class="text-h6 mt-4 text-medium-emphasis">Ma'lumotlar topilmadi</div>
-        </div>
-      </v-card-text>
-    </v-card>
+    <!-- Empty State -->
+    <div v-else class="text-center py-12">
+      <v-icon size="64" color="grey">mdi-chart-line</v-icon>
+      <div class="text-h6 mt-4 text-medium-emphasis">Ma'lumotlar topilmadi</div>
+    </div>
   </div>
 </template>
 
@@ -384,11 +386,11 @@ const revenueChartOptions = computed(() => ({
     toolbar: { show: false },
     fontFamily: 'inherit',
   },
-  colors: ['#6cd219', '#ef4444'],
+  colors: ['#56CA00', '#FF4C51'],
   plotOptions: {
     bar: {
-      borderRadius: 8,
-      columnWidth: '60%',
+      borderRadius: 6,
+      columnWidth: '45%',
     },
   },
   dataLabels: {
@@ -451,7 +453,7 @@ const cashflowChartOptions = computed(() => ({
     type: 'donut',
     fontFamily: 'inherit',
   },
-  colors: ['#6cd219', '#ef4444'],
+  colors: ['#56CA00', '#FF4C51'],
   labels: ['Kirim', 'Chiqim'],
   legend: {
     position: 'bottom',
@@ -485,7 +487,7 @@ const paymentsChartOptions = computed(() => ({
     toolbar: { show: false },
     fontFamily: 'inherit',
   },
-  colors: ['#6cd219'],
+  colors: ['#01c0c8'],
   dataLabels: {
     enabled: false,
   },
@@ -534,7 +536,7 @@ const studentsChartOptions = computed(() => ({
     toolbar: { show: false },
     fontFamily: 'inherit',
   },
-  colors: ['#6cd219', '#3b82f6', '#ef4444'],
+  colors: ['#01c0c8', '#16B1FF', '#FF4C51'],
   stroke: {
     curve: 'smooth',
     width: 3,
@@ -648,36 +650,52 @@ onMounted(async () => {
 
 <style scoped>
 .statistics-page {
-  min-height: 100vh;
+  min-height: 100%;
 }
 
-.page-card {
-  border-radius: 12px;
-  background: white;
+.page-header {
+  margin-bottom: 24px;
 }
 
 .page-title {
-  padding: 24px 24px 0 24px;
-  border-bottom: 1px solid #e5e7eb;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgba(46, 38, 61, 0.9);
+  line-height: 1.3;
+}
+
+.page-subtitle {
+  font-size: 0.9375rem;
+  color: rgba(46, 38, 61, 0.68);
+  margin: 4px 0 0;
+}
+
+.filters-card {
+  background: #fff;
 }
 
 .stat-card {
-  border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 6px 20px 0 rgba(46, 38, 61, 0.14) !important;
 }
 
-.chart-card {
-  border-radius: 12px;
-  height: 100%;
-}
-
+.chart-card,
 .detail-card {
-  border-radius: 12px;
   height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card {
+    transition: none;
+  }
+  .stat-card:hover {
+    transform: none;
+  }
 }
 </style>

@@ -6,7 +6,6 @@
           <img src="/talimplus-logo.svg" alt="TalimPlus" class="logo-img" />
         </div>
       </div>
-      <v-divider></v-divider>
       <v-list density="compact" class="sidebar-menu">
         <!-- Statistics (standalone) -->
         <v-list-item
@@ -72,8 +71,7 @@
         <!-- Settings Group -->
         <v-list-group v-if="hasSettingsGroup" value="settings-group">
           <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-cog" title="Sozlamalar">
-            </v-list-item>
+            <v-list-item v-bind="props" prepend-icon="mdi-cog" title="Sozlamalar"> </v-list-item>
           </template>
           <v-list>
             <v-list-item
@@ -94,56 +92,56 @@
       </v-list>
 
       <!-- User Profile Card -->
-      <div class="sidebar-footer">
-        <v-card class="user-card" elevation="0">
-          <v-card-text class="d-flex align-center pa-3">
-            <v-avatar size="40" color="primary" class="mr-3">
-              <v-icon color="white">mdi-account</v-icon>
-            </v-avatar>
-            <div class="flex-grow-1">
-              <div class="text-body-2 font-weight-medium">
-                {{ userStore.user?.email || 'User' }}
-              </div>
-              <div class="text-caption text-medium-emphasis">
-                {{ getRoleLabel(userStore.user?.role || '') }}
-              </div>
-            </div>
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              :loading="logoutLoading"
-              :disabled="logoutLoading"
-              @click="handleLogout"
-            >
-              <v-icon size="20">mdi-logout</v-icon>
-            </v-btn>
-          </v-card-text>
-        </v-card>
-      </div>
     </v-navigation-drawer>
 
-    <v-app-bar class="app-bar" elevation="1" height="70">
+    <v-app-bar class="app-bar" flat height="66">
       <v-app-bar-nav-icon @click="drawer = !drawer" size="large"></v-app-bar-nav-icon>
       <v-spacer></v-spacer>
-      <v-menu>
+
+      <v-menu location="bottom end" offset="10" :close-on-content-click="true">
         <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props" variant="text" class="mr-2">
-            <v-avatar size="36" color="primary">
-              <v-icon color="white" size="20">mdi-account</v-icon>
-            </v-avatar>
-          </v-btn>
+          <button type="button" class="topbar-user" v-bind="props">
+            <div class="topbar-user-meta d-none d-sm-block">
+              <div class="topbar-user-name">{{ userStore.user?.email || 'Foydalanuvchi' }}</div>
+              <div class="topbar-user-role">{{ getRoleLabel(userStore.user?.role || '') }}</div>
+            </div>
+            <div class="topbar-avatar-wrap">
+              <v-avatar size="40" color="primary" class="topbar-avatar">
+                <v-icon color="white" size="22">mdi-account</v-icon>
+              </v-avatar>
+              <span class="topbar-avatar-status"></span>
+            </div>
+          </button>
         </template>
-        <v-list>
-          <v-list-item @click="goToProfile">
+
+        <v-list class="topbar-menu" width="240" density="comfortable">
+          <div class="topbar-menu-header">
+            <div class="topbar-avatar-wrap">
+              <v-avatar size="40" color="primary">
+                <v-icon color="white" size="22">mdi-account</v-icon>
+              </v-avatar>
+              <span class="topbar-avatar-status"></span>
+            </div>
+            <div class="topbar-menu-meta">
+              <div class="topbar-user-name">{{ userStore.user?.email || 'Foydalanuvchi' }}</div>
+              <div class="topbar-user-role">{{ getRoleLabel(userStore.user?.role || '') }}</div>
+            </div>
+          </div>
+          <v-divider class="my-1"></v-divider>
+          <v-list-item @click="goToProfile" rounded="lg">
             <template v-slot:prepend>
-              <v-icon>mdi-account</v-icon>
+              <v-icon size="20">mdi-account-outline</v-icon>
             </template>
             <v-list-item-title>Profil</v-list-item-title>
           </v-list-item>
-          <v-list-item @click="handleLogout" :disabled="logoutLoading">
+          <v-list-item
+            class="topbar-logout"
+            :disabled="logoutLoading"
+            rounded="lg"
+            @click="handleLogout"
+          >
             <template v-slot:prepend>
-              <v-icon>mdi-logout</v-icon>
+              <v-icon size="20">mdi-logout</v-icon>
             </template>
             <v-list-item-title>Chiqish</v-list-item-title>
           </v-list-item>
@@ -290,16 +288,19 @@ const handleLogout = async () => {
 
 <style scoped>
 .app-container {
-  background: #f5f7fa;
+  background: #f4f5fa;
 }
 
+/* ---- Sidebar ---------------------------------------------------------- */
 .sidebar {
-  background: white !important;
-  border-right: 1px solid #e5e7eb;
+  background: #ffffff !important;
+  border-right: 1px solid rgba(46, 38, 61, 0.12);
 }
 
 .sidebar-header {
-  padding: 24px 20px;
+  padding: 4px 24px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid lightgray;
 }
 
 .sidebar-logo {
@@ -309,67 +310,172 @@ const handleLogout = async () => {
 }
 
 .logo-img {
-  height: 40px;
+  height: 52px;
   width: auto;
 }
 
 .sidebar-menu {
-  padding: 8px;
+  padding: 4px 12px 12px;
 }
 
+/* Base nav item */
 .sidebar-menu :deep(.v-list-item) {
   border-radius: 8px;
-  margin: 0 8px 4px 8px;
-  min-height: 44px;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
+  margin: 2px 0;
+  min-height: 42px;
+  padding-inline: 12px !important;
+  color: rgba(46, 38, 61, 0.68);
+  transition:
+    background-color 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.sidebar-menu :deep(.v-list-item-title) {
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.sidebar-menu :deep(.v-list-item .v-icon) {
+  color: rgba(46, 38, 61, 0.68);
+  font-size: 22px;
+}
+
+/* Hover — soft primary tint */
+.sidebar-menu :deep(.v-list-item:hover:not(.v-list-item--active)) {
+  background: rgba(1, 192, 200, 0.08);
+  color: rgb(1, 192, 200);
+}
+
+.sidebar-menu :deep(.v-list-item:hover:not(.v-list-item--active) .v-icon) {
+  color: rgb(1, 192, 200);
+}
+
+/* Active — Materio signature gradient pill with soft brand glow */
 .sidebar-menu :deep(.v-list-item--active) {
-  background: #01c0c8 !important;
-  color: white !important;
+  background: linear-gradient(
+    72.47deg,
+    rgb(1, 192, 200) 22.16%,
+    rgba(1, 192, 200, 0.7) 76.47%
+  ) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px 0 rgba(1, 192, 200, 0.48);
 }
 
-.sidebar-menu :deep(.v-list-item--active .v-icon) {
-  color: white !important;
+.sidebar-menu :deep(.v-list-item--active .v-icon),
+.sidebar-menu :deep(.v-list-item--active .v-list-item-title) {
+  color: #ffffff !important;
 }
 
 .sidebar-menu :deep(.v-list-item--active .v-list-item-title) {
-  color: white !important;
   font-weight: 500;
 }
 
+/* Group activator + nested items */
 .sidebar-menu :deep(.v-list-group__items .v-list-item) {
-  padding-left: 48px !important;
+  padding-inline-start: 42px !important;
 }
 
-.sidebar-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px;
-  border-top: 1px solid #e5e7eb;
-  background: white;
-}
-
-.user-card {
-  border-radius: 12px;
-  background: #f9fafb;
-}
-
+/* ---- Topbar (Materio floating navbar) --------------------------------- */
 .app-bar {
-  background: white !important;
-  border-bottom: 1px solid #e5e7eb;
+  background: rgba(244, 245, 250, 0.78) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(46, 38, 61, 0.08);
 }
 
+/* User identity block on the right of the header */
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px 4px 12px;
+  margin-right: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topbar-user:hover {
+  background: rgba(46, 38, 61, 0.05);
+}
+
+.topbar-user-meta {
+  text-align: right;
+  line-height: 1.25;
+}
+
+.topbar-user-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(46, 38, 61, 0.9);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-user-role {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(46, 38, 61, 0.6);
+}
+
+.topbar-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.topbar-avatar {
+  box-shadow: 0 2px 6px 0 rgba(1, 192, 200, 0.4);
+}
+
+/* Online status dot */
+.topbar-avatar-status {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #56ca00;
+  border: 2px solid #ffffff;
+}
+
+/* Dropdown menu */
+.topbar-menu {
+  padding: 6px;
+}
+
+.topbar-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 10px;
+}
+
+.topbar-menu-meta {
+  min-width: 0;
+}
+
+.topbar-menu :deep(.topbar-logout) {
+  color: rgb(255, 76, 81);
+}
+
+.topbar-menu :deep(.topbar-logout .v-icon) {
+  color: rgb(255, 76, 81);
+}
+
+/* ---- Main content ----------------------------------------------------- */
 .main-content {
-  background: #f5f7fa;
+  background: #f4f5fa;
 }
 
 .content-wrapper {
   padding: 24px;
-  max-width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  width: 100%;
 }
 
 @media (max-width: 960px) {

@@ -217,7 +217,10 @@ const submit = async () => {
 
 .register-left {
   flex: 1;
-  background: #f3f3f3;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(1, 192, 200, 0.1), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(1, 192, 200, 0.08), transparent 50%),
+    #f4f5fa;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -272,28 +275,29 @@ const submit = async () => {
 }
 
 .register-header {
-  text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .register-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-size: 26px;
+  font-weight: 600;
+  color: rgba(46, 38, 61, 0.9);
   margin-bottom: 8px;
-  line-height: 1.2;
+  line-height: 1.3;
+  text-wrap: balance;
 }
 
 .register-subtitle {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 15px;
+  color: rgba(46, 38, 61, 0.68);
   margin: 0;
+  line-height: 1.5;
 }
 
 .divider-text {
   background: white;
   padding: 0 16px;
-  color: #9ca3af;
+  color: rgba(46, 38, 61, 0.5);
   font-size: 14px;
 }
 
@@ -301,11 +305,11 @@ const submit = async () => {
   text-align: center;
   margin-top: 24px;
   font-size: 14px;
-  color: #6b7280;
+  color: rgba(46, 38, 61, 0.68);
 }
 
 .footer-link {
-  color: #1976d2;
+  color: rgb(1, 192, 200);
   text-decoration: none;
   font-weight: 500;
   margin-left: 4px;
@@ -313,7 +317,7 @@ const submit = async () => {
 }
 
 .footer-link:hover {
-  color: #1565c0;
+  color: rgb(0, 170, 177);
   text-decoration: underline;
 }
 

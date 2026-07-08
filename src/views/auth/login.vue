@@ -11,13 +11,9 @@
     <div class="login-right">
       <div class="login-form-wrapper">
         <div class="login-header">
-          <h1 class="login-title">Welcome to TalimPlus</h1>
-          <p class="login-subtitle">Your Admin Dashboard</p>
+          <h1 class="login-title">TalimPlus'ga xush kelibsiz 👋</h1>
+          <p class="login-subtitle">Hisobingizga kiring va boshqaruvni boshlang</p>
         </div>
-
-        <v-divider class="my-6">
-          <span class="divider-text">or sign in with</span>
-        </v-divider>
 
         <Form @submit="submit" ref="formRef">
           <Field name="email" rules="required|email" v-slot="{ handleChange, handleBlur, errors }">
@@ -59,15 +55,15 @@
             :loading="loading"
             :disabled="loading"
             block
-            class="mb-4"
+            class="mb-4 login-submit"
           >
-            Sign In
+            Kirish
           </v-btn>
         </Form>
 
         <div class="login-footer">
-          <span class="footer-text">New to Ta'lim Markazi?</span>
-          <router-link to="/register" class="footer-link">Create an account</router-link>
+          <span class="footer-text">TalimPlus'da yangimisiz?</span>
+          <router-link to="/register" class="footer-link">Hisob yarating</router-link>
         </div>
       </div>
     </div>
@@ -134,7 +130,10 @@ const submit = async () => {
 
 .login-left {
   flex: 1;
-  background: #f3f3f3;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(1, 192, 200, 0.1), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(1, 192, 200, 0.08), transparent 50%),
+    #f4f5fa;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -188,40 +187,38 @@ const submit = async () => {
 }
 
 .login-header {
-  text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .login-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-size: 26px;
+  font-weight: 600;
+  color: rgba(46, 38, 61, 0.9);
   margin-bottom: 8px;
-  line-height: 1.2;
+  line-height: 1.3;
+  text-wrap: balance;
 }
 
 .login-subtitle {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 15px;
+  color: rgba(46, 38, 61, 0.68);
   margin: 0;
+  line-height: 1.5;
 }
 
-.divider-text {
-  background: white;
-  padding: 0 16px;
-  color: #9ca3af;
-  font-size: 14px;
+.login-submit {
+  letter-spacing: 0.02em;
 }
 
 .login-footer {
   text-align: center;
   margin-top: 24px;
   font-size: 14px;
-  color: #6b7280;
+  color: rgba(46, 38, 61, 0.68);
 }
 
 .footer-link {
-  color: #1976d2;
+  color: rgb(1, 192, 200);
   text-decoration: none;
   font-weight: 500;
   margin-left: 4px;
@@ -229,7 +226,7 @@ const submit = async () => {
 }
 
 .footer-link:hover {
-  color: #1565c0;
+  color: rgb(0, 170, 177);
   text-decoration: underline;
 }
 

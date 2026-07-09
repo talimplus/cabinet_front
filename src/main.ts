@@ -7,6 +7,7 @@ import { required, email } from '@vee-validate/rules'
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
+import i18n from './plugins/i18n'
 import { useUserStore } from './stores/user'
 import { getMe } from './services/pages/auth'
 
@@ -22,6 +23,7 @@ defineRule('email', email)
 app.use(pinia)
 app.use(router)
 app.use(vuetify)
+app.use(i18n)
 app.use(VueApexCharts)
 
 // Initialize user from token if exists

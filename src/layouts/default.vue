@@ -19,13 +19,13 @@
           <template v-slot:prepend>
             <v-icon :icon="item.icon"></v-icon>
           </template>
-          <v-list-item-title v-text="item.text"></v-list-item-title>
+          <v-list-item-title v-text="t(item.text)"></v-list-item-title>
         </v-list-item>
 
         <!-- Payment Group -->
         <v-list-group v-if="hasPaymentGroup" value="payment-group">
           <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-cash-multiple" title="To'lovlar">
+            <v-list-item v-bind="props" prepend-icon="mdi-cash-multiple" :title="t('layout.groups.payment')">
             </v-list-item>
           </template>
           <v-list>
@@ -40,7 +40,7 @@
               <template v-slot:prepend>
                 <v-icon :icon="item.icon"></v-icon>
               </template>
-              <v-list-item-title v-text="item.text"></v-list-item-title>
+              <v-list-item-title v-text="t(item.text)"></v-list-item-title>
             </v-list-item>
           </v-list>
         </v-list-group>
@@ -48,7 +48,7 @@
         <!-- Students Group -->
         <v-list-group v-if="hasStudentsGroup" value="students-group">
           <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-account-school" title="O'quvchilar">
+            <v-list-item v-bind="props" prepend-icon="mdi-account-school" :title="t('layout.groups.students')">
             </v-list-item>
           </template>
           <v-list>
@@ -63,7 +63,7 @@
               <template v-slot:prepend>
                 <v-icon :icon="item.icon"></v-icon>
               </template>
-              <v-list-item-title v-text="item.text"></v-list-item-title>
+              <v-list-item-title v-text="t(item.text)"></v-list-item-title>
             </v-list-item>
           </v-list>
         </v-list-group>
@@ -71,7 +71,7 @@
         <!-- Settings Group -->
         <v-list-group v-if="hasSettingsGroup" value="settings-group">
           <template v-slot:activator="{ props }">
-            <v-list-item v-bind="props" prepend-icon="mdi-cog" title="Sozlamalar"> </v-list-item>
+            <v-list-item v-bind="props" prepend-icon="mdi-cog" :title="t('layout.groups.settings')"> </v-list-item>
           </template>
           <v-list>
             <v-list-item
@@ -85,7 +85,7 @@
               <template v-slot:prepend>
                 <v-icon :icon="item.icon"></v-icon>
               </template>
-              <v-list-item-title v-text="item.text"></v-list-item-title>
+              <v-list-item-title v-text="t(item.text)"></v-list-item-title>
             </v-list-item>
           </v-list>
         </v-list-group>
@@ -98,11 +98,37 @@
       <v-app-bar-nav-icon @click="drawer = !drawer" size="large"></v-app-bar-nav-icon>
       <v-spacer></v-spacer>
 
+      <v-menu location="bottom end" offset="10">
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" variant="text" class="lang-switcher" size="small">
+            <v-icon start size="20">mdi-translate</v-icon>
+            {{ locale === 'ru' ? t('layout.russian') : t('layout.uzbek') }}
+            <v-icon end size="18">mdi-chevron-down</v-icon>
+          </v-btn>
+        </template>
+        <v-list density="compact" width="160">
+          <v-list-item
+            :active="locale === 'uz'"
+            @click="changeLocale('uz')"
+            rounded="lg"
+          >
+            <v-list-item-title>{{ t('layout.uzbek') }}</v-list-item-title>
+          </v-list-item>
+          <v-list-item
+            :active="locale === 'ru'"
+            @click="changeLocale('ru')"
+            rounded="lg"
+          >
+            <v-list-item-title>{{ t('layout.russian') }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
       <v-menu location="bottom end" offset="10" :close-on-content-click="true">
         <template v-slot:activator="{ props }">
           <button type="button" class="topbar-user" v-bind="props">
             <div class="topbar-user-meta d-none d-sm-block">
-              <div class="topbar-user-name">{{ userStore.user?.email || 'Foydalanuvchi' }}</div>
+              <div class="topbar-user-name">{{ userStore.user?.email || t('layout.user') }}</div>
               <div class="topbar-user-role">{{ getRoleLabel(userStore.user?.role || '') }}</div>
             </div>
             <div class="topbar-avatar-wrap">
@@ -123,7 +149,7 @@
               <span class="topbar-avatar-status"></span>
             </div>
             <div class="topbar-menu-meta">
-              <div class="topbar-user-name">{{ userStore.user?.email || 'Foydalanuvchi' }}</div>
+              <div class="topbar-user-name">{{ userStore.user?.email || t('layout.user') }}</div>
               <div class="topbar-user-role">{{ getRoleLabel(userStore.user?.role || '') }}</div>
             </div>
           </div>
@@ -132,7 +158,7 @@
             <template v-slot:prepend>
               <v-icon size="20">mdi-account-outline</v-icon>
             </template>
-            <v-list-item-title>Profil</v-list-item-title>
+            <v-list-item-title>{{ t('layout.profile') }}</v-list-item-title>
           </v-list-item>
           <v-list-item
             class="topbar-logout"
@@ -143,7 +169,7 @@
             <template v-slot:prepend>
               <v-icon size="20">mdi-logout</v-icon>
             </template>
-            <v-list-item-title>Chiqish</v-list-item-title>
+            <v-list-item-title>{{ t('layout.logout') }}</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -160,42 +186,49 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { logout } from '@/services/pages/auth'
 import { useUserStore } from '@/stores/user'
+import { setLocale, type AppLocale } from '@/plugins/i18n'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t, locale } = useI18n()
 
-// Menu items organized by groups
+const changeLocale = (lang: AppLocale) => {
+  setLocale(lang)
+}
+
+// Menu items organized by groups (text = i18n key)
 const allItems = {
   standalone: [
-    { text: 'Statistika', icon: 'mdi-chart-line', path: '/statistics' },
-    { text: 'Ishchilar', icon: 'mdi-account', path: '/users' },
-    { text: 'Guruhlar', icon: 'mdi-flag', path: '/groups' },
+    { text: 'layout.menu.statistics', icon: 'mdi-chart-line', path: '/statistics' },
+    { text: 'layout.menu.users', icon: 'mdi-account', path: '/users' },
+    { text: 'layout.menu.groups', icon: 'mdi-flag', path: '/groups' },
   ],
   payment: [
-    { text: "To'lovlar", icon: 'mdi-cash', path: '/payments' },
-    { text: 'Ish haqi', icon: 'mdi-cash-multiple', path: '/payroll' },
-    { text: 'Chiqimlar', icon: 'mdi-cash-minus', path: '/expenses' },
+    { text: 'layout.menu.payments', icon: 'mdi-cash', path: '/payments' },
+    { text: 'layout.menu.payroll', icon: 'mdi-cash-multiple', path: '/payroll' },
+    { text: 'layout.menu.expenses', icon: 'mdi-cash-minus', path: '/expenses' },
     {
-      text: "Tasdiqlash uchun to'lovlar",
+      text: 'layout.menu.pendingReceipts',
       icon: 'mdi-receipt-text-check',
       path: '/pending-receipts',
       adminOnly: true,
     },
   ],
   students: [
-    { text: 'Qabul', icon: 'mdi-account-school', path: '/reception' },
-    { text: 'Leads', icon: 'mdi-account-plus', path: '/leads' },
-    { text: "O'quvchilar", icon: 'mdi-account-school', path: '/students' },
-    { text: "To'xtatilgan", icon: 'mdi-account-school', path: '/stopped' },
-    { text: "E'tiborsiz", icon: 'mdi-account-school', path: '/ignored' },
-    { text: 'Tugallangan', icon: 'mdi-account-school', path: '/finished' },
+    { text: 'layout.menu.reception', icon: 'mdi-account-school', path: '/reception' },
+    { text: 'layout.menu.leads', icon: 'mdi-account-plus', path: '/leads' },
+    { text: 'layout.menu.students', icon: 'mdi-account-school', path: '/students' },
+    { text: 'layout.menu.stopped', icon: 'mdi-account-school', path: '/stopped' },
+    { text: 'layout.menu.ignored', icon: 'mdi-account-school', path: '/ignored' },
+    { text: 'layout.menu.finished', icon: 'mdi-account-school', path: '/finished' },
   ],
   settings: [
-    { text: 'Markazlar', icon: 'mdi-domain', path: '/centers' },
-    { text: 'Fanlar', icon: 'mdi-clock', path: '/subjects' },
-    { text: 'Xonalar', icon: 'mdi-door', path: '/rooms' },
+    { text: 'layout.menu.centers', icon: 'mdi-domain', path: '/centers' },
+    { text: 'layout.menu.subjects', icon: 'mdi-clock', path: '/subjects' },
+    { text: 'layout.menu.rooms', icon: 'mdi-door', path: '/rooms' },
   ],
 }
 
@@ -252,14 +285,10 @@ const drawer = ref(null)
 const logoutLoading = ref(false)
 
 const getRoleLabel = (role: string): string => {
-  const roleLabels: Record<string, string> = {
-    admin: 'Administrator',
-    super_admin: 'Super Administrator',
-    teacher: "O'qituvchi",
-    reception: 'Qabul',
-    manager: 'Menejer',
-  }
-  return roleLabels[role] || role
+  if (!role) return ''
+  const key = `layout.roles.${role}`
+  const label = t(key)
+  return label === key ? role : label
 }
 
 const goToProfile = () => {
@@ -464,6 +493,15 @@ const handleLogout = async () => {
 
 .topbar-menu :deep(.topbar-logout .v-icon) {
   color: rgb(255, 76, 81);
+}
+
+/* Language switcher in the top bar */
+.lang-switcher {
+  color: rgba(46, 38, 61, 0.68);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+  margin-right: 4px;
 }
 
 /* ---- Main content ----------------------------------------------------- */

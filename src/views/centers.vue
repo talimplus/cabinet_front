@@ -1,8 +1,8 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
-      Centers
-      <v-btn @click="dialog = true" color="primary">Create</v-btn>
+      {{ $t('centers.title') }}
+      <v-btn @click="dialog = true" color="primary">{{ $t('common.create') }}</v-btn>
     </v-card-title>
     <v-row class="px-4">
       <v-col cols="3">
@@ -11,7 +11,7 @@
           v-model="params.name"
           density="compact"
           variant="outlined"
-          label="Center Name"
+          :label="$t('centers.searchLabel')"
         ></v-text-field>
       </v-col>
     </v-row>
@@ -61,9 +61,12 @@
 
 <script setup lang="ts">
 import CenterCreate from '@/components/pages/center/CenterCreate.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchCenters, deleteCenter } from '@/services/pages/centers'
 import type { Center, CentersParams } from '@/types/center.types'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const items = ref<Center[]>([])
@@ -118,12 +121,12 @@ const remove = async (id: number) => {
   }
 }
 
-const headers = [
-  { title: 'ID', key: 'id' },
-  { title: 'Name', key: 'name' },
-  { title: 'Default', key: 'isDefault' },
-  { title: 'Actions', key: 'actions' },
-]
+const headers = computed(() => [
+  { title: t('centers.table.id'), key: 'id' },
+  { title: t('common.name'), key: 'name' },
+  { title: t('centers.table.default'), key: 'isDefault' },
+  { title: t('common.actions'), key: 'actions' },
+])
 </script>
 
 <style scoped></style>

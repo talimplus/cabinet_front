@@ -1,8 +1,8 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
-      Leads
-      <v-btn color="primary" @click="openModal = true">Yaratish</v-btn>
+      {{ $t('leads.title') }}
+      <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
 
     <v-card-text>
@@ -13,7 +13,7 @@
             :items="centerOptions"
             item-title="title"
             item-value="value"
-            label="Markaz"
+            :label="$t('leads.center')"
             variant="outlined"
             density="compact"
             clearable
@@ -27,7 +27,7 @@
             :items="statusOptions"
             item-title="title"
             item-value="value"
-            label="Status"
+            :label="$t('common.status')"
             variant="outlined"
             density="compact"
             clearable
@@ -40,7 +40,7 @@
             :items="groupOptions"
             item-title="title"
             item-value="value"
-            label="Guruh"
+            :label="$t('leads.group')"
             variant="outlined"
             density="compact"
             clearable
@@ -50,7 +50,7 @@
         <v-col cols="12" md="3">
           <v-text-field
             v-model="params.name"
-            label="Ism bo'yicha"
+            :label="$t('leads.searchByName')"
             variant="outlined"
             density="compact"
             clearable
@@ -60,7 +60,7 @@
         <v-col cols="12" md="3">
           <v-text-field
             v-model="params.phone"
-            label="Telefon"
+            :label="$t('common.phone')"
             variant="outlined"
             density="compact"
             clearable
@@ -70,7 +70,7 @@
         <v-col cols="12" md="3">
           <v-date-input
             v-model="params.followUpDate"
-            label="Keyinroq sanasi"
+            :label="$t('leads.followUpDate')"
             variant="outlined"
             density="compact"
             clearable
@@ -155,18 +155,18 @@
 
     <v-dialog v-model="discardDialog.show" max-width="480">
       <v-card>
-        <v-card-title class="text-h6 pa-4">Sabab</v-card-title>
+        <v-card-title class="text-h6 pa-4">{{ $t('leads.dialog.reasonTitle') }}</v-card-title>
         <v-card-text class="pa-4">
           <v-textarea
             v-model="discardDialog.reason"
-            label="Sabab (ixtiyoriy)"
+            :label="$t('leads.dialog.reasonLabel')"
             rows="3"
           ></v-textarea>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="discardDialog.show = false" :disabled="discardDialog.loading">
-            Bekor qilish
+            {{ $t('common.cancel') }}
           </v-btn>
           <v-btn
             color="error"
@@ -174,7 +174,7 @@
             :loading="discardDialog.loading"
             @click="confirmDiscard"
           >
-            O'qishni xohlamadi
+            {{ $t('leads.dialog.notInterested') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -184,6 +184,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchLeads, changeLeadStatus } from '@/services/pages/leads'
 import CreateLeadModal from '@/components/leads/CreateLeadModal.vue'
 import type { Lead } from '@/types/leads.types'
@@ -203,6 +204,7 @@ const groups = ref<Group[]>([])
 const loadingCenters = ref(false)
 const totalPages = ref(1)
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
@@ -218,10 +220,10 @@ const params = ref<LeadsParams>({
 })
 
 const statusOptions = [
-  { title: 'Yangi', value: LeadStatus.NEW },
-  { title: 'Rad etilgan', value: LeadStatus.DISCARDED },
-  { title: "Konvert bo'lgan", value: LeadStatus.CONVERTED },
-  { title: 'Keyinroq', value: LeadStatus.LATER },
+  { title: t('leads.status.new'), value: LeadStatus.NEW },
+  { title: t('leads.status.discarded'), value: LeadStatus.DISCARDED },
+  { title: t('leads.status.converted'), value: LeadStatus.CONVERTED },
+  { title: t('leads.status.later'), value: LeadStatus.LATER },
 ]
 
 const centerOptions = computed(() => {
@@ -313,10 +315,10 @@ const clearForm = () => {
 
 const getStatusLabel = (status?: LeadStatus): string => {
   const labels: Record<string, string> = {
-    [LeadStatus.NEW]: 'Yangi',
-    [LeadStatus.DISCARDED]: 'Rad etilgan',
-    [LeadStatus.CONVERTED]: "Konvert bo'lgan",
-    [LeadStatus.LATER]: 'Keyinroq',
+    [LeadStatus.NEW]: t('leads.status.new'),
+    [LeadStatus.DISCARDED]: t('leads.status.discarded'),
+    [LeadStatus.CONVERTED]: t('leads.status.converted'),
+    [LeadStatus.LATER]: t('leads.status.later'),
   }
   if (!status) return '—'
   return labels[status] || status
@@ -339,7 +341,7 @@ const getStatusColor = (status?: LeadStatus): string => {
 
 const getStatusOptions = (status?: LeadStatus) => {
   if (status === LeadStatus.NEW) {
-    return [{ title: "O'qishni xohlamadi", value: LeadStatus.DISCARDED }]
+    return [{ title: t('leads.dialog.notInterested'), value: LeadStatus.DISCARDED }]
   }
   return []
 }
@@ -374,12 +376,12 @@ const confirmDiscard = async () => {
 }
 
 const headers = [
-  { title: 'ID', key: 'id' },
-  { title: 'Ism', key: 'fullName' },
-  { title: 'Telefon', key: 'phone' },
-  { title: 'Status', key: 'status' },
-  { title: 'Keyinroq sanasi', key: 'followUpDate' },
-  { title: 'Amallar', key: 'actions' },
+  { title: t('leads.table.id'), key: 'id' },
+  { title: t('common.name'), key: 'fullName' },
+  { title: t('common.phone'), key: 'phone' },
+  { title: t('common.status'), key: 'status' },
+  { title: t('leads.followUpDate'), key: 'followUpDate' },
+  { title: t('common.actions'), key: 'actions' },
 ]
 
 const formatDate = (dateString: string | null | undefined): string => {

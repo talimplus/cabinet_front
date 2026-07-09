@@ -2,8 +2,8 @@
   <div class="statistics-page">
     <!-- Page header -->
     <div class="page-header">
-      <h1 class="page-title">Statistika</h1>
-      <p class="page-subtitle">Markaz bo'yicha umumiy ko'rsatkichlar</p>
+      <h1 class="page-title">{{ $t('statistics.title') }}</h1>
+      <p class="page-subtitle">{{ $t('statistics.subtitle') }}</p>
     </div>
 
     <!-- Filters -->
@@ -16,7 +16,7 @@
               :items="centerOptions"
               item-title="title"
               item-value="value"
-              label="Markaz"
+              :label="$t('statistics.filters.center')"
               variant="outlined"
               density="comfortable"
               hide-details
@@ -26,7 +26,7 @@
           <v-col cols="12" md="4">
             <v-text-field
               v-model="filters.fromMonth"
-              label="Boshlanish oyi"
+              :label="$t('statistics.filters.fromMonth')"
               type="month"
               variant="outlined"
               density="comfortable"
@@ -37,7 +37,7 @@
           <v-col cols="12" md="4">
             <v-text-field
               v-model="filters.toMonth"
-              label="Tugash oyi"
+              :label="$t('statistics.filters.toMonth')"
               type="month"
               variant="outlined"
               density="comfortable"
@@ -63,7 +63,7 @@
                 <v-card-text class="text-center pa-4">
                   <v-icon size="40" color="purple" class="mb-2">mdi-account</v-icon>
                   <div class="text-h5 font-weight-bold">{{ dashboard.students.totalCount }}</div>
-                  <div class="text-caption text-medium-emphasis">O'quvchilar</div>
+                  <div class="text-caption text-medium-emphasis">{{ $t('statistics.cards.students') }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -72,7 +72,7 @@
                 <v-card-text class="text-center pa-4">
                   <v-icon size="40" color="orange" class="mb-2">mdi-account-group</v-icon>
                   <div class="text-h5 font-weight-bold">{{ dashboard.students.activeCount }}</div>
-                  <div class="text-caption text-medium-emphasis">Faol</div>
+                  <div class="text-caption text-medium-emphasis">{{ $t('statistics.cards.active') }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -81,7 +81,7 @@
                 <v-card-text class="text-center pa-4">
                   <v-icon size="40" color="info" class="mb-2">mdi-email</v-icon>
                   <div class="text-h5 font-weight-bold">{{ dashboard.students.addedCount }}</div>
-                  <div class="text-caption text-medium-emphasis">Qo'shilgan</div>
+                  <div class="text-caption text-medium-emphasis">{{ $t('statistics.cards.added') }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -90,7 +90,7 @@
                 <v-card-text class="text-center pa-4">
                   <v-icon size="40" color="red" class="mb-2">mdi-star</v-icon>
                   <div class="text-h5 font-weight-bold">{{ dashboard.students.stoppedCount }}</div>
-                  <div class="text-caption text-medium-emphasis">To'xtatilgan</div>
+                  <div class="text-caption text-medium-emphasis">{{ $t('statistics.cards.stopped') }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -99,7 +99,7 @@
                 <v-card-text class="text-center pa-4">
                   <v-icon size="40" color="success" class="mb-2">mdi-leaf</v-icon>
                   <div class="text-h5 font-weight-bold">{{ formatCurrencyShort(dashboard.payroll.amountPaid) }}</div>
-                  <div class="text-caption text-medium-emphasis">Ish haqi</div>
+                  <div class="text-caption text-medium-emphasis">{{ $t('statistics.cards.payroll') }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -108,7 +108,7 @@
                 <v-card-text class="text-center pa-4">
                   <v-icon size="40" color="info" class="mb-2">mdi-chart-line</v-icon>
                   <div class="text-h5 font-weight-bold">{{ dashboard.expenses.totalCount }}</div>
-                  <div class="text-caption text-medium-emphasis">Hisobotlar</div>
+                  <div class="text-caption text-medium-emphasis">{{ $t('statistics.cards.reports') }}</div>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -121,8 +121,8 @@
               <v-card class="chart-card" elevation="0" border>
                 <v-card-title class="d-flex align-center justify-space-between">
                   <div>
-                    <div class="text-h6 font-weight-bold">Kirim va Chiqim</div>
-                    <div class="text-caption text-medium-emphasis">Umumiy ko'rinish</div>
+                    <div class="text-h6 font-weight-bold">{{ $t('statistics.charts.revenueTitle') }}</div>
+                    <div class="text-caption text-medium-emphasis">{{ $t('statistics.charts.revenueSubtitle') }}</div>
                   </div>
                   <v-select
                     v-model="selectedPeriod"
@@ -148,7 +148,7 @@
             <v-col cols="12" lg="4">
               <v-card class="chart-card" elevation="0" border>
                 <v-card-title>
-                  <div class="text-h6 font-weight-bold">Jami pul oqimi</div>
+                  <div class="text-h6 font-weight-bold">{{ $t('statistics.charts.cashflowTitle') }}</div>
                 </v-card-title>
                 <v-card-text>
                   <div class="text-center mb-4">
@@ -176,13 +176,13 @@
             <v-col cols="12" lg="6">
               <v-card class="chart-card" elevation="0" border>
                 <v-card-title>
-                  <div class="text-h6 font-weight-bold">Oylik to'lovlar</div>
+                  <div class="text-h6 font-weight-bold">{{ $t('statistics.charts.paymentsTitle') }}</div>
                 </v-card-title>
                 <v-card-text>
                   <div class="mb-4">
                     <div class="text-h4 font-weight-bold">{{ formatCurrencyShort(dashboard.payments.amountPaid) }}</div>
                     <div class="text-caption text-medium-emphasis">
-                      To'langan: {{ formatCurrency(dashboard.payments.amountPaid) }}
+                      {{ $t('statistics.details.paidWithAmount', { amount: formatCurrency(dashboard.payments.amountPaid) }) }}
                     </div>
                   </div>
                   <apexchart
@@ -199,7 +199,7 @@
             <v-col cols="12" lg="6">
               <v-card class="chart-card" elevation="0" border>
                 <v-card-title>
-                  <div class="text-h6 font-weight-bold">O'quvchilar statistikasi</div>
+                  <div class="text-h6 font-weight-bold">{{ $t('statistics.charts.studentsTitle') }}</div>
                 </v-card-title>
                 <v-card-text>
                   <apexchart
@@ -217,11 +217,11 @@
           <v-row>
             <v-col cols="12" md="4">
               <v-card class="detail-card" elevation="0" border>
-                <v-card-title class="text-subtitle-1 font-weight-bold">To'lovlar</v-card-title>
+                <v-card-title class="text-subtitle-1 font-weight-bold">{{ $t('statistics.details.payments') }}</v-card-title>
                 <v-card-text>
                   <div class="mb-3">
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">Jami qarzdorlik</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.totalDebt') }}</span>
                       <span class="text-h6 font-weight-bold">{{ formatCurrency(dashboard.payments.amountDue) }}</span>
                     </div>
                     <v-progress-linear
@@ -233,7 +233,7 @@
                   </div>
                   <div class="mb-3">
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">To'langan</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.paid') }}</span>
                       <span class="text-h6 text-success font-weight-bold">{{ formatCurrency(dashboard.payments.amountPaid) }}</span>
                     </div>
                     <v-progress-linear
@@ -245,7 +245,7 @@
                   </div>
                   <div>
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">Qolgan</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.remaining') }}</span>
                       <span class="text-h6 text-error font-weight-bold">{{ formatCurrency(dashboard.payments.remainingAmount) }}</span>
                     </div>
                     <v-progress-linear
@@ -261,17 +261,17 @@
 
             <v-col cols="12" md="4">
               <v-card class="detail-card" elevation="0" border>
-                <v-card-title class="text-subtitle-1 font-weight-bold">Chiqimlar</v-card-title>
+                <v-card-title class="text-subtitle-1 font-weight-bold">{{ $t('statistics.details.expenses') }}</v-card-title>
                 <v-card-text>
                   <div class="mb-3">
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">Jami summa</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.totalAmount') }}</span>
                       <span class="text-h6 text-error font-weight-bold">{{ formatCurrency(dashboard.expenses.totalAmount) }}</span>
                     </div>
                   </div>
                   <div>
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">Jami soni</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.totalCount') }}</span>
                       <span class="text-h6 font-weight-bold">{{ dashboard.expenses.totalCount }}</span>
                     </div>
                   </div>
@@ -281,11 +281,11 @@
 
             <v-col cols="12" md="4">
               <v-card class="detail-card" elevation="0" border>
-                <v-card-title class="text-subtitle-1 font-weight-bold">Ish haqi</v-card-title>
+                <v-card-title class="text-subtitle-1 font-weight-bold">{{ $t('statistics.details.payroll') }}</v-card-title>
                 <v-card-text>
                   <div class="mb-3">
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">Jami qarzdorlik</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.totalDebt') }}</span>
                       <span class="text-h6 font-weight-bold">{{ formatCurrency(dashboard.payroll.amountDue) }}</span>
                     </div>
                     <v-progress-linear
@@ -297,7 +297,7 @@
                   </div>
                   <div class="mb-3">
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">To'langan</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.paid') }}</span>
                       <span class="text-h6 text-success font-weight-bold">{{ formatCurrency(dashboard.payroll.amountPaid) }}</span>
                     </div>
                     <v-progress-linear
@@ -309,7 +309,7 @@
                   </div>
                   <div>
                     <div class="d-flex justify-space-between align-center mb-2">
-                      <span class="text-caption text-medium-emphasis">Qolgan</span>
+                      <span class="text-caption text-medium-emphasis">{{ $t('statistics.details.remaining') }}</span>
                       <span class="text-h6 text-error font-weight-bold">{{ formatCurrency(dashboard.payroll.remainingAmount) }}</span>
                     </div>
                     <v-progress-linear
@@ -328,18 +328,21 @@
     <!-- Empty State -->
     <div v-else class="text-center py-12">
       <v-icon size="64" color="grey">mdi-chart-line</v-icon>
-      <div class="text-h6 mt-4 text-medium-emphasis">Ma'lumotlar topilmadi</div>
+      <div class="text-h6 mt-4 text-medium-emphasis">{{ $t('statistics.noData') }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchDashboard } from '@/services/pages/statistics'
 import type { DashboardResponse, DashboardParams } from '@/types/statistics.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 import dayjs from 'dayjs'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const dashboard = ref<DashboardResponse | null>(null)
@@ -352,10 +355,10 @@ const filters = ref<DashboardParams>({
   toMonth: dayjs().add(1, 'month').format('YYYY-MM'),
 })
 
-const periodOptions = [
-  { title: 'Oy', value: 'month' },
-  { title: 'Yil', value: 'year' },
-]
+const periodOptions = computed(() => [
+  { title: t('statistics.periods.month'), value: 'month' },
+  { title: t('statistics.periods.year'), value: 'year' },
+])
 
 const centerOptions = computed(() => {
   return centers.value.map(center => ({
@@ -438,11 +441,11 @@ const revenueChartSeries = computed(() => {
   
   return [
     {
-      name: 'Kirim',
+      name: t('statistics.charts.income'),
       data: paidData,
     },
     {
-      name: 'Chiqim',
+      name: t('statistics.charts.expense'),
       data: expenseData,
     },
   ]
@@ -454,7 +457,7 @@ const cashflowChartOptions = computed(() => ({
     fontFamily: 'inherit',
   },
   colors: ['#56CA00', '#FF4C51'],
-  labels: ['Kirim', 'Chiqim'],
+  labels: [t('statistics.charts.income'), t('statistics.charts.expense')],
   legend: {
     position: 'bottom',
   },
@@ -524,7 +527,7 @@ const paymentsChartSeries = computed(() => {
   const data = months.map(() => dashboard.value!.payments.amountPaid / months.length)
   return [
     {
-      name: 'To\'lovlar',
+      name: t('statistics.charts.payments'),
       data: data,
     },
   ]
@@ -569,15 +572,15 @@ const studentsChartSeries = computed(() => {
   
   return [
     {
-      name: 'Jami',
+      name: t('statistics.charts.total'),
       data: months.map(() => totalPerMonth),
     },
     {
-      name: 'Faol',
+      name: t('statistics.charts.active'),
       data: months.map(() => activePerMonth),
     },
     {
-      name: 'Qo\'shilgan',
+      name: t('statistics.charts.added'),
       data: months.map(() => addedPerMonth),
     },
   ]

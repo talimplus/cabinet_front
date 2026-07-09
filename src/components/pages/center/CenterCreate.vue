@@ -1,12 +1,12 @@
 <template>
   <v-dialog v-model="open" width="auto">
     <Form @submit="submit" ref="centerForm">
-      <v-card width="400" title="Create Center">
+      <v-card width="400" :title="$t('centers.dialog.createTitle')">
         <v-card-text>
           <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.name"
-              label="Center name"
+              :label="$t('centers.form.centerName')"
               :error-messages="errors"
               @update:model-value="handleChange"
               @blur="handleBlur"
@@ -16,7 +16,7 @@
           <Field name="isDefault" v-slot="{ handleChange, handleBlur, errors }">
             <v-checkbox
               v-model="form.isDefault"
-              label="Default markaz"
+              :label="$t('centers.form.defaultCenter')"
               density="compact"
               class="mt-2"
               :error-messages="errors"
@@ -26,8 +26,8 @@
           </Field>
         </v-card-text>
         <template v-slot:actions>
-          <v-btn text="Cancel" @click="open = false"></v-btn>
-          <v-btn :loading="loading" :disabled="loading" type="submit" color="primary" text="Save"></v-btn>
+          <v-btn :text="$t('common.cancel')" @click="open = false"></v-btn>
+          <v-btn :loading="loading" :disabled="loading" type="submit" color="primary" :text="$t('common.save')"></v-btn>
         </template>
       </v-card>
     </Form>

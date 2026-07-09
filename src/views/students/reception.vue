@@ -1,8 +1,8 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
-      Qabul qilinganlar
-      <v-btn @click="openModal = true" color="primary">Yaratish</v-btn>
+      {{ $t('students.titles.reception') }}
+      <v-btn @click="openModal = true" color="primary">{{ $t('students.actions.create') }}</v-btn>
     </v-card-title>
     <v-card-text>
       <v-row>
@@ -12,7 +12,7 @@
             :items="centerOptions"
             item-title="title"
             item-value="value"
-            label="Markaz"
+            :label="$t('students.labels.center')"
             clearable
             variant="outlined"
             density="compact"
@@ -26,7 +26,7 @@
             :items="subjectOptions"
             item-title="title"
             item-value="value"
-            label="Fan"
+            :label="$t('students.labels.subject')"
             clearable
             variant="outlined"
             density="compact"
@@ -40,7 +40,7 @@
             :items="preferredTimeOptions"
             item-title="title"
             item-value="value"
-            label="Qaysi vaqtda o'qimoqchi"
+            :label="$t('students.labels.preferredTime')"
             clearable
             variant="outlined"
             density="compact"
@@ -53,7 +53,7 @@
             :items="dayOptions"
             item-title="title"
             item-value="value"
-            label="Qaysi kunlari o'qimoqchi"
+            :label="$t('students.labels.preferredDays')"
             multiple
             chips
             clearable
@@ -141,20 +141,20 @@
     ></CreateStudent>
     <v-dialog v-model="returnDialog.show" max-width="400">
       <v-card>
-        <v-card-title class="text-h6 pa-4">Qaytish ehtimoli</v-card-title>
+        <v-card-title class="text-h6 pa-4">{{ $t('students.dialog.returnTitle') }}</v-card-title>
         <v-card-text class="pa-4">
           <v-select
             v-model="returnDialog.value"
             :items="returnLikelihoodOptions"
             item-title="title"
             item-value="value"
-            label="Qaytish ehtimoli"
+            :label="$t('students.labels.returnLikelihood')"
             variant="outlined"
             density="compact"
           ></v-select>
           <v-textarea
             v-model="returnDialog.comment"
-            label="Izoh"
+            :label="$t('students.labels.comment')"
             rows="3"
             variant="outlined"
             density="compact"
@@ -163,9 +163,9 @@
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
-          <v-btn variant="text" @click="closeReturnDialog">Bekor qilish</v-btn>
+          <v-btn variant="text" @click="closeReturnDialog">{{ $t('common.cancel') }}</v-btn>
           <v-btn color="primary" variant="flat" @click="confirmReturnDialog" :loading="returnDialog.loading">
-            Saqlash
+            {{ $t('common.save') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -173,7 +173,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false"> Yopish </v-btn>
+        <v-btn variant="text" @click="snackbar.show = false"> {{ $t('common.close') }} </v-btn>
       </template>
     </v-snackbar>
   </v-card>
@@ -181,6 +181,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
 import { StudentStatus, StudentPreferredTime, studentStatusLabels } from '@/types/students.enum'
@@ -190,6 +191,8 @@ import type { Center } from '@/types/center.types'
 import { WeekDay } from '@/types/groups.enum'
 import { fetchAllSubjects } from '@/services/pages/subjects'
 import type { Subject } from '@/types/subject.types'
+
+const { t } = useI18n()
 
 const statusList = computed(() => {
   return [
@@ -238,20 +241,20 @@ const subjectOptions = computed(() => {
   }))
 })
 
-const preferredTimeOptions = [
-  { title: 'Ertalab', value: StudentPreferredTime.MORNING },
-  { title: 'Kechqurun', value: StudentPreferredTime.EVENING },
-]
+const preferredTimeOptions = computed(() => [
+  { title: t('students.time.morning'), value: StudentPreferredTime.MORNING },
+  { title: t('students.time.evening'), value: StudentPreferredTime.EVENING },
+])
 
-const dayOptions = [
-  { title: 'Dushanba', value: WeekDay.MONDAY },
-  { title: 'Seshanba', value: WeekDay.TUESDAY },
-  { title: 'Chorshanba', value: WeekDay.WEDNESDAY },
-  { title: 'Payshanba', value: WeekDay.THURSDAY },
-  { title: 'Juma', value: WeekDay.FRIDAY },
-  { title: 'Shanba', value: WeekDay.SATURDAY },
-  { title: 'Yakshanba', value: WeekDay.SUNDAY },
-]
+const dayOptions = computed(() => [
+  { title: t('students.days.monday'), value: WeekDay.MONDAY },
+  { title: t('students.days.tuesday'), value: WeekDay.TUESDAY },
+  { title: t('students.days.wednesday'), value: WeekDay.WEDNESDAY },
+  { title: t('students.days.thursday'), value: WeekDay.THURSDAY },
+  { title: t('students.days.friday'), value: WeekDay.FRIDAY },
+  { title: t('students.days.saturday'), value: WeekDay.SATURDAY },
+  { title: t('students.days.sunday'), value: WeekDay.SUNDAY },
+])
 
 function clearFormForEdit() {
   formForEdit.value = {}
@@ -324,7 +327,7 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
   if (status === StudentStatus.ACTIVE && !hasGroup) {
     snackbar.value = {
       show: true,
-      message: 'Guruh tanlanishi kerak',
+      message: t('students.messages.groupRequired'),
       color: 'error',
     }
     return
@@ -392,18 +395,18 @@ const confirmReturnDialog = async () => {
   }
 }
 
-const headers = [
+const headers = computed(() => [
   { title: 'ID', key: 'id' },
-  { title: 'Ism', key: 'firstName' },
-  { title: 'Familiya', key: 'lastName' },
-  { title: 'Telefon', key: 'phone' },
-  { title: 'Fan', key: 'subject' },
-  { title: "Oylik to'lov", key: 'monthlyFee' },
-  { title: "Qaysi vaqtda o'qimoqchi", key: 'preferredTime' },
-  { title: "Qaysi kunlari o'qimoqchi", key: 'preferredDays' },
-  { title: 'Holat', key: 'status' },
-  { title: 'Amallar', key: 'action' },
-]
+  { title: t('students.labels.firstName'), key: 'firstName' },
+  { title: t('students.labels.lastName'), key: 'lastName' },
+  { title: t('common.phone'), key: 'phone' },
+  { title: t('students.labels.subject'), key: 'subject' },
+  { title: t('students.labels.monthlyFee'), key: 'monthlyFee' },
+  { title: t('students.labels.preferredTime'), key: 'preferredTime' },
+  { title: t('students.labels.preferredDays'), key: 'preferredDays' },
+  { title: t('common.status'), key: 'status' },
+  { title: t('common.actions'), key: 'action' },
+])
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'
@@ -421,7 +424,9 @@ const formatCurrency = (amount: number): string => {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount) + " so'm"
+    }).format(amount) +
+    ' ' +
+    t('students.currency')
   )
 }
 
@@ -456,9 +461,9 @@ const getPreferredTimeLabel = (time: string | null | undefined): string => {
   if (!time) return '—'
   switch (time) {
     case 'morning':
-      return 'Ertalab'
+      return t('students.time.morning')
     case 'evening':
-      return 'Kechqurun'
+      return t('students.time.evening')
     default:
       return time
   }
@@ -466,13 +471,13 @@ const getPreferredTimeLabel = (time: string | null | undefined): string => {
 
 const getDayLabel = (day: string): string => {
   const dayLabels: Record<string, string> = {
-    monday: 'Dushanba',
-    tuesday: 'Seshanba',
-    wednesday: 'Chorshanba',
-    thursday: 'Payshanba',
-    friday: 'Juma',
-    saturday: 'Shanba',
-    sunday: 'Yakshanba',
+    monday: t('students.days.monday'),
+    tuesday: t('students.days.tuesday'),
+    wednesday: t('students.days.wednesday'),
+    thursday: t('students.days.thursday'),
+    friday: t('students.days.friday'),
+    saturday: t('students.days.saturday'),
+    sunday: t('students.days.sunday'),
   }
   return dayLabels[day.toLowerCase()] || day
 }

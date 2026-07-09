@@ -1,12 +1,12 @@
 <template>
   <v-dialog width="500" v-model="open">
     <Form @submit="submit" ref="roomFormRef">
-      <v-card title="Create Room">
+      <v-card :title="$t('rooms.createRoom')">
         <v-card-text>
           <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.name"
-              label="Room name"
+              :label="$t('rooms.roomName')"
               :error-messages="errors"
               @update:model-value="handleChange"
               @blur="handleBlur"
@@ -18,7 +18,7 @@
             <v-select
               v-model="form.centerId"
               :items="centers"
-              label="Centers"
+              :label="$t('rooms.centers')"
               item-title="name"
               item-value="id"
               :error-messages="errors"
@@ -28,8 +28,8 @@
           </Field>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel" @click="open = false"></v-btn>
-          <v-btn type="submit" :loading="loading" :disabled="loading" text="submit" color="primary"></v-btn>
+          <v-btn :text="$t('common.cancel')" @click="open = false"></v-btn>
+          <v-btn type="submit" :loading="loading" :disabled="loading" :text="$t('rooms.submit')" color="primary"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>

@@ -1,0 +1,22 @@
+export default {
+  loadingProfile: 'Загрузка профиля...',
+  firstName: 'Имя',
+  lastName: 'Фамилия',
+  login: 'Логин',
+  changePassword: 'Изменить пароль',
+  newPassword: 'Новый пароль',
+  passwordHint: 'Оставьте пустым, чтобы не менять пароль',
+  additionalInfo: 'Дополнительная информация',
+  salary: 'Зарплата',
+  commissionPercentage: 'Процент комиссии',
+  loadError: 'Ошибка при загрузке данных профиля',
+  updateSuccess: 'Профиль успешно обновлён',
+  updateError: 'Ошибка при обновлении профиля',
+  roles: {
+    admin: 'Администратор',
+    super_admin: 'Супер администратор',
+    teacher: 'Преподаватель',
+    reception: 'Ресепшн',
+    manager: 'Менеджер',
+  },
+}

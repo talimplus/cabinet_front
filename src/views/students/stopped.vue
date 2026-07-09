@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title class="mb-6 d-flex justify-space-between"> To'xtatganlar </v-card-title>
+    <v-card-title class="mb-6 d-flex justify-space-between"> {{ $t('students.titles.stopped') }} </v-card-title>
     <v-card-text>
       <v-row>
         <v-col cols="12" md="4">
@@ -9,7 +9,7 @@
             :items="centerOptions"
             item-title="title"
             item-value="value"
-            label="Markaz"
+            :label="$t('students.labels.center')"
             variant="outlined"
             clearable
             density="compact"
@@ -23,7 +23,7 @@
             :items="returnLikelihoodOptions"
             item-title="title"
             item-value="value"
-            label="Qaytish ehtimoli"
+            :label="$t('students.labels.returnLikelihood')"
             clearable
             variant="outlined"
             density="compact"
@@ -94,12 +94,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
 import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
+
+const { t } = useI18n()
 
 const statusList = computed(() => {
   return [{ title: studentStatusLabels[StudentStatus.NEW], value: StudentStatus.NEW }]
@@ -129,11 +132,11 @@ const centerOptions = computed(() => {
   }))
 })
 
-const returnLikelihoodOptions = [
-  { title: 'Qaytmaydi', value: 'never' },
-  { title: 'Balki', value: 'maybe' },
-  { title: 'Albatta', value: 'sure' },
-]
+const returnLikelihoodOptions = computed(() => [
+  { title: t('students.returnLikelihood.never'), value: 'never' },
+  { title: t('students.returnLikelihood.maybe'), value: 'maybe' },
+  { title: t('students.returnLikelihood.sure'), value: 'sure' },
+])
 
 function clearFormForEdit() {
   formForEdit.value = {}
@@ -195,16 +198,16 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
   }
 }
 
-const headers = [
+const headers = computed(() => [
   { title: 'ID', key: 'id' },
-  { title: 'Ism', key: 'firstName' },
-  { title: 'Familiya', key: 'lastName' },
-  { title: 'Telefon', key: 'phone' },
-  { title: "Tug'ilgan sana", key: 'birthDate' },
-  { title: 'Qaytish ehtimoli', key: 'returnLikelihood' },
-  { title: 'Izoh', key: 'comment' },
-  { title: 'Holat', key: 'status' },
-]
+  { title: t('students.labels.firstName'), key: 'firstName' },
+  { title: t('students.labels.lastName'), key: 'lastName' },
+  { title: t('common.phone'), key: 'phone' },
+  { title: t('students.labels.birthDate'), key: 'birthDate' },
+  { title: t('students.labels.returnLikelihood'), key: 'returnLikelihood' },
+  { title: t('students.labels.comment'), key: 'comment' },
+  { title: t('common.status'), key: 'status' },
+])
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'
@@ -247,11 +250,11 @@ const getReturnLikelihoodLabel = (value: string | null | undefined): string => {
   if (!value) return '—'
   switch (value) {
     case 'never':
-      return 'Qaytmaydi'
+      return t('students.returnLikelihood.never')
     case 'maybe':
-      return 'Balki'
+      return t('students.returnLikelihood.maybe')
     case 'sure':
-      return 'Albatta'
+      return t('students.returnLikelihood.sure')
     default:
       return value
   }

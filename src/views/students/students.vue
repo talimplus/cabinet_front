@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title class="mb-6 d-flex justify-space-between"> O'quvchilar </v-card-title>
+    <v-card-title class="mb-6 d-flex justify-space-between"> {{ $t('students.titles.list') }} </v-card-title>
     <v-card-text>
       <v-row>
         <v-col cols="12" md="4">
@@ -9,7 +9,7 @@
             :items="centerOptions"
             item-title="title"
             item-value="value"
-            label="Markaz"
+            :label="$t('students.labels.center')"
             clearable
             variant="outlined"
             density="compact"
@@ -117,20 +117,20 @@
     ></CreateStudent>
     <v-dialog v-model="returnDialog.show" max-width="400">
       <v-card>
-        <v-card-title class="text-h6 pa-4">Qaytish ehtimoli</v-card-title>
+        <v-card-title class="text-h6 pa-4">{{ $t('students.dialog.returnTitle') }}</v-card-title>
         <v-card-text class="pa-4">
           <v-select
             v-model="returnDialog.value"
             :items="returnLikelihoodOptions"
             item-title="title"
             item-value="value"
-            label="Qaytish ehtimoli"
+            :label="$t('students.labels.returnLikelihood')"
             variant="outlined"
             density="compact"
           ></v-select>
           <v-textarea
             v-model="returnDialog.comment"
-            label="Izoh"
+            :label="$t('students.labels.comment')"
             rows="3"
             variant="outlined"
             density="compact"
@@ -139,9 +139,9 @@
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
-          <v-btn variant="text" @click="closeReturnDialog">Bekor qilish</v-btn>
+          <v-btn variant="text" @click="closeReturnDialog">{{ $t('common.cancel') }}</v-btn>
           <v-btn color="primary" variant="flat" @click="confirmReturnDialog" :loading="returnDialog.loading">
-            Saqlash
+            {{ $t('common.save') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -151,6 +151,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
 import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
@@ -158,12 +159,20 @@ import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
 
+const { t } = useI18n()
+
 const statusList = computed(() => {
   return [
     { title: studentStatusLabels[StudentStatus.STOPPED], value: StudentStatus.STOPPED },
     { title: studentStatusLabels[StudentStatus.FINISHED], value: StudentStatus.FINISHED },
   ]
 })
+
+const returnLikelihoodOptions = computed(() => [
+  { title: t('students.returnLikelihood.never'), value: 'never' },
+  { title: t('students.returnLikelihood.maybe'), value: 'maybe' },
+  { title: t('students.returnLikelihood.sure'), value: 'sure' },
+])
 
 const openModal = ref(false)
 const students = ref<Student[]>([])
@@ -299,17 +308,17 @@ const confirmReturnDialog = async () => {
   }
 }
 
-const headers = [
+const headers = computed(() => [
   { title: 'ID', key: 'id' },
-  { title: 'Ism', key: 'firstName' },
-  { title: 'Familiya', key: 'lastName' },
-  { title: 'Telefon', key: 'phone' },
-  { title: 'Tug\'ilgan sana', key: 'birthDate' },
-  { title: 'Oylik to\'lov', key: 'monthlyFee' },
-  { title: 'Chegirma', key: 'discountPercent' },
-  { title: 'Holat', key: 'status' },
-  { title: 'Amallar', key: 'action' },
-]
+  { title: t('students.labels.firstName'), key: 'firstName' },
+  { title: t('students.labels.lastName'), key: 'lastName' },
+  { title: t('common.phone'), key: 'phone' },
+  { title: t('students.labels.birthDate'), key: 'birthDate' },
+  { title: t('students.labels.monthlyFee'), key: 'monthlyFee' },
+  { title: t('students.labels.discount'), key: 'discountPercent' },
+  { title: t('common.status'), key: 'status' },
+  { title: t('common.actions'), key: 'action' },
+])
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'
@@ -327,7 +336,7 @@ const formatCurrency = (amount: number): string => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })
-    .format(amount) + ' so\'m'
+    .format(amount) + ' ' + t('students.currency')
 }
 
 const truncateText = (text: string, maxLength: number): string => {

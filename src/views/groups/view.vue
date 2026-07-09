@@ -2,13 +2,13 @@
   <v-container fluid>
   <v-card>
       <v-card-title class="text-h5 pa-4">
-        {{ group?.name || 'Group Details' }}
+        {{ group?.name || $t('groups.view.title') }}
       </v-card-title>
 
       <v-tabs v-model="activeTab" bg-color="primary" slider-color="white">
-        <v-tab value="attendance">Attendance</v-tab>
-        <v-tab value="students">Students</v-tab>
-        <v-tab value="info">Group Info</v-tab>
+        <v-tab value="attendance">{{ $t('groups.tabs.attendance') }}</v-tab>
+        <v-tab value="students">{{ $t('groups.tabs.students') }}</v-tab>
+        <v-tab value="info">{{ $t('groups.tabs.info') }}</v-tab>
       </v-tabs>
 
       <v-window v-model="activeTab">
@@ -20,7 +20,7 @@
               <v-col cols="12" md="4">
                 <v-date-input
                   v-model="dateFrom"
-                  label="From Date"
+                  :label="$t('groups.attendance.fromDate')"
                   density="compact"
                   variant="outlined"
                   :max="today"
@@ -30,7 +30,7 @@
               <v-col cols="12" md="4">
                 <v-date-input
                   v-model="dateTo"
-                  label="To Date (optional)"
+                  :label="$t('groups.attendance.toDate')"
                   density="compact"
                   variant="outlined"
                   :max="today"
@@ -44,7 +44,7 @@
                   @click="clearFilters"
                   prepend-icon="mdi-close-circle"
                 >
-                  Clear
+                  {{ $t('groups.attendance.clear') }}
                 </v-btn>
               </v-col>
             </v-row>
@@ -55,7 +55,7 @@
             </div>
 
             <div v-else-if="students.length === 0" class="text-center pa-8 text-medium-emphasis">
-              No students in this group
+              {{ $t('groups.attendance.noStudents') }}
             </div>
 
             <div v-else class="attendance-matrix">
@@ -63,7 +63,7 @@
                 <table class="attendance-table">
                   <thead>
                     <tr>
-                      <th class="student-column sticky">Student</th>
+                      <th class="student-column sticky">{{ $t('groups.attendance.student') }}</th>
                       <th
                         v-for="date in lessonDates"
                         :key="date"
@@ -167,61 +167,61 @@
           <v-card-text v-else-if="group">
             <!-- Basic Info -->
             <v-card variant="outlined" class="mb-4">
-              <v-card-title class="text-h6 pa-4">Basic Info</v-card-title>
+              <v-card-title class="text-h6 pa-4">{{ $t('groups.info.basicInfo') }}</v-card-title>
               <v-card-text>
                 <v-row>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Group Name:</span>
+                      <span class="info-label">{{ $t('groups.info.groupName') }}</span>
                       <span class="info-value">{{ group.name }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Center:</span>
+                      <span class="info-label">{{ $t('groups.info.center') }}</span>
                       <span class="info-value">{{ group.center?.name || '—' }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Subject:</span>
+                      <span class="info-label">{{ $t('groups.info.subject') }}</span>
                       <span class="info-value">{{ group.subject?.name || '—' }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Teacher:</span>
+                      <span class="info-label">{{ $t('groups.info.teacher') }}</span>
                       <span class="info-value">
                         {{
                           group.teacher
                             ? `${group.teacher.firstName} ${group.teacher.lastName}`
-                            : 'Not assigned'
+                            : $t('groups.info.notAssigned')
                         }}
                       </span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Room:</span>
+                      <span class="info-label">{{ $t('groups.info.room') }}</span>
                       <span class="info-value">{{ group.room?.name || '—' }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Status:</span>
+                      <span class="info-label">{{ $t('common.status') }}</span>
                       <v-chip
                         class="status-chip"
                         :color="getGroupStatusColor(group.status)"
                         size="small"
                         variant="flat"
                       >
-                        {{ group.status || 'Active' }}
+                        {{ group.status || $t('common.active') }}
                       </v-chip>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Duration (months):</span>
+                      <span class="info-label">{{ $t('groups.info.duration') }}</span>
                       <span class="info-value">
                         {{ group.durationMonths ?? '—' }}
                       </span>
@@ -229,7 +229,7 @@
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">Start Date:</span>
+                      <span class="info-label">{{ $t('groups.info.startDate') }}</span>
                       <span class="info-value">
                         {{ group.startDate ? formatDate(group.startDate) : '—' }}
                       </span>
@@ -241,7 +241,7 @@
 
             <!-- Schedule -->
             <v-card variant="outlined" class="mb-4" v-if="group.schedules && group.schedules.length > 0">
-              <v-card-title class="text-h6 pa-4">Schedule</v-card-title>
+              <v-card-title class="text-h6 pa-4">{{ $t('groups.info.schedule') }}</v-card-title>
               <v-card-text>
                 <div v-for="schedule in group.schedules" :key="schedule.id" class="schedule-item mb-2">
                   <v-chip size="small" class="me-2">{{ formatDayName(schedule.day) }}</v-chip>
@@ -252,24 +252,24 @@
 
             <!-- Summary -->
             <v-card variant="outlined">
-              <v-card-title class="text-h6 pa-4">Summary</v-card-title>
+              <v-card-title class="text-h6 pa-4">{{ $t('groups.info.summary') }}</v-card-title>
               <v-card-text>
                 <v-row>
                   <v-col cols="12" md="4">
                     <div class="info-row">
-                      <span class="info-label">Total Students:</span>
+                      <span class="info-label">{{ $t('groups.info.totalStudents') }}</span>
                       <span class="info-value">{{ students.length }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="4">
                     <div class="info-row">
-                      <span class="info-label">Lessons per Week:</span>
+                      <span class="info-label">{{ $t('groups.info.lessonsPerWeek') }}</span>
                       <span class="info-value">{{ group.schedules?.length || 0 }}</span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="4">
                     <div class="info-row">
-                      <span class="info-label">Start Date:</span>
+                      <span class="info-label">{{ $t('groups.info.startDate') }}</span>
                       <span class="info-value">{{
                         group.startDate ? formatDate(group.startDate) : '—'
                       }}</span>
@@ -314,16 +314,16 @@
     <!-- Reschedule Dialog -->
     <v-dialog v-model="rescheduleDialog.show" max-width="520">
       <v-card>
-        <v-card-title class="text-h6 pa-4"> Reschedule Lesson </v-card-title>
+        <v-card-title class="text-h6 pa-4"> {{ $t('groups.reschedule.title') }} </v-card-title>
         <v-card-text class="pa-4">
           <v-row>
             <v-col cols="12">
-              <div class="text-body-2 text-medium-emphasis mb-2">From: Bugun</div>
+              <div class="text-body-2 text-medium-emphasis mb-2">{{ $t('groups.reschedule.fromToday') }}</div>
             </v-col>
             <v-col cols="12" md="6">
               <v-date-input
                 v-model="rescheduleDialog.toDate"
-                label="To Date"
+                :label="$t('groups.reschedule.toDate')"
                 density="compact"
                 variant="outlined"
                 :allowed-dates="isAllowedRescheduleDate"
@@ -332,7 +332,7 @@
             <v-col cols="12">
               <v-textarea
                 v-model="rescheduleDialog.reason"
-                label="Reason (optional)"
+                :label="$t('groups.reschedule.reason')"
                 density="compact"
                 variant="outlined"
                 rows="2"
@@ -349,9 +349,9 @@
             :loading="rescheduleDialog.loading"
             :disabled="!canSubmitReschedule"
           >
-            Save
+            {{ $t('common.save') }}
           </v-btn>
-          <v-btn variant="text" @click="rescheduleDialog.show = false"> Cancel </v-btn>
+          <v-btn variant="text" @click="rescheduleDialog.show = false"> {{ $t('common.cancel') }} </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -360,6 +360,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import type { Student } from '@/types/students.types'
 import type { Group } from '@/types/groups.types'
@@ -379,6 +380,7 @@ defineOptions({
 })
 
 const route = useRoute()
+const { t } = useI18n()
 
 // Tabs
 const activeTab = ref('attendance')
@@ -660,8 +662,8 @@ const isExtraDate = (date: string): boolean => {
 
 const getOverrideLabel = (date: string): string => {
   const type = getOverrideType(date)
-  if (type === 'cancelled') return 'Bekor qilindi'
-  if (type === 'extra') return "Ko'chirilgan dars"
+  if (type === 'cancelled') return t('groups.override.cancelled')
+  if (type === 'extra') return t('groups.override.extra')
   return ''
 }
 
@@ -774,12 +776,12 @@ const submitReschedule = async () => {
 
 
 // Student table headers
-const studentHeaders = [
-  { title: 'Full Name', key: 'fullName' },
-  { title: 'Phone', key: 'phone' },
-  { title: 'Status', key: 'status' },
-  { title: 'Created Date', key: 'createdAt' },
-]
+const studentHeaders = computed(() => [
+  { title: t('groups.studentTable.fullName'), key: 'fullName' },
+  { title: t('groups.studentTable.phone'), key: 'phone' },
+  { title: t('common.status'), key: 'status' },
+  { title: t('groups.studentTable.createdDate'), key: 'createdAt' },
+])
 
 // Watch for tab changes to load data
 watch(activeTab, (newTab) => {

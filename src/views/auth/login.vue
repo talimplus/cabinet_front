@@ -11,15 +11,15 @@
     <div class="login-right">
       <div class="login-form-wrapper">
         <div class="login-header">
-          <h1 class="login-title">TalimPlus'ga xush kelibsiz 👋</h1>
-          <p class="login-subtitle">Hisobingizga kiring va boshqaruvni boshlang</p>
+          <h1 class="login-title">{{ $t('auth.welcome') }}</h1>
+          <p class="login-subtitle">{{ $t('auth.subtitle') }}</p>
         </div>
 
         <Form @submit="submit" ref="formRef">
           <Field name="email" rules="required|email" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.email"
-              label="Email"
+              :label="$t('auth.email')"
               type="email"
               variant="outlined"
               density="comfortable"
@@ -35,7 +35,7 @@
           <Field name="password" rules="required" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.password"
-              label="Password"
+              :label="$t('auth.password')"
               type="password"
               variant="outlined"
               density="comfortable"
@@ -57,13 +57,13 @@
             block
             class="mb-4 login-submit"
           >
-            Kirish
+            {{ $t('auth.login') }}
           </v-btn>
         </Form>
 
         <div class="login-footer">
-          <span class="footer-text">TalimPlus'da yangimisiz?</span>
-          <router-link to="/register" class="footer-link">Hisob yarating</router-link>
+          <span class="footer-text">{{ $t('auth.newHere') }}</span>
+          <router-link to="/register" class="footer-link">{{ $t('auth.createAccount') }}</router-link>
         </div>
       </div>
     </div>

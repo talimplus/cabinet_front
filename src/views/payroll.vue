@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-card>
-      <v-card-title class="text-h5 pa-4"> Ish haqi </v-card-title>
+      <v-card-title class="text-h5 pa-4"> {{ $t('payroll.title') }} </v-card-title>
 
       <!-- Year & Month Navigation -->
       <v-card-text class="pb-2">
@@ -10,7 +10,7 @@
             <v-select
               v-model="selectedYear"
               :items="yearOptions"
-              label="Yil"
+              :label="$t('payroll.year')"
               variant="outlined"
               density="compact"
               @update:model-value="handleYearChange"
@@ -22,7 +22,7 @@
               :items="centerOptions"
               item-title="title"
               item-value="value"
-              label="Markaz"
+              :label="$t('payroll.center')"
               variant="outlined"
               density="compact"
               clearable
@@ -53,22 +53,22 @@
 
         <div v-else-if="staffSalaries.length === 0" class="text-center pa-8">
           <v-icon size="64" color="grey-lighten-1">mdi-cash-off</v-icon>
-          <p class="text-h6 mt-4 text-medium-emphasis">Bu oy uchun ish haqi ma'lumotlari topilmadi</p>
+          <p class="text-h6 mt-4 text-medium-emphasis">{{ $t('payroll.emptyState') }}</p>
         </div>
 
         <div v-else class="payroll-table-wrapper">
           <table class="payroll-table">
             <thead>
               <tr>
-                <th>Ishchi</th>
-                <th>Rol</th>
-                <th>Asosiy maosh</th>
-                <th v-if="hasTeachers">Komissiya</th>
-                <th>Jami maosh</th>
-                <th>To'langan</th>
-                <th>Qolgan</th>
-                <th>Holat</th>
-                <th>Amallar</th>
+                <th>{{ $t('payroll.table.worker') }}</th>
+                <th>{{ $t('payroll.table.role') }}</th>
+                <th>{{ $t('payroll.table.baseSalary') }}</th>
+                <th v-if="hasTeachers">{{ $t('payroll.table.commission') }}</th>
+                <th>{{ $t('payroll.table.totalSalary') }}</th>
+                <th>{{ $t('payroll.table.paid') }}</th>
+                <th>{{ $t('payroll.table.remaining') }}</th>
+                <th>{{ $t('payroll.table.status') }}</th>
+                <th>{{ $t('payroll.table.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -113,9 +113,9 @@
                     @click="openPaymentModal(staff)"
                     :disabled="processingPayment"
                   >
-                    To'lash
+                    {{ $t('payroll.pay') }}
                   </v-btn>
-                  <span v-else class="text-caption text-medium-emphasis">To'langan</span>
+                  <span v-else class="text-caption text-medium-emphasis">{{ $t('payroll.paid') }}</span>
                 </td>
               </tr>
             </tbody>
@@ -127,29 +127,29 @@
     <!-- Payment Modal -->
     <v-dialog v-model="paymentModal.show" max-width="500" persistent>
       <v-card>
-        <v-card-title class="text-h6 pa-4"> To'lov </v-card-title>
+        <v-card-title class="text-h6 pa-4"> {{ $t('payroll.modal.title') }} </v-card-title>
         <v-card-text class="pa-4">
           <div class="mb-4">
             <div class="info-row mb-3">
-              <span class="info-label">Ishchi:</span>
+              <span class="info-label">{{ $t('payroll.modal.worker') }}</span>
               <span class="info-value">
                 {{ paymentModal.staff?.user.firstName }} {{ paymentModal.staff?.user.lastName }}
               </span>
             </div>
             <div class="info-row mb-3">
-              <span class="info-label">Jami maosh:</span>
+              <span class="info-label">{{ $t('payroll.modal.totalSalary') }}</span>
               <span class="info-value font-weight-bold">
                 {{ formatCurrency(paymentModal.staff ? getTotalSalary(paymentModal.staff) : 0) }}
               </span>
             </div>
             <div class="info-row mb-3">
-              <span class="info-label">To'langan:</span>
+              <span class="info-label">{{ $t('payroll.modal.paid') }}</span>
               <span class="info-value">
                 {{ formatCurrency(paymentModal.staff?.paidAmount || 0) }}
               </span>
             </div>
             <div class="info-row mb-3">
-              <span class="info-label">Qolgan summa:</span>
+              <span class="info-label">{{ $t('payroll.modal.remainingAmount') }}</span>
               <span class="info-value font-weight-bold text-primary">
                 {{ formatCurrency(remainingAmount) }}
               </span>
@@ -158,21 +158,21 @@
 
           <v-text-field
             v-model.number="paymentModal.amount"
-            label="To'lov miqdori"
+            :label="$t('payroll.modal.amountLabel')"
             type="number"
             variant="outlined"
             density="compact"
             :min="0.01"
             :max="remainingAmount"
             :rules="amountRules"
-            suffix="so'm"
+            :suffix="$t('payroll.modal.currencySuffix')"
             :error-messages="amountError"
             class="mb-3"
           ></v-text-field>
 
           <v-textarea
             v-model="paymentModal.comment"
-            label="Izoh (ixtiyoriy)"
+            :label="$t('payroll.modal.commentLabel')"
             variant="outlined"
             density="compact"
             rows="3"
@@ -183,7 +183,7 @@
 
           <!-- Payment History -->
           <div v-if="paymentModal.staff?.paymentHistory && paymentModal.staff.paymentHistory.length > 0" class="mb-2">
-            <div class="text-caption text-medium-emphasis mb-2">Oldingi to'lovlar:</div>
+            <div class="text-caption text-medium-emphasis mb-2">{{ $t('payroll.modal.previousPayments') }}</div>
             <v-card variant="outlined" class="payment-history-card">
               <v-card-text class="pa-2">
                 <div
@@ -213,7 +213,7 @@
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="closePaymentModal" :disabled="processingPayment">
-            Bekor qilish
+            {{ $t('common.cancel') }}
           </v-btn>
           <v-btn
             color="primary"
@@ -222,7 +222,7 @@
             :loading="processingPayment"
             :disabled="!canProcessPayment"
           >
-            Tasdiqlash
+            {{ $t('payroll.modal.confirm') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -232,7 +232,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="snackbar.show = false"> Yopish </v-btn>
+        <v-btn variant="text" @click="snackbar.show = false"> {{ $t('common.close') }} </v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -240,6 +240,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StaffSalary } from '@/types/payroll.types'
 import { PayrollStatus } from '@/types/payroll.types'
 import { fetchStaffSalaries, payStaffSalary } from '@/services/pages/payroll'
@@ -250,6 +251,8 @@ import type { Center } from '@/types/centers.types'
 defineOptions({
   name: 'PayrollPage',
 })
+
+const { t } = useI18n()
 
 // State
 const selectedYear = ref(new Date().getFullYear())
@@ -316,20 +319,20 @@ const yearOptions = computed(() => {
   return years
 })
 
-const monthNames = [
-  { label: 'Yan', value: '01' },
-  { label: 'Fev', value: '02' },
-  { label: 'Mar', value: '03' },
-  { label: 'Apr', value: '04' },
-  { label: 'May', value: '05' },
-  { label: 'Iyun', value: '06' },
-  { label: 'Iyul', value: '07' },
-  { label: 'Avg', value: '08' },
-  { label: 'Sen', value: '09' },
-  { label: 'Okt', value: '10' },
-  { label: 'Noy', value: '11' },
-  { label: 'Dek', value: '12' },
-]
+const monthNames = computed(() => [
+  { label: t('payroll.months.jan'), value: '01' },
+  { label: t('payroll.months.feb'), value: '02' },
+  { label: t('payroll.months.mar'), value: '03' },
+  { label: t('payroll.months.apr'), value: '04' },
+  { label: t('payroll.months.may'), value: '05' },
+  { label: t('payroll.months.jun'), value: '06' },
+  { label: t('payroll.months.jul'), value: '07' },
+  { label: t('payroll.months.aug'), value: '08' },
+  { label: t('payroll.months.sep'), value: '09' },
+  { label: t('payroll.months.oct'), value: '10' },
+  { label: t('payroll.months.nov'), value: '11' },
+  { label: t('payroll.months.dec'), value: '12' },
+])
 
 const availableMonths = computed(() => {
   const months = []
@@ -350,14 +353,14 @@ const availableMonths = computed(() => {
   const maxMonth = selectedYear.value === currentYear.value ? currentMonth.value + 1 : 12
 
   for (let i = startMonth; i < maxMonth; i++) {
-    months.push(monthNames[i])
+    months.push(monthNames.value[i])
   }
 
   return months
 })
 
 const selectedMonth = computed(() => {
-  return availableMonths.value[selectedMonthIndex.value]?.value || monthNames[currentMonth.value].value
+  return availableMonths.value[selectedMonthIndex.value]?.value || monthNames.value[currentMonth.value].value
 })
 
 const forMonth = computed(() => {
@@ -382,16 +385,16 @@ const remainingAmount = computed(() => {
 
 const amountError = computed(() => {
   if (!paymentModal.value.amount) return []
-  if (paymentModal.value.amount <= 0) return ['Miqdor 0 dan katta bo\'lishi kerak']
+  if (paymentModal.value.amount <= 0) return [t('payroll.validation.greaterThanZero')]
   if (paymentModal.value.amount > remainingAmount.value) {
-    return [`Miqdor qolgan summa ${formatCurrency(remainingAmount.value)} dan oshmasligi kerak`]
+    return [t('payroll.validation.exceedsRemaining', { amount: formatCurrency(remainingAmount.value) })]
   }
   return []
 })
 
 const amountRules = [
-  (v: number) => v > 0 || 'Miqdor 0 dan katta bo\'lishi kerak',
-  (v: number) => v <= remainingAmount.value || `Miqdor ${formatCurrency(remainingAmount.value)} dan oshmasligi kerak`,
+  (v: number) => v > 0 || t('payroll.validation.greaterThanZero'),
+  (v: number) => v <= remainingAmount.value || t('payroll.validation.exceedsRemainingShort', { amount: formatCurrency(remainingAmount.value) }),
 ]
 
 const canProcessPayment = computed(() => {
@@ -445,7 +448,7 @@ const loadStaffSalaries = async () => {
     const response = await fetchStaffSalaries(forMonth.value, selectedCenterId.value || undefined)
     staffSalaries.value = Array.isArray(response) ? response : []
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'Ish haqi ma\'lumotlarini yuklashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('payroll.messages.loadSalariesError'), 'error')
     staffSalaries.value = []
   } finally {
     loading.value = false
@@ -501,11 +504,11 @@ const confirmPayment = async () => {
   processingPayment.value = true
   try {
     if (!paymentModal.value.amount || paymentModal.value.amount <= 0) {
-      showSnackbar('Iltimos, to\'g\'ri miqdorni kiriting', 'error')
+      showSnackbar(t('payroll.messages.invalidAmount'), 'error')
       return
     }
     if (paymentModal.value.amount > remainingAmount.value) {
-      showSnackbar('Miqdor qolgan summadan oshmasligi kerak', 'error')
+      showSnackbar(t('payroll.messages.exceedsRemainingAmount'), 'error')
       return
     }
 
@@ -517,7 +520,7 @@ const confirmPayment = async () => {
     }
 
     await payStaffSalary(paymentModal.value.staff.id, payload)
-    showSnackbar(`${formatCurrency(paymentModal.value.amount)} miqdoridagi to'lov qabul qilindi`, 'success')
+    showSnackbar(t('payroll.messages.paymentSuccess', { amount: formatCurrency(paymentModal.value.amount) }), 'success')
     paymentModal.value = {
       show: false,
       staff: null,
@@ -526,7 +529,7 @@ const confirmPayment = async () => {
     }
     await loadStaffSalaries()
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'To\'lovni qayta ishlashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('payroll.messages.paymentError'), 'error')
   } finally {
     processingPayment.value = false
   }
@@ -548,11 +551,11 @@ const getStatusColor = (status: PayrollStatus): string => {
 const getStatusLabel = (status: PayrollStatus): string => {
   switch (status) {
     case PayrollStatus.PAID:
-      return 'To\'langan'
+      return t('payroll.status.paid')
     case PayrollStatus.PARTIAL:
-      return 'Qisman'
+      return t('payroll.status.partial')
     case PayrollStatus.UNPAID:
-      return 'To\'lanmagan'
+      return t('payroll.status.unpaid')
     default:
       return status
   }
@@ -561,13 +564,13 @@ const getStatusLabel = (status: PayrollStatus): string => {
 const getRoleLabel = (role: string): string => {
   switch (role) {
     case 'teacher':
-      return 'O\'qituvchi'
+      return t('payroll.roles.teacher')
     case 'manager':
-      return 'Menejer'
+      return t('payroll.roles.manager')
     case 'admin':
-      return 'Administrator'
+      return t('payroll.roles.admin')
     case 'super_admin':
-      return 'Super Administrator'
+      return t('payroll.roles.superAdmin')
     default:
       return role
   }

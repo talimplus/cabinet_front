@@ -1,13 +1,13 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between"
-      >Ishchilar
-      <v-btn color="primary" @click="openModal = true">Yaratish</v-btn>
+      >{{ $t('users.title') }}
+      <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
     <v-row class="px-4">
       <v-col cols="3">
         <v-select
-          label="Markazlar"
+          :label="$t('users.filter.center')"
           variant="outlined"
           clearable
           density="compact"
@@ -24,7 +24,7 @@
           variant="outlined"
           density="compact"
           v-model="params.name"
-          label="To'liq ism"
+          :label="$t('users.filter.fullName')"
         ></v-text-field>
       </v-col>
       <v-col cols="3">
@@ -33,12 +33,15 @@
           density="compact"
           variant="outlined"
           v-model="params.phone"
-          label="Telefon raqami"
+          :label="$t('users.filter.phone')"
         ></v-text-field>
       </v-col>
     </v-row>
     <v-card-text>
       <v-data-table :loading="laoding" :items="users" :headers="headers" hide-default-footer>
+      <template #item.role="{ item }">
+        {{ roleLabel(item.role) }}
+      </template>
       <template #item.commissionPercentage="{ item }">
         <div v-if="item?.commissionPercentage">{{ item.commissionPercentage }}%</div>
       </template>
@@ -75,12 +78,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchUsers, deleteUser } from '@/services/pages/users'
 import type { User, UsersParams } from '@/types/users.types'
 import CreateUser from '../components/pages/user/CreateUser.vue'
 import type { Center } from '@/types/centers.types'
 import { fetchAllCenters } from '@/services/pages/centers'
+
+const { t } = useI18n()
+
+function roleLabel(role: string) {
+  return role ? t(`users.roles.${role}`) : ''
+}
 
 const centers = ref<Center[]>([])
 const users = ref<User[]>([])
@@ -156,17 +166,17 @@ watch(
   },
 )
 
-const headers = [
-  { title: 'ID', key: 'id' },
-  { title: 'Ism', key: 'firstName' },
-  { title: 'Familiya', key: 'lastName' },
-  { title: 'Telefon', key: 'phone' },
-  { title: 'Rol', key: 'role' },
-  { title: 'Maosh', key: 'salary' },
-  { title: 'Komissiya foizi', key: 'commissionPercentage' },
-  { title: 'Markaz', key: 'center.name' },
-  { title: 'Amallar', key: 'actions' },
-]
+const headers = computed(() => [
+  { title: t('users.table.id'), key: 'id' },
+  { title: t('users.table.firstName'), key: 'firstName' },
+  { title: t('users.table.lastName'), key: 'lastName' },
+  { title: t('common.phone'), key: 'phone' },
+  { title: t('users.table.role'), key: 'role' },
+  { title: t('users.table.salary'), key: 'salary' },
+  { title: t('users.table.commissionPercentage'), key: 'commissionPercentage' },
+  { title: t('users.table.center'), key: 'center.name' },
+  { title: t('common.actions'), key: 'actions' },
+])
 </script>
 
 <style scoped></style>

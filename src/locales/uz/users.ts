@@ -1,0 +1,36 @@
+export default {
+  title: 'Ishchilar',
+  filter: {
+    center: 'Markazlar',
+    fullName: "To'liq ism",
+    phone: 'Telefon raqami',
+  },
+  table: {
+    id: 'ID',
+    firstName: 'Ism',
+    lastName: 'Familiya',
+    role: 'Rol',
+    salary: 'Maosh',
+    commissionPercentage: 'Komissiya foizi',
+    center: 'Markaz',
+  },
+  form: {
+    createTitle: 'Foydalanuvchi yaratish',
+    firstName: 'Ism',
+    lastName: 'Familiya',
+    login: 'Login',
+    phone: 'Telefon',
+    password: 'Parol',
+    role: 'Rol',
+    center: 'Markaz',
+    salary: 'Maosh',
+    commissionPercentage: 'Komissiya foizi',
+  },
+  roles: {
+    admin: 'Administrator',
+    super_admin: 'Super administrator',
+    teacher: "O'qituvchi",
+    reception: 'Qabulxona',
+    manager: 'Menejer',
+  },
+}

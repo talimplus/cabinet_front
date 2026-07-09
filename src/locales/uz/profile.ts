@@ -1,0 +1,22 @@
+export default {
+  loadingProfile: 'Profil yuklanmoqda...',
+  firstName: 'Ism',
+  lastName: 'Familiya',
+  login: 'Login',
+  changePassword: "Parolni o'zgartirish",
+  newPassword: 'Yangi parol',
+  passwordHint: "Parolni o'zgartirmaslik uchun bo'sh qoldiring",
+  additionalInfo: "Qo'shimcha ma'lumotlar",
+  salary: 'Maosh',
+  commissionPercentage: 'Komissiya foizi',
+  loadError: "Profil ma'lumotlarini yuklashda xatolik",
+  updateSuccess: 'Profil muvaffaqiyatli yangilandi',
+  updateError: 'Profilni yangilashda xatolik',
+  roles: {
+    admin: 'Administrator',
+    super_admin: 'Super Administrator',
+    teacher: "O'qituvchi",
+    reception: 'Qabul',
+    manager: 'Menejer',
+  },
+}

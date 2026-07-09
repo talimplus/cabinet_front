@@ -11,12 +11,12 @@
     <div class="register-right">
       <div class="register-form-wrapper">
         <div class="register-header">
-          <h1 class="register-title">Welcome to TalimPlus</h1>
-          <p class="register-subtitle">Create Your Account</p>
+          <h1 class="register-title">{{ $t('auth.registerTitle') }}</h1>
+          <p class="register-subtitle">{{ $t('auth.registerSubtitle') }}</p>
         </div>
 
         <v-divider class="my-6">
-          <span class="divider-text">or sign up with</span>
+          <span class="divider-text">{{ $t('auth.orSignUpWith') }}</span>
         </v-divider>
 
         <Form @submit="submit" ref="formRef">
@@ -25,7 +25,7 @@
               <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.firstName"
-                  label="First Name"
+                  :label="$t('auth.firstName')"
                   variant="outlined"
                   density="comfortable"
                   :disabled="loading"
@@ -40,7 +40,7 @@
               <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.lastName"
-                  label="Last Name"
+                  :label="$t('auth.lastName')"
                   variant="outlined"
                   density="comfortable"
                   :disabled="loading"
@@ -55,7 +55,7 @@
               <Field name="email" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.email"
-                  label="Email"
+                  :label="$t('auth.email')"
                   type="email"
                   variant="outlined"
                   density="comfortable"
@@ -71,7 +71,7 @@
               <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.phone"
-                  label="Phone"
+                  :label="$t('auth.phone')"
                   variant="outlined"
                   density="comfortable"
                   :disabled="loading"
@@ -86,7 +86,7 @@
               <Field name="organizationName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.organizationName"
-                  label="Organization Name"
+                  :label="$t('auth.organizationName')"
                   variant="outlined"
                   density="comfortable"
                   :disabled="loading"
@@ -101,7 +101,7 @@
               <Field name="centerName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.centerName"
-                  label="Center Name"
+                  :label="$t('auth.centerName')"
                   variant="outlined"
                   density="comfortable"
                   :disabled="loading"
@@ -116,7 +116,7 @@
               <Field name="password" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.password"
-                  label="Password"
+                  :label="$t('auth.password')"
                   type="password"
                   variant="outlined"
                   density="comfortable"
@@ -132,7 +132,7 @@
               <Field name="confirmPassword" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="confirmPass"
-                  label="Confirm Password"
+                  :label="$t('auth.confirmPassword')"
                   type="password"
                   variant="outlined"
                   density="comfortable"
@@ -155,13 +155,13 @@
             block
             class="mt-4 mb-4"
           >
-            Complete Registration
+            {{ $t('auth.completeRegistration') }}
           </v-btn>
         </Form>
 
         <div class="register-footer">
-          <span class="footer-text">Already have an account?</span>
-          <router-link to="/login" class="footer-link">Log In</router-link>
+          <span class="footer-text">{{ $t('auth.alreadyHaveAccount') }}</span>
+          <router-link to="/login" class="footer-link">{{ $t('auth.logIn') }}</router-link>
         </div>
       </div>
     </div>

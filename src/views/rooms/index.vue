@@ -2,15 +2,15 @@
   <div>
     <v-card>
       <v-card-title class="mb-6 d-flex justify-space-between"
-        >Rooms
-        <v-btn color="primary" @click="openModal = true">Create</v-btn>
+        >{{ $t('rooms.title') }}
+        <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
       </v-card-title>
       <v-row class="px-4">
         <v-col cols="3">
           <v-text-field
             v-model="params.name"
             variant="outlined"
-            label="Room Name"
+            :label="$t('rooms.roomName')"
             density="compact"
             @input="getRooms"
           >
@@ -21,7 +21,7 @@
             v-model="params.centerId"
             density="compact"
             variant="outlined"
-            label="Centers"
+            :label="$t('rooms.centers')"
             item-title="name"
             item-value="id"
             :items="centers"
@@ -68,13 +68,16 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import CreateRoom from '@/components/pages/room/CreateRoom.vue'
 import { fetchRooms } from '@/services/pages/rooms'
 import { fetchAllCenters } from '@/services/pages/centers'
 import { deleteRoom } from '@/services/pages/rooms'
 import type { Room, RoomParams } from '@/types/room.types'
 import type { Center } from '@/types/centers.types'
+
+const { t } = useI18n()
 
 const formForEdit = ref<Room>()
 const openModal = ref(false)
@@ -140,9 +143,9 @@ const remove = async (id: number) => {
   }
 }
 
-const headers = [
-  { title: 'ID', key: 'id' },
-  { title: 'ROOM', key: 'name' },
-  { title: 'Actions', key: 'actions' },
-]
+const headers = computed(() => [
+  { title: t('rooms.headers.id'), key: 'id' },
+  { title: t('rooms.headers.room'), key: 'name' },
+  { title: t('common.actions'), key: 'actions' },
+])
 </script>

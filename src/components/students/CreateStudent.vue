@@ -1,14 +1,14 @@
 <template>
   <v-dialog width="800" v-model="open">
     <Form @submit="submit" ref="studentForm">
-      <v-card title="Create Student">
+      <v-card :title="$t('students.form.createTitle')">
         <v-card-text>
           <v-row dense>
             <v-col cols="6">
               <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.firstName"
-                  label="firstName"
+                  :label="$t('students.labels.firstName')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -19,7 +19,7 @@
               <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.lastName"
-                  label="lastName"
+                  :label="$t('students.labels.lastName')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -30,7 +30,7 @@
               <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.phone"
-                  label="phone"
+                  :label="$t('common.phone')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -41,7 +41,7 @@
               <Field name="secondPhone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.secondPhone"
-                  label="2-telefon"
+                  :label="$t('students.form.secondPhone')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -51,7 +51,7 @@
             <v-col cols="6">
               <Field name="birthDate" v-slot="{ handleChange, handleBlur, errors }">
                 <v-date-input
-                  label="Select a date"
+                  :label="$t('students.form.selectDate')"
                   prepend-icon=""
                   prepend-inner-icon="$calendar"
                   v-model="form.birthDate"
@@ -68,7 +68,7 @@
                   item-title="firstName"
                   item-value="id"
                   v-model="form.referrerId"
-                  label="referrerId"
+                  :label="$t('students.form.referrer')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -79,7 +79,7 @@
               <Field name="monthlyFee" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.monthlyFee"
-                  label="monthlyFee"
+                  :label="$t('students.labels.monthlyFee')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -90,7 +90,7 @@
               <Field name="heardAboutUs" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.heardAboutUs"
-                  label="Qayerdan eshitgan"
+                  :label="$t('students.form.heardAboutUs')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -104,7 +104,7 @@
                   :items="studyTimeOptions"
                   item-title="title"
                   item-value="value"
-                  label="Qaysi vaqtda o'qimoqchi"
+                  :label="$t('students.labels.preferredTime')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -118,7 +118,7 @@
                   :items="dayList"
                   multiple
                   chips
-                  label="Qaysi kunlari o'qimoqchi"
+                  :label="$t('students.labels.preferredDays')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -132,7 +132,7 @@
                   item-title="name"
                   item-value="id"
                   v-model="form.centerId"
-                  label="centerId"
+                  :label="$t('students.labels.center')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -147,7 +147,7 @@
                   item-value="id"
                   multiple
                   v-model="form.groupIds"
-                  label="groupIds"
+                  :label="$t('students.form.groups')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -161,7 +161,7 @@
                   item-title="name"
                   item-value="id"
                   v-model="form.subjectId"
-                  label="Fan"
+                  :label="$t('students.labels.subject')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -170,8 +170,8 @@
             </v-col>
             <v-col cols="12">
               <v-tabs v-model="identityTab" density="compact" color="primary">
-                <v-tab value="passport">Passport</v-tab>
-                <v-tab value="jshshir">JSHSHIR</v-tab>
+                <v-tab value="passport">{{ $t('students.form.passport') }}</v-tab>
+                <v-tab value="jshshir">{{ $t('students.form.jshshir') }}</v-tab>
               </v-tabs>
             </v-col>
             <v-col cols="12">
@@ -182,7 +182,7 @@
                       <Field name="passportSeries" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.passportSeries"
-                          label="Passport seriya"
+                          :label="$t('students.form.passportSeries')"
                           :error-messages="errors"
                           @update:model-value="handleChange"
                           @blur="handleBlur"
@@ -193,7 +193,7 @@
                       <Field name="passportNumber" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.passportNumber"
-                          label="Passport raqam"
+                          :label="$t('students.form.passportNumber')"
                           :error-messages="errors"
                           @update:model-value="handleChange"
                           @blur="handleBlur"
@@ -208,7 +208,7 @@
                       <Field name="jshshir" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.jshshir"
-                          label="JSHSHIR"
+                          :label="$t('students.form.jshshir')"
                           :error-messages="errors"
                           @update:model-value="handleChange"
                           @blur="handleBlur"
@@ -223,7 +223,7 @@
               <Field name="comment" v-slot="{ handleChange, handleBlur, errors }">
                 <v-textarea
                   v-model="form.comment"
-                  label="Izoh"
+                  :label="$t('students.labels.comment')"
                   rows="2"
                   :error-messages="errors"
                   @update:model-value="handleChange"
@@ -235,14 +235,14 @@
             <!-- Discount Section -->
             <v-col cols="12">
               <v-divider class="my-4"></v-divider>
-              <h3 class="mb-4">Chegirma</h3>
+              <h3 class="mb-4">{{ $t('students.labels.discount') }}</h3>
             </v-col>
 
             <v-col v-if="!usePeriodDiscounts" cols="12" md="6">
               <Field name="discountPercent" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model.number="form.discountPercent"
-                  label="Chegirma foizi"
+                  :label="$t('students.form.discountPercent')"
                   type="number"
                   variant="outlined"
                   density="compact"
@@ -260,7 +260,7 @@
               <Field name="discountReason" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.discountReason"
-                  label="Chegirma sababi"
+                  :label="$t('students.form.discountReason')"
                   variant="outlined"
                   density="compact"
                   :error-messages="errors"
@@ -273,7 +273,7 @@
             <v-col cols="12">
               <v-checkbox
                 v-model="usePeriodDiscounts"
-                label="Periodlar bo'yicha chegirma qo'llash"
+                :label="$t('students.form.usePeriodDiscounts')"
                 density="compact"
               ></v-checkbox>
             </v-col>
@@ -287,7 +287,7 @@
                   style="border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;"
                 >
                   <div class="d-flex justify-space-between align-center mb-3">
-                    <h4 class="text-subtitle-1">Period {{ index + 1 }}</h4>
+                    <h4 class="text-subtitle-1">{{ $t('students.form.period', { n: index + 1 }) }}</h4>
                     <v-btn
                       v-if="form.discountPeriods && form.discountPeriods.length > 1"
                       @click="removeDiscountPeriod(index)"
@@ -302,7 +302,7 @@
                       <Field :name="`discountPeriods.${index}.percent`" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model.number="period.percent"
-                          label="Foiz"
+                          :label="$t('students.form.percent')"
                           type="number"
                           variant="outlined"
                           density="compact"
@@ -319,7 +319,7 @@
                       <Field :name="`discountPeriods.${index}.fromMonth`" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="period.fromMonth"
-                          label="Boshlanish oyi"
+                          :label="$t('students.form.fromMonth')"
                           type="month"
                           variant="outlined"
                           density="compact"
@@ -334,7 +334,7 @@
                       <Field :name="`discountPeriods.${index}.toMonth`" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="period.toMonth"
-                          label="Tugash oyi"
+                          :label="$t('students.form.toMonth')"
                           type="month"
                           variant="outlined"
                           density="compact"
@@ -349,7 +349,7 @@
                       <Field :name="`discountPeriods.${index}.reason`" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="period.reason"
-                          label="Sabab"
+                          :label="$t('students.form.reason')"
                           variant="outlined"
                           density="compact"
                           :error-messages="errors"
@@ -366,7 +366,7 @@
                   variant="outlined"
                   class="mt-2"
                 >
-                  Period qo'shish
+                  {{ $t('students.form.addPeriod') }}
                 </v-btn>
               </div>
             </v-col>
@@ -374,8 +374,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="open = false" text="Cancel"></v-btn>
-          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" text="Save"></v-btn>
+          <v-btn @click="open = false" :text="$t('common.cancel')"></v-btn>
+          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" :text="$t('common.save')"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>
@@ -384,6 +384,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { StudentForm } from '@/types/students.types'
 import type { Center } from '@/types/center.types'
@@ -397,6 +398,8 @@ import { WeekDay } from '@/types/groups.enum'
 import dayjs from 'dayjs'
 import { fetchSubjects } from '@/services/pages/subjects'
 import type { Subject } from '@/types/subject.types'
+
+const { t } = useI18n()
 
 const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
@@ -612,10 +615,10 @@ const getStudents = async (centerId?: number) => {
   }
 }
 
-const studyTimeOptions = [
-  { title: 'Ertalab', value: 'morning' },
-  { title: 'Kechqurun', value: 'evening' },
-]
+const studyTimeOptions = computed(() => [
+  { title: t('students.time.morning'), value: 'morning' },
+  { title: t('students.time.evening'), value: 'evening' },
+])
 
 const dayList = computed(() => {
   return [

@@ -2,23 +2,30 @@
   <v-dialog v-model="open" width="750">
     <Form @submit="submit" ref="groupFormRef">
       <v-card>
-        <v-card-text class="pb-1">
+        <v-card-title class="d-flex align-center justify-space-between py-4">
+          <span class="text-h6 font-weight-bold">
+            {{ props.formForEdit?.id ? $t('groups.form.editTitle') : $t('groups.form.addTitle') }}
+          </span>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="open = false"></v-btn>
+        </v-card-title>
+        <v-divider></v-divider>
+        <v-card-text class="py-2">
           <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.name"
-              label="Group Name"
+              :label="$t('groups.form.name')"
               :error-messages="errors"
               @update:model-value="handleChange"
               @blur="handleBlur"
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text>
+        <v-card-text class="py-2">
           <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.centerId"
               :items="centers"
-              label="Centers"
+              :label="$t('groups.form.center')"
               item-title="name"
               item-value="id"
               @update:modelValue="changedCenter"
@@ -28,12 +35,12 @@
             ></v-select>
           </Field>
         </v-card-text>
-        <v-card-text class="pt-0">
+        <v-card-text class="py-2">
           <Field name="subjectId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.subjectId"
               :items="subjects"
-              label="Subjects"
+              :label="$t('groups.form.subject')"
               :disabled="!form.centerId"
               item-title="name"
               item-value="id"
@@ -44,12 +51,12 @@
           </Field>
         </v-card-text>
 
-        <v-card-text class="pt-0">
+        <v-card-text class="py-2">
           <Field name="roomId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.roomId"
               :items="rooms"
-              label="Rooms"
+              :label="$t('groups.form.room')"
               :disabled="!form.centerId"
               item-title="name"
               item-value="id"
@@ -60,13 +67,13 @@
           </Field>
         </v-card-text>
 
-        <v-card-text class="pt-0">
+        <v-card-text class="py-2">
           <Field name="teacherId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.teacherId"
               :items="users"
               :disabled="!form.centerId"
-              label="Teacher"
+              :label="$t('groups.form.teacher')"
               item-title="fullName"
               item-value="id"
               :error-messages="errors"
@@ -75,11 +82,11 @@
             ></v-select>
           </Field>
         </v-card-text>
-        <v-card-text class="pb-0">
+        <v-card-text class="py-2">
           <Field name="monthlyFee" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.monthlyFee"
-              label="Oylik to'lov"
+              :label="$t('groups.form.monthlyFee')"
               type="number"
               variant="outlined"
               :error-messages="errors"
@@ -88,11 +95,11 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text class="pt-0">
+        <v-card-text class="py-2">
           <Field name="durationMonths" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.durationMonths"
-              label="Dars necha oy davom etishi"
+              :label="$t('groups.form.durationMonths')"
               type="number"
               variant="outlined"
               :error-messages="errors"
@@ -101,12 +108,12 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text>
-          <v-row>
+        <v-card-text class="py-2">
+          <v-row dense>
             <v-col :cols="6">
               <Field name="days" v-slot="{ handleChange, handleBlur, errors }">
                 <v-autocomplete
-                  placeholder="Select Lesson Days"
+                  :placeholder="$t('groups.form.selectDays')"
                   :items="dayList"
                   multiple
                   chips
@@ -117,12 +124,13 @@
                 />
               </Field>
             </v-col>
-            <v-col :cols="6" class="d-flex align-center">
+            <v-col :cols="6" class="d-flex">
               <Field name="allTimes" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-if="!differentTime"
-                  placeholder="Group Name"
+                  :placeholder="$t('groups.form.name')"
                   type="time"
+                  style="height: 48px!important; min-height: 48px!important; max-height: 48px!important;"
                   v-model="allTimes"
                   :error-messages="errors"
                   @update:model-value="handleChange"
@@ -131,7 +139,7 @@
               </Field>
               <Field name="differentTime" v-slot="{ handleChange, handleBlur }">
                 <v-checkbox
-                  label="Alohida tanlash"
+                  :label="$t('groups.form.differentTime')"
                   v-model="differentTime"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -155,8 +163,14 @@
           </v-row>
         </v-card-text>
         <template v-slot:actions>
-          <v-btn @click="open = false">Cancel</v-btn>
-          <v-btn type="submit" color="primary" text="Submit" :loading="loading" :disabled="loading"></v-btn>
+          <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn
+            type="submit"
+            color="primary"
+            :text="$t('groups.form.submit')"
+            :loading="loading"
+            :disabled="loading"
+          ></v-btn>
         </template>
       </v-card>
     </Form>
@@ -334,12 +348,18 @@ const submit = async () => {
     subjectId: form.value.subjectId,
     teacherId: form.value.teacherId,
     roomId: form.value.roomId,
-    monthlyFee: form.value.monthlyFee !== undefined && form.value.monthlyFee !== null && form.value.monthlyFee !== ''
-      ? +form.value.monthlyFee
-      : null,
-    durationMonths: form.value.durationMonths !== undefined && form.value.durationMonths !== null && form.value.durationMonths !== ''
-      ? +form.value.durationMonths
-      : null,
+    monthlyFee:
+      form.value.monthlyFee !== undefined &&
+      form.value.monthlyFee !== null &&
+      form.value.monthlyFee !== ''
+        ? +form.value.monthlyFee
+        : null,
+    durationMonths:
+      form.value.durationMonths !== undefined &&
+      form.value.durationMonths !== null &&
+      form.value.durationMonths !== ''
+        ? +form.value.durationMonths
+        : null,
     days: [],
   }
 
@@ -348,7 +368,7 @@ const submit = async () => {
     if (day) {
       submitData.days?.push({
         day: day,
-        startTime: differentTime.value ? (times.value[i] || '') : allTimes.value,
+        startTime: differentTime.value ? times.value[i] || '' : allTimes.value,
       })
     }
   })
@@ -383,5 +403,4 @@ const submit = async () => {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

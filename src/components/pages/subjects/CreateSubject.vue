@@ -1,12 +1,12 @@
 <template>
   <v-dialog width="auto" v-model="open">
     <Form @submit="submit" ref="subjectFormRef">
-      <v-card width="400" title="Create Subject">
+      <v-card width="400" :title="$t('subjects.createTitle')">
         <v-card-text class="pb-1">
           <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field
               v-model="form.name"
-              label="Subject name"
+              :label="$t('subjects.subjectName')"
               :error-messages="errors"
               @update:model-value="handleChange"
               @blur="handleBlur"
@@ -18,7 +18,7 @@
             <v-select
               v-model="form.centerId"
               :items="centers"
-              label="Centers"
+              :label="$t('subjects.centers')"
               item-title="name"
               item-value="id"
               :error-messages="errors"
@@ -28,8 +28,8 @@
           </Field>
         </v-card-text>
         <template v-slot:actions>
-          <v-btn @click="open = false">Cancel</v-btn>
-          <v-btn type="submit" color="primary" text="Save" :loading="loading" :disabled="loading"></v-btn>
+          <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
+          <v-btn type="submit" color="primary" :text="$t('common.save')" :loading="loading" :disabled="loading"></v-btn>
         </template>
       </v-card>
     </Form>

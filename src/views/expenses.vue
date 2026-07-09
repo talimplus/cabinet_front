@@ -2,8 +2,8 @@
   <v-container fluid>
     <v-card>
       <v-card-title class="text-h5 pa-4 d-flex justify-space-between">
-        Chiqimlar
-        <v-btn color="primary" @click="openCreateModal">Yaratish</v-btn>
+        {{ $t('expenses.title') }}
+        <v-btn color="primary" @click="openCreateModal">{{ $t('common.create') }}</v-btn>
       </v-card-title>
 
       <!-- Filters -->
@@ -13,7 +13,7 @@
             <v-select
               v-model="selectedYear"
               :items="yearOptions"
-              label="Yil"
+              :label="$t('expenses.year')"
               variant="outlined"
               density="compact"
               @update:model-value="handleYearChange"
@@ -23,7 +23,7 @@
             <v-select
               v-model="params.centerId"
               :items="centerOptions"
-              label="Markaz"
+              :label="$t('expenses.center')"
               variant="outlined"
               density="compact"
               clearable
@@ -34,8 +34,8 @@
           <v-col cols="12" md="3">
             <v-text-field
               v-model="params.search"
-              label="Qidirish"
-              placeholder="Nomi bo'yicha qidirish"
+              :label="$t('common.search')"
+              :placeholder="$t('expenses.searchPlaceholder')"
               variant="outlined"
               density="compact"
               prepend-inner-icon="mdi-magnify"
@@ -67,7 +67,7 @@
 
         <div v-else-if="expenses.length === 0" class="text-center pa-8">
           <v-icon size="64" color="grey-lighten-1">mdi-cash-off</v-icon>
-          <p class="text-h6 mt-4 text-medium-emphasis">Bu oy uchun chiqimlar topilmadi</p>
+          <p class="text-h6 mt-4 text-medium-emphasis">{{ $t('expenses.noExpensesForMonth') }}</p>
         </div>
 
         <div v-else>
@@ -118,7 +118,7 @@
     <v-dialog v-model="expenseModal.show" max-width="600" persistent>
       <v-card>
         <v-card-title class="text-h6 pa-4">
-          {{ expenseModal.isEdit ? 'Chiqimni tahrirlash' : 'Yangi chiqim' }}
+          {{ expenseModal.isEdit ? $t('expenses.editTitle') : $t('expenses.createTitle') }}
         </v-card-title>
         <Form ref="expenseFormRef" @submit="saveExpense">
           <v-card-text class="pa-4">
@@ -126,7 +126,7 @@
               <v-select
                 v-model="expenseForm.centerId"
                 :items="centerOptions"
-                label="Markaz"
+                :label="$t('expenses.center')"
                 variant="outlined"
                 density="compact"
                 class="mb-1"
@@ -139,7 +139,7 @@
             <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
               <v-text-field
                 v-model="expenseForm.name"
-                label="Chiqim nomi"
+                :label="$t('expenses.expenseName')"
                 variant="outlined"
                 density="compact"
                 class="mb-1"
@@ -152,11 +152,11 @@
             <Field name="amount" v-slot="{ handleChange, handleBlur, errors }">
               <v-text-field
                 v-model.number="expenseForm.amount"
-                label="Summa"
+                :label="$t('common.amount')"
                 type="number"
                 variant="outlined"
                 density="compact"
-                suffix="so'm"
+                :suffix="$t('common.sum')"
                 class="mb-1"
                 :error-messages="errors"
                 @update:model-value="handleChange"
@@ -167,7 +167,7 @@
             <Field name="description" v-slot="{ handleChange, handleBlur, errors }">
               <v-textarea
                 v-model="expenseForm.description"
-                label="Tavsif"
+                :label="$t('common.description')"
                 variant="outlined"
                 density="compact"
                 rows="3"
@@ -182,7 +182,7 @@
               <v-select
                 v-model="expenseForm.forMonth"
                 :items="monthOptions"
-                label="Oy"
+                :label="$t('expenses.month')"
                 variant="outlined"
                 density="compact"
                 :error-messages="errors"
@@ -194,7 +194,7 @@
           <v-card-actions class="pa-4">
             <v-spacer></v-spacer>
             <v-btn variant="text" @click="closeExpenseModal" :disabled="processing">
-              Bekor qilish
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -202,7 +202,7 @@
               type="submit"
               :loading="processing"
             >
-              Saqlash
+              {{ $t('common.save') }}
             </v-btn>
           </v-card-actions>
         </Form>
@@ -212,16 +212,16 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog.show" max-width="400">
       <v-card>
-        <v-card-title class="text-h6 pa-4"> Chiqimni o'chirish </v-card-title>
+        <v-card-title class="text-h6 pa-4"> {{ $t('expenses.deleteTitle') }} </v-card-title>
         <v-card-text class="pa-4">
           <p class="text-body-1">
-            <strong>{{ deleteDialog.expense?.name }}</strong> chiqimini o'chirishni tasdiqlaysizmi?
+            <strong>{{ deleteDialog.expense?.name }}</strong> {{ $t('expenses.deleteConfirmSuffix') }}
           </p>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="deleteDialog.show = false" :disabled="processing">
-            Bekor qilish
+            {{ $t('common.cancel') }}
           </v-btn>
           <v-btn
             color="error"
@@ -229,7 +229,7 @@
             @click="confirmDelete"
             :loading="processing"
           >
-            O'chirish
+            {{ $t('common.delete') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -239,7 +239,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="snackbar.show = false"> Yopish </v-btn>
+        <v-btn variant="text" @click="snackbar.show = false"> {{ $t('common.close') }} </v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -247,6 +247,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { Expense, ExpenseForm, ExpensesParams } from '@/types/expenses.types'
 import { fetchExpenses, fetchExpenseById, createExpense, updateExpense, deleteExpense } from '@/services/pages/expenses'
@@ -257,6 +258,8 @@ import type { Center } from '@/types/centers.types'
 defineOptions({
   name: 'ExpensesPage',
 })
+
+const { t } = useI18n()
 
 // State
 const selectedYear = ref(new Date().getFullYear())
@@ -318,34 +321,34 @@ const yearOptions = computed(() => {
   return years
 })
 
-const monthNames = [
-  { label: 'Yanvar', value: '01' },
-  { label: 'Fevral', value: '02' },
-  { label: 'Mart', value: '03' },
-  { label: 'Aprel', value: '04' },
-  { label: 'May', value: '05' },
-  { label: 'Iyun', value: '06' },
-  { label: 'Iyul', value: '07' },
-  { label: 'Avgust', value: '08' },
-  { label: 'Sentabr', value: '09' },
-  { label: 'Oktabr', value: '10' },
-  { label: 'Noyabr', value: '11' },
-  { label: 'Dekabr', value: '12' },
-]
+const monthNames = computed(() => [
+  { label: t('expenses.months.01'), value: '01' },
+  { label: t('expenses.months.02'), value: '02' },
+  { label: t('expenses.months.03'), value: '03' },
+  { label: t('expenses.months.04'), value: '04' },
+  { label: t('expenses.months.05'), value: '05' },
+  { label: t('expenses.months.06'), value: '06' },
+  { label: t('expenses.months.07'), value: '07' },
+  { label: t('expenses.months.08'), value: '08' },
+  { label: t('expenses.months.09'), value: '09' },
+  { label: t('expenses.months.10'), value: '10' },
+  { label: t('expenses.months.11'), value: '11' },
+  { label: t('expenses.months.12'), value: '12' },
+])
 
 const availableMonths = computed(() => {
   const months = []
   const maxMonth = selectedYear.value === currentYear.value ? currentMonth.value + 1 : 12
 
   for (let i = 0; i < maxMonth; i++) {
-    months.push(monthNames[i])
+    months.push(monthNames.value[i])
   }
 
   return months
 })
 
 const selectedMonth = computed(() => {
-  return availableMonths.value[selectedMonthIndex.value]?.value || monthNames[currentMonth.value].value
+  return availableMonths.value[selectedMonthIndex.value]?.value || monthNames.value[currentMonth.value].value
 })
 
 const forMonth = computed(() => {
@@ -369,23 +372,23 @@ const monthOptions = computed(() => {
     const maxMonth = year === currentYearNum ? currentMonthNum : 12
     for (let month = 1; month <= maxMonth; month++) {
       const monthValue = `${year}-${String(month).padStart(2, '0')}`
-      const monthLabel = `${monthNames[month - 1].label} ${year}`
+      const monthLabel = `${monthNames.value[month - 1].label} ${year}`
       options.push({ title: monthLabel, value: monthValue })
     }
   }
   return options
 })
 
-const headers = [
+const headers = computed(() => [
   { title: 'ID', key: 'id' },
-  { title: 'Nomi', key: 'name' },
-  { title: 'Markaz', key: 'center' },
-  { title: 'Summa', key: 'amount' },
-  { title: 'Tavsif', key: 'description' },
-  { title: 'Oy', key: 'forMonth' },
-  { title: 'Kun', key: 'createdAt' },
-  { title: 'Amallar', key: 'actions' },
-]
+  { title: t('expenses.name'), key: 'name' },
+  { title: t('expenses.center'), key: 'center' },
+  { title: t('common.amount'), key: 'amount' },
+  { title: t('common.description'), key: 'description' },
+  { title: t('expenses.month'), key: 'forMonth' },
+  { title: t('expenses.day'), key: 'createdAt' },
+  { title: t('common.actions'), key: 'actions' },
+])
 
 // Methods
 const isPastMonth = (monthValue: string): boolean => {
@@ -416,7 +419,7 @@ const loadExpenses = async () => {
     expenses.value = response.data || []
     totalPages.value = response.meta?.totalPages || 1
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'Chiqimlarni yuklashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('expenses.errors.loadExpenses'), 'error')
     expenses.value = []
   } finally {
     loading.value = false
@@ -501,7 +504,7 @@ const editExpense = async (expense: Expense) => {
       forMonth: forMonthValue,
     }
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'Chiqimni yuklashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('expenses.errors.loadExpense'), 'error')
   }
 }
 
@@ -522,10 +525,10 @@ const saveExpense = async () => {
   try {
     if (expenseModal.value.isEdit && expenseModal.value.expenseId) {
       await updateExpense(expenseModal.value.expenseId, expenseForm.value)
-      showSnackbar('Chiqim muvaffaqiyatli yangilandi', 'success')
+      showSnackbar(t('expenses.messages.updated'), 'success')
     } else {
       await createExpense(expenseForm.value)
-      showSnackbar('Chiqim muvaffaqiyatli yaratildi', 'success')
+      showSnackbar(t('expenses.messages.created'), 'success')
     }
     await loadExpenses()
     expenseModal.value.show = false
@@ -541,7 +544,7 @@ const saveExpense = async () => {
     if (errors) {
       expenseFormRef.value?.setErrors(errors)
     }
-    showSnackbar(error.response?.data?.message || 'Chiqimni saqlashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('expenses.errors.save'), 'error')
   } finally {
     processing.value = false
   }
@@ -560,11 +563,11 @@ const confirmDelete = async () => {
   processing.value = true
   try {
     await deleteExpense(deleteDialog.value.expense.id)
-    showSnackbar('Chiqim muvaffaqiyatli o\'chirildi', 'success')
+    showSnackbar(t('expenses.messages.deleted'), 'success')
     deleteDialog.value.show = false
     await loadExpenses()
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || 'Chiqimni o\'chirishda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('expenses.errors.delete'), 'error')
   } finally {
     processing.value = false
   }
@@ -582,7 +585,7 @@ const formatCurrency = (amount: number): string => {
 const formatMonth = (monthString: string): string => {
   const [year, month] = monthString.substring(0, 7).split('-')
   const monthIndex = parseInt(month) - 1
-  return `${monthNames[monthIndex]?.label || month} ${year}`
+  return `${monthNames.value[monthIndex]?.label || month} ${year}`
 }
 
 const formatDate = (dateString: string): string => {

@@ -1,0 +1,36 @@
+export default {
+  title: 'Сотрудники',
+  filter: {
+    center: 'Центры',
+    fullName: 'Полное имя',
+    phone: 'Номер телефона',
+  },
+  table: {
+    id: 'ID',
+    firstName: 'Имя',
+    lastName: 'Фамилия',
+    role: 'Роль',
+    salary: 'Зарплата',
+    commissionPercentage: 'Процент комиссии',
+    center: 'Центр',
+  },
+  form: {
+    createTitle: 'Создать сотрудника',
+    firstName: 'Имя',
+    lastName: 'Фамилия',
+    login: 'Логин',
+    phone: 'Телефон',
+    password: 'Пароль',
+    role: 'Роль',
+    center: 'Центр',
+    salary: 'Зарплата',
+    commissionPercentage: 'Процент комиссии',
+  },
+  roles: {
+    admin: 'Администратор',
+    super_admin: 'Супер администратор',
+    teacher: 'Преподаватель',
+    reception: 'Приёмщик',
+    manager: 'Менеджер',
+  },
+}

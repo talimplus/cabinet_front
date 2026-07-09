@@ -4,7 +4,7 @@
       <v-col cols="12" md="8" offset-md="2">
         <div v-if="loading" class="text-center pa-12">
           <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-          <p class="text-h6 mt-4 text-medium-emphasis">Profil yuklanmoqda...</p>
+          <p class="text-h6 mt-4 text-medium-emphasis">{{ $t('profile.loadingProfile') }}</p>
         </div>
         <v-card v-else class="profile-card">
           <v-card-title class="text-h5 pa-6 d-flex align-center">
@@ -26,7 +26,7 @@
                   <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                     <v-text-field
                       v-model="form.firstName"
-                      label="Ism"
+                      :label="$t('profile.firstName')"
                       variant="outlined"
                       density="comfortable"
                       :disabled="loading || saving"
@@ -40,7 +40,7 @@
                   <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                     <v-text-field
                       v-model="form.lastName"
-                      label="Familiya"
+                      :label="$t('profile.lastName')"
                       variant="outlined"
                       density="comfortable"
                       :disabled="loading || saving"
@@ -54,7 +54,7 @@
                   <Field name="login" v-slot="{ handleChange, handleBlur, errors }">
                     <v-text-field
                       v-model="form.login"
-                      label="Login"
+                      :label="$t('profile.login')"
                       variant="outlined"
                       density="comfortable"
                       :disabled="loading || saving"
@@ -68,7 +68,7 @@
                   <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
                     <v-text-field
                       v-model="form.phone"
-                      label="Telefon"
+                      :label="$t('common.phone')"
                       variant="outlined"
                       density="comfortable"
                       :disabled="loading || saving"
@@ -80,15 +80,15 @@
                 </v-col>
                 <v-col cols="12">
                   <v-divider class="my-4"></v-divider>
-                  <div class="text-subtitle-1 font-weight-medium mb-2">Parolni o'zgartirish</div>
+                  <div class="text-subtitle-1 font-weight-medium mb-2">{{ $t('profile.changePassword') }}</div>
                   <Field name="password" v-slot="{ handleChange, handleBlur, errors }">
                     <v-text-field
                       v-model="form.password"
-                      label="Yangi parol"
+                      :label="$t('profile.newPassword')"
                       type="password"
                       variant="outlined"
                       density="comfortable"
-                      hint="Parolni o'zgartirmaslik uchun bo'sh qoldiring"
+                      :hint="$t('profile.passwordHint')"
                       persistent-hint
                       :disabled="loading || saving"
                       :error-messages="errors"
@@ -103,12 +103,12 @@
               <v-row v-if="profileData.role === 'teacher'">
                 <v-col cols="12">
                   <v-divider class="my-4"></v-divider>
-                  <div class="text-subtitle-1 font-weight-medium mb-4">Qo'shimcha ma'lumotlar</div>
+                  <div class="text-subtitle-1 font-weight-medium mb-4">{{ $t('profile.additionalInfo') }}</div>
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-text-field
                     :model-value="formatCurrency(profileData.salary || 0)"
-                    label="Maosh"
+                    :label="$t('profile.salary')"
                     variant="outlined"
                     density="comfortable"
                     readonly
@@ -118,7 +118,7 @@
                 <v-col cols="12" md="6">
                   <v-text-field
                     :model-value="`${profileData.commissionPercentage || 0}%`"
-                    label="Komissiya foizi"
+                    :label="$t('profile.commissionPercentage')"
                     variant="outlined"
                     density="comfortable"
                     readonly
@@ -138,7 +138,7 @@
               @click="resetForm"
               :disabled="loading || saving || !hasChanges"
             >
-              Bekor qilish
+              {{ $t('common.cancel') }}
             </v-btn>
             <v-btn
               color="primary"
@@ -147,7 +147,7 @@
               :loading="saving"
               :disabled="loading || !hasChanges"
             >
-              Saqlash
+              {{ $t('common.save') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -158,7 +158,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="snackbar.show = false"> Yopish </v-btn>
+        <v-btn variant="text" @click="snackbar.show = false"> {{ $t('common.close') }} </v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -166,9 +166,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { UserProfile, UpdateProfileForm } from '@/types/user.types'
 import { getUserMe, updateUserMe } from '@/services/pages/users'
+
+const { t } = useI18n()
 
 // Component name
 defineOptions({
@@ -241,7 +244,7 @@ const loadProfile = async () => {
     initialForm.value = { ...form.value }
   } catch (error: any) {
     showSnackbar(
-      error.response?.data?.message || 'Profil ma\'lumotlarini yuklashda xatolik',
+      error.response?.data?.message || t('profile.loadError'),
       'error',
     )
   } finally {
@@ -270,14 +273,14 @@ const saveProfile = async () => {
     }
 
     await updateUserMe(updateData)
-    showSnackbar('Profil muvaffaqiyatli yangilandi', 'success')
+    showSnackbar(t('profile.updateSuccess'), 'success')
     await loadProfile()
   } catch (error: any) {
     const errors = error?.response?.data?.errors
     if (errors) {
       formRef.value?.setErrors(errors)
     }
-    showSnackbar(error.response?.data?.message || 'Profilni yangilashda xatolik', 'error')
+    showSnackbar(error.response?.data?.message || t('profile.updateError'), 'error')
   } finally {
     saving.value = false
   }
@@ -289,19 +292,13 @@ const formatCurrency = (amount: number): string => {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount) + " so'm"
+    }).format(amount) + ' ' + t('common.sum')
   )
 }
 
 const getRoleLabel = (role: string): string => {
-  const roleLabels: Record<string, string> = {
-    admin: 'Administrator',
-    super_admin: 'Super Administrator',
-    teacher: "O'qituvchi",
-    reception: 'Qabul',
-    manager: 'Menejer',
-  }
-  return roleLabels[role] || role
+  const roleCodes = ['admin', 'super_admin', 'teacher', 'reception', 'manager']
+  return roleCodes.includes(role) ? t(`profile.roles.${role}`) : role
 }
 
 const showSnackbar = (message: string, color: 'success' | 'error' = 'success') => {

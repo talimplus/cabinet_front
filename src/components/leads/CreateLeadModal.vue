@@ -1,14 +1,14 @@
 <template>
   <v-dialog width="820" v-model="open">
     <Form @submit="submit" ref="leadFormRef">
-      <v-card :title="props.formForEdit?.id ? 'Leadni tahrirlash' : 'Yangi lead'">
+      <v-card :title="props.formForEdit?.id ? $t('leads.form.editTitle') : $t('leads.form.createTitle')">
         <v-card-text>
           <v-row dense>
             <v-col cols="6">
               <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.firstName"
-                  label="Ism"
+                  :label="$t('common.name')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -19,7 +19,7 @@
               <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.lastName"
-                  label="Familiya"
+                  :label="$t('leads.form.lastName')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -30,7 +30,7 @@
               <Field name="phone" rules="required" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.phone"
-                  label="Telefon"
+                  :label="$t('common.phone')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -41,7 +41,7 @@
               <Field name="secondPhone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.secondPhone"
-                  label="2-telefon"
+                  :label="$t('leads.form.secondPhone')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -51,7 +51,7 @@
             <v-col cols="6">
               <Field name="birthDate" v-slot="{ handleChange, handleBlur, errors }">
                 <v-date-input
-                  label="Tug'ilgan sana"
+                  :label="$t('leads.form.birthDate')"
                   prepend-icon=""
                   prepend-inner-icon="$calendar"
                   v-model="form.birthDate"
@@ -65,7 +65,7 @@
               <Field name="monthlyFee" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.monthlyFee"
-                  label="Oylik to'lov"
+                  :label="$t('leads.form.monthlyFee')"
                   type="number"
                   :error-messages="errors"
                   @update:model-value="handleChange"
@@ -77,7 +77,7 @@
               <Field name="heardAboutUs" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.heardAboutUs"
-                  label="Qayerdan eshitgan"
+                  :label="$t('leads.form.heardAboutUs')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -91,7 +91,7 @@
                   :items="preferredTimeOptions"
                   item-title="title"
                   item-value="value"
-                  label="Qaysi vaqtda o'qimoqchi"
+                  :label="$t('leads.form.preferredTime')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -105,7 +105,7 @@
                   :items="dayList"
                   multiple
                   chips
-                  label="Qaysi kunlari o'qimoqchi"
+                  :label="$t('leads.form.preferredDays')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -120,7 +120,7 @@
                   item-title="name"
                   item-value="id"
                   v-model="form.centerId"
-                  label="Markaz"
+                  :label="$t('leads.center')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -135,7 +135,7 @@
                   item-value="id"
                   multiple
                   v-model="form.groupIds"
-                  label="Guruhlar"
+                  :label="$t('leads.form.groups')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -145,8 +145,8 @@
 
             <v-col cols="12">
               <v-tabs v-model="identityTab" density="compact" color="primary">
-                <v-tab value="passport">Passport</v-tab>
-                <v-tab value="jshshir">JSHSHIR</v-tab>
+                <v-tab value="passport">{{ $t('leads.form.passport') }}</v-tab>
+                <v-tab value="jshshir">{{ $t('leads.form.jshshir') }}</v-tab>
               </v-tabs>
             </v-col>
             <v-col cols="12">
@@ -157,7 +157,7 @@
                       <Field name="passportSeries" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.passportSeries"
-                          label="Passport seriya"
+                          :label="$t('leads.form.passportSeries')"
                           :error-messages="errors"
                           @update:model-value="handleChange"
                           @blur="handleBlur"
@@ -168,7 +168,7 @@
                       <Field name="passportNumber" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.passportNumber"
-                          label="Passport raqam"
+                          :label="$t('leads.form.passportNumber')"
                           :error-messages="errors"
                           @update:model-value="handleChange"
                           @blur="handleBlur"
@@ -183,7 +183,7 @@
                       <Field name="jshshir" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.jshshir"
-                          label="JSHSHIR"
+                          :label="$t('leads.form.jshshir')"
                           :error-messages="errors"
                           @update:model-value="handleChange"
                           @blur="handleBlur"
@@ -199,7 +199,7 @@
               <Field name="discountPercent" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.discountPercent"
-                  label="Chegirma foizi"
+                  :label="$t('leads.form.discountPercent')"
                   type="number"
                   suffix="%"
                   :min="0"
@@ -214,7 +214,7 @@
               <Field name="discountReason" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.discountReason"
-                  label="Chegirma sababi"
+                  :label="$t('leads.form.discountReason')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -225,7 +225,7 @@
               <Field name="comment" v-slot="{ handleChange, handleBlur, errors }">
                 <v-textarea
                   v-model="form.comment"
-                  label="Izoh"
+                  :label="$t('common.comment')"
                   rows="2"
                   :error-messages="errors"
                   @update:model-value="handleChange"
@@ -236,7 +236,7 @@
             <v-col cols="6">
               <Field name="followUpDate" v-slot="{ handleChange, handleBlur, errors }">
                 <v-date-input
-                  label="Keyinroq sanasi"
+                  :label="$t('leads.followUpDate')"
                   prepend-icon=""
                   prepend-inner-icon="$calendar"
                   v-model="form.followUpDate"
@@ -251,7 +251,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="open = false" :disabled="saving || transferring">
-            Cancel
+            {{ $t('common.cancel') }}
           </v-btn>
           <v-btn
             color="primary"
@@ -259,7 +259,7 @@
             :loading="saving"
             :disabled="saving || transferring"
           >
-            {{ props.formForEdit?.id ? "O'zgartirish" : "Qo'shish" }}
+            {{ props.formForEdit?.id ? $t('leads.form.update') : $t('common.add') }}
           </v-btn>
           <v-btn
             color="secondary"
@@ -268,7 +268,7 @@
             :loading="transferring"
             :disabled="saving || transferring || !props.formForEdit?.id"
           >
-            Yangi o'quvchi yaratish
+            {{ $t('leads.createStudent') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -278,6 +278,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { Lead, LeadForm } from '@/types/leads.types'
 import { LeadStatus } from '@/types/leads.enum'
@@ -301,6 +302,7 @@ const transferring = ref(false)
 const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
 const userStore = useUserStore()
+const { t } = useI18n()
 const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 interface Props {
@@ -337,8 +339,8 @@ const form = ref<LeadForm>({
 const identityTab = ref<'passport' | 'jshshir'>('passport')
 
 const preferredTimeOptions = [
-  { title: 'Ertalab', value: 'morning' },
-  { title: 'Kechqurun', value: 'evening' },
+  { title: t('leads.form.morning'), value: 'morning' },
+  { title: t('leads.form.evening'), value: 'evening' },
 ]
 
 const dayList = computed(() => {

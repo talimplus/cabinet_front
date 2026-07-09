@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title class="mb-6 d-flex justify-space-between"> Tamomlaganlar </v-card-title>
+    <v-card-title class="mb-6 d-flex justify-space-between"> {{ $t('students.titles.finished') }} </v-card-title>
     <v-card-text>
       <v-row>
         <v-col cols="12" md="4">
@@ -9,7 +9,7 @@
             :items="centerOptions"
             item-title="title"
             item-value="value"
-            label="Markaz"
+            :label="$t('students.labels.center')"
             variant="outlined"
             clearable
             density="compact"
@@ -105,12 +105,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
 import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
+
+const { t } = useI18n()
 
 const statusList = computed(() => {
   return [{ title: studentStatusLabels[StudentStatus.NEW], value: StudentStatus.NEW }]
@@ -199,16 +202,16 @@ const changeStatus = async (status: StudentStatus, item: Student) => {
   }
 }
 
-const headers = [
+const headers = computed(() => [
   { title: 'ID', key: 'id' },
-  { title: 'Ism', key: 'firstName' },
-  { title: 'Familiya', key: 'lastName' },
-  { title: 'Telefon', key: 'phone' },
-  { title: "Tug'ilgan sana", key: 'birthDate' },
-  { title: "Oylik to'lov", key: 'monthlyFee' },
-  { title: 'Chegirma', key: 'discountPercent' },
-  { title: 'Holat', key: 'status' },
-]
+  { title: t('students.labels.firstName'), key: 'firstName' },
+  { title: t('students.labels.lastName'), key: 'lastName' },
+  { title: t('common.phone'), key: 'phone' },
+  { title: t('students.labels.birthDate'), key: 'birthDate' },
+  { title: t('students.labels.monthlyFee'), key: 'monthlyFee' },
+  { title: t('students.labels.discount'), key: 'discountPercent' },
+  { title: t('common.status'), key: 'status' },
+])
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return '—'
@@ -226,7 +229,9 @@ const formatCurrency = (amount: number): string => {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount) + " so'm"
+    }).format(amount) +
+    ' ' +
+    t('students.currency')
   )
 }
 

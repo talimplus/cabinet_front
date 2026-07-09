@@ -1,14 +1,14 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
-      Subjects
-      <v-btn color="primary" @click="openModal = true">Create</v-btn>
+      {{ $t('subjects.title') }}
+      <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
 
     <v-row class="px-4">
       <v-col cols="3">
         <v-select
-          label="Centers"
+          :label="$t('subjects.centers')"
           density="compact"
           clearable
           :items="centers"
@@ -22,7 +22,7 @@
         <v-text-field
           variant="outlined"
           v-model="params.name"
-          label="Subject Name"
+          :label="$t('subjects.subjectName')"
           density="compact"
           @input="getSubjects"
         ></v-text-field>
@@ -67,11 +67,14 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchSubjects, deleteSubject } from '@/services/pages/subjects'
 import type { Subject, SubjectsParams } from '@/types/subject.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 import CreateSubjects from '@/components/pages/subjects/CreateSubject.vue'
+
+const { t } = useI18n()
 
 const items = ref<Subject[]>([])
 const centers = ref<Center[]>([])
@@ -95,9 +98,9 @@ const clearFormForEdit = () => {
 }
 const headers = [
   { title: 'ID', key: 'id' },
-  { title: 'Center Name', key: 'center.name' },
-  { title: 'Subject Name', key: 'name' },
-  { title: 'Actions', key: 'actions' },
+  { title: t('subjects.centerName'), key: 'center.name' },
+  { title: t('subjects.subjectName'), key: 'name' },
+  { title: t('common.actions'), key: 'actions' },
 ]
 
 const remove = async (id: number) => {

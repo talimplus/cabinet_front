@@ -1,8 +1,8 @@
 <template>
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
-      Groups
-      <v-btn color="primary" @click="openFormModal = true">Create</v-btn>
+      {{ $t('groups.title') }}
+      <v-btn color="primary" @click="openFormModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
     <v-card-text>
       <v-row>
@@ -12,7 +12,7 @@
             :items="centerOptions"
             item-title="title"
             item-value="value"
-            label="Markaz"
+            :label="$t('groups.filter.center')"
             variant="outlined"
             density="compact"
             clearable
@@ -123,6 +123,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchGroups, deleteGroup, changeGroupStatus } from '@/services/pages/groups'
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
 import { fetchCenters, fetchAllCenters } from '@/services/pages/centers'
@@ -134,6 +135,8 @@ import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { GroupsParams } from '@/types/groups.types'
 import { GroupStatus } from '@/types/groups.enum'
+
+const { t } = useI18n()
 
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
@@ -252,17 +255,17 @@ const changeStatus = async (status: GroupStatus, item: Group) => {
   }
 }
 
-const headers = [
-  { title: 'ID', key: 'id' },
-  { title: 'Nomi', key: 'name' },
-  { title: 'Fan', key: 'subject.name' },
-  { title: 'Dars vaqtlari', key: 'schedules' },
-  { title: 'Kurs Summasi', key: 'monthlyFee' },
-  { title: 'Status', key: 'status' },
-  { title: 'Xona', key: 'room.name' },
-  { title: 'Ustoz', key: 'teacherFullName' },
-  { title: 'Actions', key: 'actions' },
-]
+const headers = computed(() => [
+  { title: t('groups.table.id'), key: 'id' },
+  { title: t('common.name'), key: 'name' },
+  { title: t('groups.table.subject'), key: 'subject.name' },
+  { title: t('groups.table.schedules'), key: 'schedules' },
+  { title: t('groups.table.monthlyFee'), key: 'monthlyFee' },
+  { title: t('common.status'), key: 'status' },
+  { title: t('groups.table.room'), key: 'room.name' },
+  { title: t('groups.table.teacher'), key: 'teacherFullName' },
+  { title: t('common.actions'), key: 'actions' },
+])
 
 const formatCurrency = (amount: number | null): string => {
   if (amount === null || amount === undefined) return '—'
@@ -271,14 +274,14 @@ const formatCurrency = (amount: number | null): string => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })
-    .format(amount) + ' so\'m'
+    .format(amount) + ' ' + t('common.sum')
 }
 
 const getStatusLabel = (status?: GroupStatus): string => {
   const labels: Record<string, string> = {
-    [GroupStatus.NEW]: 'Yangi',
-    [GroupStatus.STARTED]: 'Boshlangan',
-    [GroupStatus.FINISHED]: 'Tugagan',
+    [GroupStatus.NEW]: t('groups.status.new'),
+    [GroupStatus.STARTED]: t('groups.status.started'),
+    [GroupStatus.FINISHED]: t('groups.status.finished'),
   }
   if (!status) return '—'
   return labels[status] || status

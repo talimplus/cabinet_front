@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-card>
-      <v-card-title class="text-h5 pa-4"> Tasdiqlash uchun kelgan to'lovlar </v-card-title>
+      <v-card-title class="text-h5 pa-4"> {{ $t('pendingReceipts.title') }} </v-card-title>
 
       <!-- Payments Table -->
       <v-card-text>
@@ -12,7 +12,7 @@
         <div v-else-if="pendingReceipts.length === 0" class="text-center pa-8">
           <v-icon size="64" color="grey-lighten-1">mdi-receipt-text-check</v-icon>
           <p class="text-h6 mt-4 text-medium-emphasis">
-            Tasdiqlash uchun kelgan to'lovlar topilmadi
+            {{ $t('pendingReceipts.empty') }}
           </p>
         </div>
 
@@ -20,12 +20,12 @@
           <table class="receipts-table">
             <thead>
               <tr>
-                <th>O'quvchi</th>
-                <th>Guruh</th>
-                <th>Oy</th>
-                <th>Summa</th>
-                <th>Yaratilgan sana</th>
-                <th>Amallar</th>
+                <th>{{ $t('pendingReceipts.columns.student') }}</th>
+                <th>{{ $t('pendingReceipts.columns.group') }}</th>
+                <th>{{ $t('pendingReceipts.columns.month') }}</th>
+                <th>{{ $t('common.sum') }}</th>
+                <th>{{ $t('pendingReceipts.columns.createdAt') }}</th>
+                <th>{{ $t('common.actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -50,7 +50,7 @@
                     :disabled="processing"
                     :loading="processingReceiptId === receipt.id"
                   >
-                    Tasdiqlash
+                    {{ $t('pendingReceipts.approve') }}
                   </v-btn>
                 </td>
               </tr>
@@ -63,24 +63,24 @@
     <!-- Confirm Receipt Dialog -->
     <v-dialog v-model="confirmDialog.show" max-width="400">
       <v-card>
-        <v-card-title class="text-h6 pa-4"> To'lovni tasdiqlash </v-card-title>
+        <v-card-title class="text-h6 pa-4"> {{ $t('pendingReceipts.confirmTitle') }} </v-card-title>
         <v-card-text class="pa-4">
           <p class="text-body-1">
             <strong
               >{{ confirmDialog.receipt?.payment.student.firstName }}
               {{ confirmDialog.receipt?.payment.student.lastName }}</strong
             >
-            uchun to'lovni tasdiqlaysizmi?
+            {{ $t('pendingReceipts.confirmQuestion') }}
           </p>
           <div class="mt-4">
             <div class="info-row mb-2">
-              <span class="info-label">Summa:</span>
+              <span class="info-label">{{ $t('common.sum') }}:</span>
               <span class="info-value font-weight-bold text-primary">
                 {{ formatCurrency(parseFloat(confirmDialog.receipt?.amount || '0')) }}
               </span>
             </div>
             <div class="info-row mb-2">
-              <span class="info-label">Oy:</span>
+              <span class="info-label">{{ $t('pendingReceipts.columns.month') }}:</span>
               <span class="info-value">
                 {{ formatMonth(confirmDialog.receipt?.payment.forMonth || '') }}
               </span>
@@ -90,7 +90,7 @@
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
           <v-btn variant="text" @click="confirmDialog.show = false" :disabled="processing">
-            Bekor qilish
+            {{ $t('common.cancel') }}
           </v-btn>
           <v-btn
             color="success"
@@ -98,7 +98,7 @@
             @click="handleConfirmReceipt"
             :loading="processing"
           >
-            Tasdiqlash
+            {{ $t('pendingReceipts.approve') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -108,7 +108,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template v-slot:actions>
-        <v-btn variant="text" @click="snackbar.show = false"> Yopish </v-btn>
+        <v-btn variant="text" @click="snackbar.show = false"> {{ $t('common.close') }} </v-btn>
       </template>
     </v-snackbar>
   </v-container>
@@ -116,8 +116,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { PendingReceipt } from '@/types/payments.types'
 import { fetchPendingReceipts, confirmReceipt } from '@/services/pages/payments'
+
+const { t } = useI18n()
 
 // Component name
 defineOptions({
@@ -151,7 +154,7 @@ const loadPendingReceipts = async () => {
     pendingReceipts.value = response.data || []
   } catch (error: any) {
     showSnackbar(
-      error.response?.data?.message || "Tasdiqlash uchun kelgan to'lovlarni yuklashda xatolik",
+      error.response?.data?.message || t('pendingReceipts.loadError'),
       'error',
     )
     pendingReceipts.value = []
@@ -174,11 +177,11 @@ const handleConfirmReceipt = async () => {
   processingReceiptId.value = confirmDialog.value.receipt.id
   try {
     await confirmReceipt(confirmDialog.value.receipt.id)
-    showSnackbar('To\'lov muvaffaqiyatli tasdiqlandi', 'success')
+    showSnackbar(t('pendingReceipts.confirmSuccess'), 'success')
     confirmDialog.value.show = false
     await loadPendingReceipts()
   } catch (error: any) {
-    showSnackbar(error.response?.data?.message || "To'lovni tasdiqlashda xatolik", 'error')
+    showSnackbar(error.response?.data?.message || t('pendingReceipts.confirmError'), 'error')
   } finally {
     processing.value = false
     processingReceiptId.value = null
@@ -191,7 +194,9 @@ const formatCurrency = (amount: number): string => {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount) + " so'm"
+    }).format(amount) +
+    ' ' +
+    t('common.sum')
   )
 }
 
@@ -211,18 +216,18 @@ const formatMonth = (monthString: string): string => {
   if (!monthString) return '—'
   const [year, month] = monthString.split('-')
   const monthNames = [
-    'Yanvar',
-    'Fevral',
-    'Mart',
-    'Aprel',
-    'May',
-    'Iyun',
-    'Iyul',
-    'Avgust',
-    'Sentabr',
-    'Oktabr',
-    'Noyabr',
-    'Dekabr',
+    t('pendingReceipts.months.january'),
+    t('pendingReceipts.months.february'),
+    t('pendingReceipts.months.march'),
+    t('pendingReceipts.months.april'),
+    t('pendingReceipts.months.may'),
+    t('pendingReceipts.months.june'),
+    t('pendingReceipts.months.july'),
+    t('pendingReceipts.months.august'),
+    t('pendingReceipts.months.september'),
+    t('pendingReceipts.months.october'),
+    t('pendingReceipts.months.november'),
+    t('pendingReceipts.months.december'),
   ]
   return `${monthNames[parseInt(month) - 1]} ${year}`
 }

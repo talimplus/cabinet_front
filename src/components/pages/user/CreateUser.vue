@@ -1,14 +1,14 @@
 <template>
   <v-dialog v-model="open" width="800">
     <Form @submit="submit" ref="userFormRef">
-      <v-card title="Create User">
+      <v-card :title="$t('users.form.createTitle')">
         <v-card-text>
           <v-row dense>
             <v-col cols="6">
               <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.firstName"
-                  label="FirstName"
+                  :label="$t('users.form.firstName')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -19,7 +19,7 @@
               <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.lastName"
-                  label="LastName"
+                  :label="$t('users.form.lastName')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -30,7 +30,7 @@
               <Field name="login" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.login"
-                  label="Login"
+                  :label="$t('users.form.login')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -41,7 +41,7 @@
               <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.phone"
-                  label="Phone"
+                  :label="$t('users.form.phone')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -53,7 +53,7 @@
                 <v-text-field
                   type="password"
                   v-model="form.password"
-                  label="Password"
+                  :label="$t('users.form.password')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -63,9 +63,11 @@
             <v-col cols="6">
               <Field name="role" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
-                  :items="userRoles"
+                  :items="roleItems"
+                  item-title="title"
+                  item-value="value"
                   v-model="form.role"
-                  label="Role"
+                  :label="$t('users.form.role')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -76,7 +78,7 @@
               <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   v-model="form.centerId"
-                  label="Centers"
+                  :label="$t('users.form.center')"
                   :items="centers"
                   item-title="name"
                   item-value="id"
@@ -91,7 +93,7 @@
                 <v-text-field
                   type="number"
                   v-model="form.salary"
-                  label="Salary"
+                  :label="$t('users.form.salary')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -103,7 +105,7 @@
                 <v-text-field
                   type="number"
                   v-model="form.commissionPercentage"
-                  label="Commission %"
+                  :label="$t('users.form.commissionPercentage')"
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -114,8 +116,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="open = false" text="Cancel"></v-btn>
-          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" text="Save"></v-btn>
+          <v-btn @click="open = false" :text="$t('common.cancel')"></v-btn>
+          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" :text="$t('common.save')"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>
@@ -126,7 +128,8 @@
 
 
 <script setup lang="ts">
-import { ref, defineProps, defineModel, defineEmits, watch } from 'vue'
+import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { Center } from '@/types/center.types'
 import type { UserForm, User } from '@/types/users.types'
@@ -146,6 +149,15 @@ const emits = defineEmits<Emits>()
 const open = defineModel('open')
 const loading = ref(false)
 const userFormRef = ref()
+
+const { t } = useI18n()
+
+const roleItems = computed(() =>
+  userRoles.map((role) => ({
+    title: t(`users.roles.${role}`),
+    value: role,
+  })),
+)
 
 const form = ref<UserForm>({
   firstName: '',

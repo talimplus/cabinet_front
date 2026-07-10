@@ -29,7 +29,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="receipt in pendingReceipts" :key="receipt.id">
+              <tr v-for="receipt in pagedReceipts" :key="receipt.id">
                 <td>
                   <div class="student-name">
                     {{ `${receipt.payment.student.firstName} ${receipt.payment.student.lastName}` }}
@@ -56,6 +56,11 @@
               </tr>
             </tbody>
           </table>
+          <v-pagination
+            v-model="page"
+            :length="totalPages"
+            class="mt-4"
+          ></v-pagination>
         </div>
       </v-card-text>
     </v-card>
@@ -115,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PendingReceipt } from '@/types/payments.types'
 import { fetchPendingReceipts, confirmReceipt } from '@/services/pages/payments'
@@ -132,6 +137,15 @@ const pendingReceipts = ref<PendingReceipt[]>([])
 const loading = ref(false)
 const processing = ref(false)
 const processingReceiptId = ref<number | null>(null)
+
+// Client-side pagination (backend hamma ma'lumotni bitta massiv qilib qaytaradi)
+const page = ref(1)
+const perPage = 10
+const totalPages = computed(() => Math.ceil(pendingReceipts.value.length / perPage) || 1)
+const pagedReceipts = computed(() => {
+  const start = (page.value - 1) * perPage
+  return pendingReceipts.value.slice(start, start + perPage)
+})
 
 // Dialog
 const confirmDialog = ref({
@@ -152,6 +166,7 @@ const loadPendingReceipts = async () => {
   try {
     const response = await fetchPendingReceipts()
     pendingReceipts.value = response.data || []
+    if (page.value > totalPages.value) page.value = 1
   } catch (error: any) {
     showSnackbar(
       error.response?.data?.message || t('pendingReceipts.loadError'),

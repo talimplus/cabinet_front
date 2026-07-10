@@ -150,7 +150,7 @@
               :items="students"
               :headers="studentHeaders"
               :loading="loadingStudents"
-              hide-default-footer
+              :items-per-page="10"
               class="elevation-0"
             >
               <template v-slot:item.fullName="{ item }">

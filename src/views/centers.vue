@@ -45,6 +45,12 @@
         </div>
       </template>
       </v-data-table>
+      <v-pagination
+        v-model="params.page"
+        :length="totalPages"
+        class="mt-4"
+        @update:model-value="getCenters"
+      ></v-pagination>
     </v-card-text>
     <CenterCreate
       ref="centerFormRef"

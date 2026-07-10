@@ -209,6 +209,12 @@
               </tr>
             </tbody>
           </table>
+          <v-pagination
+            v-model="page"
+            :length="totalPages"
+            class="mt-4"
+            @update:model-value="handlePageChange"
+          ></v-pagination>
         </div>
       </v-card-text>
     </v-card>
@@ -445,6 +451,8 @@ const loading = ref(false)
 const loadingGroups = ref(false)
 const loadingCenters = ref(false)
 const processingPayment = ref(false)
+const page = ref(1)
+const totalPages = ref(1)
 
 // Dialogs
 const markAsPaidDialog = ref({
@@ -613,7 +621,7 @@ const loadPayments = async () => {
   loading.value = true
   try {
     const forMonth = `${selectedYear.value}-${selectedMonth.value}`
-    const params: any = { forMonth }
+    const params: any = { forMonth, page: page.value, perPage: 10 }
 
     if (selectedStatus.value && selectedStatus.value !== 'all') {
       params.status = selectedStatus.value
@@ -633,6 +641,7 @@ const loadPayments = async () => {
 
     const response = await fetchPayments(params)
     payments.value = response.data || []
+    totalPages.value = response.meta?.totalPages || 1
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || t('payments.messages.loadError'), 'error')
     payments.value = []
@@ -644,6 +653,7 @@ const loadPayments = async () => {
 const handleCenterChange = async () => {
   // Reset group selection when center changes
   selectedGroupId.value = null
+  page.value = 1
   // Reload groups for the new center
   await loadGroups()
   // Reload payments
@@ -651,6 +661,7 @@ const handleCenterChange = async () => {
 }
 
 const handleFilterChange = () => {
+  page.value = 1
   loadPayments()
 }
 
@@ -659,10 +670,16 @@ const handleYearChange = () => {
   if (selectedMonthIndex.value >= availableMonths.value.length) {
     selectedMonthIndex.value = 0
   }
+  page.value = 1
   loadPayments()
 }
 
 const handleMonthChange = () => {
+  page.value = 1
+  loadPayments()
+}
+
+const handlePageChange = () => {
   loadPayments()
 }
 

@@ -4,7 +4,7 @@
       <v-card :title="$t('users.form.createTitle')">
         <v-card-text>
           <v-row dense>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.firstName"
@@ -15,7 +15,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.lastName"
@@ -26,7 +26,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="login" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.login"
@@ -37,7 +37,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="phone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.phone"
@@ -48,7 +48,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="password" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   type="password"
@@ -60,7 +60,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="role" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="roleItems"
@@ -74,7 +74,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   v-model="form.centerId"
@@ -88,7 +88,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="salary" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   type="number"
@@ -100,7 +100,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="commissionPercentage" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   type="number"

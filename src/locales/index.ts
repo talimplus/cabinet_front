@@ -11,6 +11,7 @@ import uzExpenses from './uz/expenses'
 import uzPendingReceipts from './uz/pendingReceipts'
 import uzCenters from './uz/centers'
 import uzSubjects from './uz/subjects'
+import uzSyllabuses from './uz/syllabuses'
 import uzRooms from './uz/rooms'
 import uzUsers from './uz/users'
 import uzProfile from './uz/profile'
@@ -29,6 +30,7 @@ import ruExpenses from './ru/expenses'
 import ruPendingReceipts from './ru/pendingReceipts'
 import ruCenters from './ru/centers'
 import ruSubjects from './ru/subjects'
+import ruSyllabuses from './ru/syllabuses'
 import ruRooms from './ru/rooms'
 import ruUsers from './ru/users'
 import ruProfile from './ru/profile'
@@ -48,6 +50,7 @@ export const messages = {
     pendingReceipts: uzPendingReceipts,
     centers: uzCenters,
     subjects: uzSubjects,
+    syllabuses: uzSyllabuses,
     rooms: uzRooms,
     users: uzUsers,
     profile: uzProfile,
@@ -66,6 +69,7 @@ export const messages = {
     pendingReceipts: ruPendingReceipts,
     centers: ruCenters,
     subjects: ruSubjects,
+    syllabuses: ruSyllabuses,
     rooms: ruRooms,
     users: ruUsers,
     profile: ruProfile,

@@ -6,7 +6,8 @@
       </v-card-title>
 
       <v-tabs v-model="activeTab" bg-color="primary" slider-color="white">
-        <v-tab value="attendance">{{ $t('groups.tabs.attendance') }}</v-tab>
+        <v-tab v-if="canManageAttendance" value="attendance">{{ $t('groups.tabs.attendance') }}</v-tab>
+        <v-tab v-if="!isReception" value="plan">{{ $t('groups.tabs.plan') }}</v-tab>
         <v-tab value="students">{{ $t('groups.tabs.students') }}</v-tab>
         <v-tab value="info">{{ $t('groups.tabs.info') }}</v-tab>
       </v-tabs>
@@ -133,7 +134,16 @@
           </v-card-text>
         </v-window-item>
 
-        <!-- TAB 2: STUDENTS -->
+        <!-- TAB 2: LESSON PLAN -->
+        <v-window-item value="plan">
+          <GroupPlanTab
+            v-if="planTabVisited && groupId"
+            :group-id="groupId"
+            :is-own-group="isOwnGroup"
+          />
+        </v-window-item>
+
+        <!-- TAB 3: STUDENTS -->
         <v-window-item value="students">
           <v-card-text>
             <v-data-table
@@ -158,7 +168,7 @@
           </v-card-text>
         </v-window-item>
 
-        <!-- TAB 3: GROUP INFO -->
+        <!-- TAB 4: GROUP INFO -->
         <v-window-item value="info">
           <v-card-text v-if="loadingGroup" class="text-center pa-8">
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -371,6 +381,8 @@ import type {
 } from '@/types/attendance.types'
 import { fetchGroupById, fetchLessonDates, submitAttendance, rescheduleAttendance } from '@/services/pages/groups'
 import { fetchStudents } from '@/services/pages/students'
+import GroupPlanTab from '@/components/pages/group/GroupPlanTab.vue'
+import { usePermissions } from '@/composables/usePermissions'
 import type { StudentsParams } from '@/types/students.types'
 import { StudentStatus } from '@/types/students.enum'
 
@@ -381,9 +393,17 @@ defineOptions({
 
 const route = useRoute()
 const { t } = useI18n()
+const { canManageAttendance, isReception, userId } = usePermissions()
 
-// Tabs
-const activeTab = ref('attendance')
+// Tabs — reception davomatni ko'ra olmaydi, shuning uchun boshqa tabdan boshlaymiz
+const activeTab = ref(canManageAttendance.value ? 'attendance' : 'students')
+const planTabVisited = ref(false)
+const groupId = computed(() => {
+  const id = route.params.id
+  return !id || Array.isArray(id) ? null : id
+})
+// Joriy foydalanuvchi shu guruhning o'qituvchisimi
+const isOwnGroup = computed(() => !!group.value?.teacher && group.value.teacher.id === userId.value)
 
 // Group data
 const group = ref<Group | null>(null)
@@ -785,6 +805,9 @@ const studentHeaders = computed(() => [
 
 // Watch for tab changes to load data
 watch(activeTab, (newTab) => {
+  if (newTab === 'plan') {
+    planTabVisited.value = true
+  }
   if (newTab === 'attendance' && !attendanceData.value) {
     loadAttendance()
   } else if (newTab === 'students' && students.value.length === 0) {

@@ -202,9 +202,11 @@ const changeLocale = (lang: AppLocale) => {
 // Menu items organized by groups (text = i18n key)
 const allItems = {
   standalone: [
+    { text: 'layout.menu.todayLessons', icon: 'mdi-calendar-today', path: '/today', roles: ['teacher'] },
     { text: 'layout.menu.statistics', icon: 'mdi-chart-line', path: '/statistics' },
-    { text: 'layout.menu.users', icon: 'mdi-account', path: '/users' },
+    { text: 'layout.menu.users', icon: 'mdi-account', path: '/users', roles: ['admin'] },
     { text: 'layout.menu.groups', icon: 'mdi-flag', path: '/groups' },
+    { text: 'layout.menu.syllabuses', icon: 'mdi-book-open-variant', path: '/syllabuses' },
   ],
   payment: [
     { text: 'layout.menu.payments', icon: 'mdi-cash', path: '/payments' },
@@ -233,12 +235,20 @@ const allItems = {
 }
 
 // Role-based restrictions
-const restrictedRoutesForReception = ['/users', '/statistics', '/payroll', '/expenses', '/centers']
+const restrictedRoutesForReception = [
+  '/users',
+  '/statistics',
+  '/payroll',
+  '/expenses',
+  '/centers',
+  '/syllabuses',
+]
 const restrictedRoutesForTeacher = [
   '/users',
   '/centers',
   '/rooms',
   '/reception',
+  '/leads',
   '/students',
   '/stopped',
   '/ignored',
@@ -248,6 +258,7 @@ const restrictedRoutesForTeacher = [
   '/expenses',
   '/statistics',
 ]
+const restrictedRoutesForManager = ['/users', '/statistics', '/payroll', '/expenses']
 
 const filterItems = (items: any[]) => {
   const user = userStore.user
@@ -260,9 +271,15 @@ const filterItems = (items: any[]) => {
     restrictedRoutes = restrictedRoutesForReception
   } else if (userRole === 'teacher') {
     restrictedRoutes = restrictedRoutesForTeacher
+  } else if (userRole === 'manager') {
+    restrictedRoutes = restrictedRoutesForManager
   }
 
   return items.filter((item) => {
+    // Item aniq rollarga cheklangan bo'lsa (masalan users -> faqat admin, today -> teacher)
+    if (item.roles && !item.roles.includes(userRole)) {
+      return false
+    }
     // Filter admin-only items
     if (item.adminOnly && userRole !== 'admin' && userRole !== 'super_admin') {
       return false

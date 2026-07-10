@@ -19,6 +19,8 @@
     "apexcharts": "^5.3.6",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
+    "dompurify": "^3.4.11",
+    "marked": "^18.0.5",
     "pinia": "^3.0.1",
     "vee-validate": "^4.15.1",
     "vue": "^3.5.13",

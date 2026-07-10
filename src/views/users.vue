@@ -5,7 +5,7 @@
       <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
     <v-row class="px-4">
-      <v-col cols="3">
+      <v-col cols="12" sm="6" md="3">
         <v-select
           :label="$t('users.filter.center')"
           variant="outlined"
@@ -18,7 +18,7 @@
           @update:modelValue="getUsers"
         ></v-select>
       </v-col>
-      <v-col cols="3">
+      <v-col cols="12" sm="6" md="3">
         <v-text-field
           @input="getUsers"
           variant="outlined"
@@ -27,7 +27,7 @@
           :label="$t('users.filter.fullName')"
         ></v-text-field>
       </v-col>
-      <v-col cols="3">
+      <v-col cols="12" sm="6" md="3">
         <v-text-field
           @input="getUsers"
           density="compact"

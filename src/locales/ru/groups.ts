@@ -23,6 +23,7 @@ export default {
     attendance: 'Посещаемость',
     students: 'Ученики',
     info: 'Информация о группе',
+    plan: 'План уроков',
   },
   attendance: {
     fromDate: 'Дата начала',

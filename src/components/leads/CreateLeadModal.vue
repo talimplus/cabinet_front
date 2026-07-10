@@ -4,7 +4,7 @@
       <v-card :title="props.formForEdit?.id ? $t('leads.form.editTitle') : $t('leads.form.createTitle')">
         <v-card-text>
           <v-row dense>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="firstName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.firstName"
@@ -15,7 +15,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="lastName" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.lastName"
@@ -26,7 +26,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="phone" rules="required" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.phone"
@@ -37,7 +37,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="secondPhone" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.secondPhone"
@@ -48,7 +48,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="birthDate" v-slot="{ handleChange, handleBlur, errors }">
                 <v-date-input
                   :label="$t('leads.form.birthDate')"
@@ -61,7 +61,7 @@
                 ></v-date-input>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="monthlyFee" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.monthlyFee"
@@ -73,7 +73,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="heardAboutUs" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.heardAboutUs"
@@ -84,7 +84,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="preferredTime" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   v-model="form.preferredTime"
@@ -113,7 +113,7 @@
               </Field>
             </v-col>
 
-            <v-col v-if="isAdmin" cols="6">
+            <v-col v-if="isAdmin" cols="12" sm="6">
               <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="centers"
@@ -127,7 +127,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="groupIds" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="groups"
@@ -153,7 +153,7 @@
               <v-window v-model="identityTab">
                 <v-window-item value="passport">
                   <v-row dense>
-                    <v-col cols="6">
+                    <v-col cols="12" sm="6">
                       <Field name="passportSeries" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.passportSeries"
@@ -164,7 +164,7 @@
                         ></v-text-field>
                       </Field>
                     </v-col>
-                    <v-col cols="6">
+                    <v-col cols="12" sm="6">
                       <Field name="passportNumber" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.passportNumber"
@@ -179,7 +179,7 @@
                 </v-window-item>
                 <v-window-item value="jshshir">
                   <v-row dense>
-                    <v-col cols="6">
+                    <v-col cols="12" sm="6">
                       <Field name="jshshir" v-slot="{ handleChange, handleBlur, errors }">
                         <v-text-field
                           v-model="form.jshshir"
@@ -195,7 +195,7 @@
               </v-window>
             </v-col>
 
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="discountPercent" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.discountPercent"
@@ -210,7 +210,7 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="discountReason" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-model="form.discountReason"
@@ -233,7 +233,7 @@
                 ></v-textarea>
               </Field>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <Field name="followUpDate" v-slot="{ handleChange, handleBlur, errors }">
                 <v-date-input
                   :label="$t('leads.followUpDate')"

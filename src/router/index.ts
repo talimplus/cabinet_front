@@ -20,6 +20,21 @@ const router = createRouter({
           component: () => import('../views/subjects.vue')
         },
         {
+          path: '/syllabuses',
+          name: 'syllabuses',
+          component: () => import('../views/syllabuses/index.vue')
+        },
+        {
+          path: '/syllabuses/:id',
+          name: 'syllabus-view',
+          component: () => import('../views/syllabuses/view.vue')
+        },
+        {
+          path: '/today',
+          name: 'today-lessons',
+          component: () => import('../views/teacher/today.vue')
+        },
+        {
           path: '/groups',
           name: 'groups',
           component: () => import('../views/groups/index.vue'),
@@ -122,12 +137,15 @@ const restrictedRoutesForReception = [
   '/expenses',
   '/centers',
   '/pending-receipts',
+  '/syllabuses',
+  '/today',
 ]
 const restrictedRoutesForTeacher = [
   '/users',
   '/centers',
   '/rooms',
   '/reception',
+  '/leads',
   '/students',
   '/stopped',
   '/ignored',
@@ -141,6 +159,31 @@ const restrictedRoutesForTeacher = [
 
 // Admin-only routes (only admin and super_admin can access)
 const adminOnlyRoutes = ['/pending-receipts']
+
+// Precise per-route allow-list, derived from backend role guards.
+// Only listed routes are constrained here; anything else falls back to the
+// per-role restriction lists above. Matches the route and its children.
+const routeAllowedRoles: Record<string, string[]> = {
+  '/users': ['admin'], // backend: faqat admin (super_admin ham 403)
+  '/statistics': ['admin', 'super_admin'], // dashboard: manager/reception/teacher 403
+  '/payroll': ['admin', 'super_admin'], // salaries/earnings: manager 403
+  '/expenses': ['admin', 'super_admin'], // expenses: manager 403
+  '/pending-receipts': ['admin', 'super_admin'],
+  '/leads': ['admin', 'super_admin', 'manager', 'reception'], // teacher 403
+  '/syllabuses': ['admin', 'super_admin', 'manager', 'teacher'], // reception ko'rmaydi
+  '/today': ['teacher'], // o'qituvchining "bugungi darslar"i
+}
+
+// Matches the route itself and its child paths (e.g. '/syllabuses' also covers '/syllabuses/5')
+const isRestricted = (routes: string[], path: string) =>
+  routes.some((route) => path === route || path.startsWith(route + '/'))
+
+// Role uchun boshlang'ich sahifa (bloklanganda yo'naltirish uchun)
+const roleHome = (role: string): string => {
+  if (role === 'admin' || role === 'super_admin') return '/statistics'
+  if (role === 'teacher') return '/today'
+  return '/groups'
+}
 
 router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('token')
@@ -182,6 +225,8 @@ router.beforeEach(async (to, from, next) => {
       const userRole = user.role
       if (userRole === 'admin' || userRole === 'super_admin') {
         next('/statistics')
+      } else if (userRole === 'teacher') {
+        next('/today')
       } else {
         next('/profile')
       }
@@ -213,23 +258,34 @@ router.beforeEach(async (to, from, next) => {
   if (user) {
     const userRole = user.role
 
+    // Precise per-route allow-list (backend role guards bilan mos)
+    for (const [prefix, roles] of Object.entries(routeAllowedRoles)) {
+      if (
+        (to.path === prefix || to.path.startsWith(prefix + '/')) &&
+        !roles.includes(userRole)
+      ) {
+        next(roleHome(userRole))
+        return
+      }
+    }
+
     // Check admin-only routes
     if (adminOnlyRoutes.includes(to.path)) {
       if (userRole !== 'admin' && userRole !== 'super_admin') {
-        next('/groups') // Redirect to allowed page
+        next(roleHome(userRole))
         return
       }
     }
 
     // Check reception role restrictions
-    if (userRole === 'reception' && restrictedRoutesForReception.includes(to.path)) {
-      next('/groups') // Redirect to allowed page
+    if (userRole === 'reception' && isRestricted(restrictedRoutesForReception, to.path)) {
+      next(roleHome(userRole))
       return
     }
 
     // Check teacher role restrictions
-    if (userRole === 'teacher' && restrictedRoutesForTeacher.includes(to.path)) {
-      next('/groups') // Redirect to allowed page
+    if (userRole === 'teacher' && isRestricted(restrictedRoutesForTeacher, to.path)) {
+      next(roleHome(userRole))
       return
     }
   }

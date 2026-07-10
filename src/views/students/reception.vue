@@ -132,6 +132,12 @@
         ></v-btn>
       </template>
       </v-data-table>
+      <v-pagination
+        v-model="params.page"
+        :length="totalPages"
+        class="mt-4"
+        @update:model-value="getStudents"
+      ></v-pagination>
     </v-card-text>
     <CreateStudent
       @updateData="getStudents"
@@ -208,6 +214,7 @@ const centers = ref<Center[]>([])
 const subjects = ref<Subject[]>([])
 const loadingCenters = ref(false)
 const loadingSubjects = ref(false)
+const totalPages = ref(1)
 const snackbar = ref({
   show: false,
   message: '',
@@ -297,13 +304,14 @@ const getStudents = async () => {
   if (!params.value.centerId) return
   try {
     const {
-      data: { data },
+      data: { data, meta },
     } = await fetchStudents(params.value)
     students.value = data
     students.value.map((student: Student) => {
       student.openStatus = false
       student.statusLoading = false
     })
+    totalPages.value = meta?.totalPages || 1
   } catch (err) {
     console.log(err)
   }

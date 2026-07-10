@@ -5,7 +5,7 @@
       <v-btn @click="dialog = true" color="primary">{{ $t('common.create') }}</v-btn>
     </v-card-title>
     <v-row class="px-4">
-      <v-col cols="3">
+      <v-col cols="12" sm="6" md="3">
         <v-text-field
           @input="getCenters"
           v-model="params.name"

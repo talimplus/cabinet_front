@@ -2,7 +2,9 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('groups.title') }}
-      <v-btn color="primary" @click="openFormModal = true">{{ $t('common.create') }}</v-btn>
+      <v-btn v-if="canCreateGroup" color="primary" @click="openFormModal = true">
+        {{ $t('common.create') }}
+      </v-btn>
     </v-card-title>
     <v-card-text>
       <v-row>
@@ -24,7 +26,7 @@
     </v-card-text>
     <v-data-table :items="items" :headers="headers" hide-default-footer>
       <template v-slot:item.teacherFullName="{ item }">
-        <div>{{ item.teacher.firstName + ' ' + item.teacher.lastName }}</div>
+        <div>{{ item.teacher ? item.teacher.firstName + ' ' + item.teacher.lastName : '—' }}</div>
       </template>
       <template v-slot:item.schedules="{ item }">
         <div v-for="(day, i) in item.schedules" :key="`day-${i}`">
@@ -41,7 +43,7 @@
           <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
             {{ getStatusLabel(item.status) }}
           </v-chip>
-          <v-menu v-if="getStatusOptions(item.status).length > 0">
+          <v-menu v-if="canEditGroup && getStatusOptions(item.status).length > 0">
             <template v-slot:activator="{ props }">
               <v-btn
                 density="compact"
@@ -64,7 +66,7 @@
             </v-list>
           </v-menu>
           <v-btn
-            v-else
+            v-else-if="canEditGroup"
             density="compact"
             color="primary"
             icon="mdi-pencil"
@@ -88,6 +90,7 @@
           >
           </v-btn>
           <v-btn
+            v-if="canEditGroup"
             density="compact"
             color="medium-emphasis"
             icon="mdi-pencil"
@@ -97,7 +100,7 @@
             @click="edit(item)"
           ></v-btn>
           <v-btn
-            teicon="mdi-delete"
+            v-if="canDeleteGroup"
             density="compact"
             color="medium-emphasis"
             icon="mdi-delete"
@@ -110,6 +113,12 @@
         </div>
       </template>
     </v-data-table>
+    <v-pagination
+      v-model="params.page"
+      :length="totalPages"
+      class="mt-4"
+      @update:model-value="getGroups"
+    ></v-pagination>
     <create-group-modal
       :centers="centers"
       v-model:open="openFormModal"
@@ -135,8 +144,10 @@ import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { GroupsParams } from '@/types/groups.types'
 import { GroupStatus } from '@/types/groups.enum'
+import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
+const { canCreateGroup, canEditGroup, canDeleteGroup } = usePermissions()
 
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
@@ -146,9 +157,12 @@ const users = ref<User[]>([])
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
 const loadingCenters = ref(false)
+const totalPages = ref(1)
 
 const params = ref<GroupsParams>({
   centerId: undefined,
+  page: 1,
+  perPage: 10,
 })
 
 const centerOptions = computed(() => {
@@ -169,13 +183,13 @@ const clearEditForm = () => {
 const getGroups = async () => {
   try {
     const {
-      data: { data },
+      data: { data, meta },
     } = await fetchGroups(params.value)
     items.value = data.map((item: Group) => ({
       ...item,
       statusLoading: false,
     }))
-    console.log(data)
+    totalPages.value = meta?.totalPages || 1
   } catch (err) {
     console.log(err)
   }

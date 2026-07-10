@@ -1,7 +1,7 @@
 <template>
-  <v-dialog v-model="open" width="auto">
+  <v-dialog v-model="open" width="400">
     <Form @submit="submit" ref="centerForm">
-      <v-card width="400" :title="$t('centers.dialog.createTitle')">
+      <v-card :title="$t('centers.dialog.createTitle')">
         <v-card-text>
           <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
             <v-text-field

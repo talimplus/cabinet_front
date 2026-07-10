@@ -110,7 +110,7 @@
         </v-card-text>
         <v-card-text class="py-2">
           <v-row dense>
-            <v-col :cols="6">
+            <v-col cols="12" sm="6">
               <Field name="days" v-slot="{ handleChange, handleBlur, errors }">
                 <v-autocomplete
                   :placeholder="$t('groups.form.selectDays')"
@@ -124,7 +124,7 @@
                 />
               </Field>
             </v-col>
-            <v-col :cols="6" class="d-flex">
+            <v-col cols="12" sm="6" class="d-flex">
               <Field name="allTimes" v-slot="{ handleChange, handleBlur, errors }">
                 <v-text-field
                   v-if="!differentTime"
@@ -147,7 +147,7 @@
               </Field>
             </v-col>
             <template v-if="differentTime">
-              <v-col :cols="6" v-for="(day, i) in days" :key="`day-${i}`">
+              <v-col cols="12" sm="6" v-for="(day, i) in days" :key="`day-${i}`">
                 <Field :name="`times.${i}`" v-slot="{ handleChange, handleBlur, errors }">
                   <v-text-field
                     :label="day"

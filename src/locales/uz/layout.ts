@@ -16,6 +16,8 @@ export default {
     centers: 'Markazlar',
     subjects: 'Fanlar',
     rooms: 'Xonalar',
+    syllabuses: 'Kurs rejalari',
+    todayLessons: 'Bugungi darslar',
   },
   groups: {
     payment: "To'lovlar",

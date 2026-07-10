@@ -23,6 +23,7 @@ export default {
     attendance: 'Davomat',
     students: "O'quvchilar",
     info: "Guruh ma'lumotlari",
+    plan: 'Dars rejasi',
   },
   attendance: {
     fromDate: 'Boshlanish sanasi',

@@ -6,7 +6,7 @@
     </v-card-title>
 
     <v-row class="px-4">
-      <v-col cols="3">
+      <v-col cols="12" sm="6" md="3">
         <v-select
           :label="$t('subjects.centers')"
           density="compact"
@@ -18,7 +18,7 @@
           v-model="params.centerId"
           @update:modelValue="getSubjects"
         ></v-select> </v-col
-      ><v-col cols="3">
+      ><v-col cols="12" sm="6" md="3">
         <v-text-field
           variant="outlined"
           v-model="params.name"

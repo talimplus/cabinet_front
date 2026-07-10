@@ -101,6 +101,8 @@ const submit = async () => {
       const userRole = data.user.role
       if (userRole === 'admin' || userRole === 'super_admin') {
         router.push('/statistics')
+      } else if (userRole === 'teacher') {
+        router.push('/today')
       } else {
         router.push('/profile')
       }

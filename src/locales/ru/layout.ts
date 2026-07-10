@@ -16,6 +16,8 @@ export default {
     centers: 'Центры',
     subjects: 'Предметы',
     rooms: 'Комнаты',
+    syllabuses: 'Учебные планы',
+    todayLessons: 'Уроки на сегодня',
   },
   groups: {
     payment: 'Платежи',

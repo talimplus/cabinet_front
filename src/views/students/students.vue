@@ -70,7 +70,7 @@
           >
             {{ getStatusLabel(item.status) }}
           </v-chip>
-          <v-menu>
+          <v-menu v-if="canEditStudent">
             <template v-slot:activator="{ props }">
               <v-btn
                 @click="item.openStatus = true"
@@ -98,6 +98,7 @@
       </template>
       <template v-slot:item.action="{ item }">
         <v-btn
+          v-if="canEditStudent"
           @click="editStudent(item)"
           density="compact"
           color="medium-emphasis"
@@ -108,6 +109,12 @@
         ></v-btn>
       </template>
       </v-data-table>
+      <v-pagination
+        v-model="params.page"
+        :length="totalPages"
+        class="mt-4"
+        @update:model-value="getStudents"
+      ></v-pagination>
     </v-card-text>
     <CreateStudent
       @updateData="getStudents"
@@ -158,8 +165,10 @@ import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
+import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
+const { canEditStudent } = usePermissions()
 
 const statusList = computed(() => {
   return [
@@ -179,6 +188,7 @@ const students = ref<Student[]>([])
 const formForEdit = ref<Student>({})
 const centers = ref<Center[]>([])
 const loadingCenters = ref(false)
+const totalPages = ref(1)
 
 const params = ref<StudentsParams>({
   centerId: undefined,
@@ -227,13 +237,14 @@ const getStudents = async () => {
   if (!params.value.centerId) return
   try {
     const {
-      data: { data },
+      data: { data, meta },
     } = await fetchStudents(params.value)
     students.value = data
     students.value.map((student: Student) => {
       student.openStatus = false
       student.statusLoading = false
     })
+    totalPages.value = meta?.totalPages || 1
   } catch (err) {
     console.log(err)
   }

@@ -6,7 +6,7 @@
         <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
       </v-card-title>
       <v-row class="px-4">
-        <v-col cols="3">
+        <v-col cols="12" sm="6" md="3">
           <v-text-field
             v-model="params.name"
             variant="outlined"
@@ -16,7 +16,7 @@
           >
           </v-text-field>
         </v-col>
-        <v-col cols="3">
+        <v-col cols="12" sm="6" md="3">
           <v-select
             v-model="params.centerId"
             density="compact"

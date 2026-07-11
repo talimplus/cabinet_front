@@ -66,6 +66,52 @@ export interface GeneratedTopicContent {
         homework: string | null;
 }
 
+// ---- AI chat plan builder ---------------------------------------------
+
+export interface AiChatMessage {
+        role: 'user' | 'assistant';
+        content: string;
+}
+
+export interface AiPlanTopic {
+        title: string;
+        description?: string | null;
+        difficulty: TopicDifficulty;
+        estimatedLessons: number;
+}
+
+export interface AiPlan {
+        name: string;
+        description?: string | null;
+        totalLessons?: number | null;
+        topics: AiPlanTopic[];
+}
+
+export interface AiChatPayload {
+        subjectId?: number;
+        messages: AiChatMessage[];
+}
+
+export interface AiChatQuestionResponse {
+        type: 'question';
+        message: string;
+}
+
+export interface AiChatPlanResponse {
+        type: 'plan';
+        message: string;
+        plan: AiPlan;
+}
+
+export type AiChatResponse = AiChatQuestionResponse | AiChatPlanResponse;
+
+export interface AiSavePayload {
+        subjectId: number;
+        name: string;
+        description?: string;
+        topics: AiPlanTopic[];
+}
+
 // ---- Group plan -------------------------------------------------------
 
 export interface PlanTopic extends SyllabusTopic {

@@ -9,6 +9,9 @@ import type {
         GroupPlan,
         DistributePayload,
         TeacherToday,
+        AiChatPayload,
+        AiChatResponse,
+        AiSavePayload,
 } from '@/types/syllabus.types';
 
 export const fetchSyllabuses = async (params?: SyllabusesParams) => {
@@ -26,6 +29,17 @@ export const createSyllabus = async (form: SyllabusForm) => {
 
 export const deleteSyllabus = async (id: number) => {
         return await http.delete(`/syllabuses/${id}`)
+}
+
+// AI plan builder
+export const aiChat = async (payload: AiChatPayload): Promise<AiChatResponse> => {
+        const response = await http.post('/syllabuses/ai/chat', payload)
+        return response.data
+}
+
+export const aiSavePlan = async (payload: AiSavePayload): Promise<Syllabus> => {
+        const response = await http.post('/syllabuses/ai/save', payload)
+        return response.data
 }
 
 // Topics

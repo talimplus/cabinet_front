@@ -2,9 +2,14 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('syllabuses.title') }}
-      <v-btn v-if="canManageSyllabus" color="primary" @click="openModal = true">
-        {{ $t('common.create') }}
-      </v-btn>
+      <div v-if="canManageSyllabus" class="d-flex" style="gap: 8px">
+        <v-btn color="primary" variant="tonal" prepend-icon="mdi-creation" @click="openAiModal = true">
+          {{ $t('syllabuses.aiChat.button') }}
+        </v-btn>
+        <v-btn color="primary" @click="openModal = true">
+          {{ $t('common.create') }}
+        </v-btn>
+      </div>
     </v-card-title>
 
     <v-row class="px-4">
@@ -82,6 +87,13 @@
 
     <CreateSyllabusModal v-model:open="openModal" :subjects="subjects" @updateData="getSyllabuses" />
 
+    <AiSyllabusModal
+      v-model:open="openAiModal"
+      :subjects="subjects"
+      @updateData="getSyllabuses"
+      @created="onAiCreated"
+    />
+
     <!-- Delete confirmation -->
     <v-dialog v-model="deleteDialog.show" max-width="440">
       <v-card :title="$t('syllabuses.deleteConfirm.title')">
@@ -120,6 +132,7 @@ import { fetchAllSubjects } from '@/services/pages/subjects'
 import type { SyllabusListItem, SyllabusesParams } from '@/types/syllabus.types'
 import type { Subject } from '@/types/subject.types'
 import CreateSyllabusModal from '@/components/pages/syllabus/CreateSyllabusModal.vue'
+import AiSyllabusModal from '@/components/pages/syllabus/AiSyllabusModal.vue'
 import { usePermissions } from '@/composables/usePermissions'
 
 defineOptions({ name: 'SyllabusesList' })
@@ -130,6 +143,7 @@ const { canManageSyllabus } = usePermissions()
 const items = ref<SyllabusListItem[]>([])
 const subjects = ref<Subject[]>([])
 const openModal = ref(false)
+const openAiModal = ref(false)
 const totalPages = ref(0)
 const loading = ref(false)
 
@@ -200,6 +214,10 @@ const getSubjects = async () => {
   } catch (err) {
     console.log(err)
   }
+}
+
+const onAiCreated = (message: string) => {
+  snackbar.value = { show: true, message, color: 'success' }
 }
 
 const askDelete = (item: SyllabusListItem) => {

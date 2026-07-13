@@ -40,4 +40,10 @@ export default {
   deleting: "O'chirilmoqda...",
   confirmDelete: "Rostdan ham o'chirmoqchimisiz?",
   sum: "so'm",
+  errors: {
+    network: "Server bilan aloqa yo'q. Internet aloqasini tekshiring.",
+    server: "Serverda xatolik yuz berdi. Keyinroq urinib ko'ring.",
+    forbidden: "Sizda bu amalni bajarish uchun ruxsat yo'q.",
+    unknown: "Xatolik yuz berdi. Qayta urinib ko'ring.",
+  },
 }

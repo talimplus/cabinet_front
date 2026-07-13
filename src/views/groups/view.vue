@@ -111,6 +111,7 @@
                           'cell-past': isPast(date),
                           'cell-future': isFuture(date),
                           'cell-cancelled': isCancelledDate(date),
+                          'cell-editable': canEditCell(date),
                         }"
                         @click="handleCellClick($event, student.id, date)"
                       >
@@ -393,7 +394,7 @@ defineOptions({
 
 const route = useRoute()
 const { t } = useI18n()
-const { canManageAttendance, isReception, userId } = usePermissions()
+const { canManageAttendance, canManagePastAttendance, isReception, userId } = usePermissions()
 
 // Tabs — reception davomatni ko'ra olmaydi, shuning uchun boshqa tabdan boshlaymiz
 const activeTab = ref(canManageAttendance.value ? 'attendance' : 'students')
@@ -530,9 +531,18 @@ const loadAttendance = async () => {
   }
 }
 
+// Katakni tahrirlash mumkinmi: kelajak va bekor qilingan darslar hech qachon,
+// bugun — har doim, o'tgan sanalar — faqat admin/o'qituvchi uchun.
+const canEditCell = (date: string): boolean => {
+  if (isFuture(date) || isCancelledDate(date)) return false
+  if (isToday(date)) return true
+  if (isPast(date)) return canManagePastAttendance.value
+  return false
+}
+
 // Cell click handler
 const handleCellClick = async (event: MouseEvent, studentId: number, lessonDate: string) => {
-  if (!isToday(lessonDate) || isFuture(lessonDate) || isCancelledDate(lessonDate)) return
+  if (!canEditCell(lessonDate)) return
 
   const sameTarget =
     attendanceDialog.value.studentId === studentId &&
@@ -908,6 +918,23 @@ onMounted(() => {
 .attendance-cell.cell-past .icon-past {
   filter: grayscale(20%);
   opacity: 0.9;
+}
+
+/* Past dates that the current user may still edit (admin / teacher) */
+.attendance-cell.cell-past.cell-editable {
+  opacity: 1;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.attendance-cell.cell-past.cell-editable:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+  cursor: pointer;
+}
+
+.attendance-cell.cell-past.cell-editable .icon-past {
+  filter: none;
+  opacity: 1;
 }
 
 /* Future dates - disabled, slightly different from past */

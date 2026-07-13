@@ -25,16 +25,19 @@ export function usePermissions() {
     // Guruhga kurs rejasini biriktirish/uzish/almashtirish: super_admin, admin, manager
     canManageGroupSyllabus: computed(() => has('super_admin', 'admin', 'manager')),
 
-    // Guruhlar
-    canCreateGroup: computed(() => has('super_admin', 'admin', 'manager')),
-    canEditGroup: computed(() => has('super_admin', 'admin', 'manager')),
-    canDeleteGroup: computed(() => has('super_admin', 'admin')),
+    // Guruhlar: create/edit/delete — reception ham qila oladi (backend ruxsat berdi)
+    canCreateGroup: computed(() => has('super_admin', 'admin', 'manager', 'reception')),
+    canEditGroup: computed(() => has('super_admin', 'admin', 'manager', 'reception')),
+    canDeleteGroup: computed(() => has('super_admin', 'admin', 'reception')),
 
     // O'quvchilar: tahrirlash/status/chegirma — reception va teacher qila olmaydi
     canEditStudent: computed(() => has('super_admin', 'admin', 'manager')),
 
     // Davomat: reception qila olmaydi
     canManageAttendance: computed(() => has('super_admin', 'admin', 'manager', 'teacher')),
+
+    // Bugundan oldingi (o'tgan) sanalar bo'yicha davomat qilish: admin va o'qituvchi
+    canManagePastAttendance: computed(() => has('super_admin', 'admin', 'teacher')),
 
     /**
      * Dars rejasini tahrirlash (mavzu biriktirish, AI taqsimlash).

@@ -7,6 +7,17 @@
     <v-card-text>
       <v-row>
         <v-col cols="12" md="3">
+          <v-text-field
+            v-model="params.search"
+            :label="$t('students.labels.search')"
+            clearable
+            variant="outlined"
+            density="compact"
+            prepend-inner-icon="mdi-magnify"
+            @update:model-value="onSearch"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="12" md="3">
           <v-select
             v-model="params.centerId"
             :items="centerOptions"
@@ -197,6 +208,7 @@ import type { Center } from '@/types/center.types'
 import { WeekDay } from '@/types/groups.enum'
 import { fetchAllSubjects } from '@/services/pages/subjects'
 import type { Subject } from '@/types/subject.types'
+import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
 
@@ -223,6 +235,7 @@ const snackbar = ref({
 
 const params = ref<StudentsParams>({
   centerId: undefined,
+  search: '',
   name: '',
   phone: '',
   status: StudentStatus.NEW,
@@ -232,6 +245,12 @@ const params = ref<StudentsParams>({
   preferredTime: undefined,
   preferredDays: undefined,
   subjectId: undefined,
+})
+
+// Qidiruvda har bosishda emas, jimlikdan so'ng so'rov yuboramiz
+const onSearch = useDebounceFn(() => {
+  params.value.page = 1
+  getStudents()
 })
 
 const centerOptions = computed(() => {

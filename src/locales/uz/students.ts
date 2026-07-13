@@ -8,6 +8,7 @@ export default {
   },
   labels: {
     center: 'Markaz',
+    search: 'Ism, familiya yoki telefon bo\'yicha qidirish',
     subject: 'Fan',
     firstName: 'Ism',
     lastName: 'Familiya',

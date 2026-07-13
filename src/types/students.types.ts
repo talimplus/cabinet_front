@@ -63,6 +63,7 @@ export interface StudentForm {
 }
 export interface StudentsParams {
         centerId?: number;
+        search?: string;
         name?: string;
         phone?: string;
         returnLikelihood?: 'never' | 'maybe' | 'sure';

@@ -17,6 +17,17 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
+        <v-col cols="12" md="4">
+          <v-text-field
+            v-model="params.search"
+            :label="$t('students.labels.search')"
+            clearable
+            variant="outlined"
+            density="compact"
+            prepend-inner-icon="mdi-magnify"
+            @update:model-value="onSearch"
+          ></v-text-field>
+        </v-col>
       </v-row>
     </v-card-text>
     <v-card-text>
@@ -166,6 +177,7 @@ import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/center.types'
 import { usePermissions } from '@/composables/usePermissions'
+import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
 const { canEditStudent } = usePermissions()
@@ -192,12 +204,19 @@ const totalPages = ref(1)
 
 const params = ref<StudentsParams>({
   centerId: undefined,
+  search: '',
   name: '',
   phone: '',
   status: StudentStatus.ACTIVE,
   page: 1,
   perPage: 10,
   groupId: undefined,
+})
+
+// Qidiruvda har bosishda emas, jimlikdan so'ng so'rov yuboramiz
+const onSearch = useDebounceFn(() => {
+  params.value.page = 1
+  getStudents()
 })
 
 const centerOptions = computed(() => {

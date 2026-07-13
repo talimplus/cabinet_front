@@ -8,6 +8,7 @@ export default {
   },
   labels: {
     center: 'Центр',
+    search: 'Поиск по имени, фамилии или телефону',
     subject: 'Предмет',
     firstName: 'Имя',
     lastName: 'Фамилия',

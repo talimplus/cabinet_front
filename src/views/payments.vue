@@ -134,8 +134,19 @@
                   <span class="text-body-2">
                     {{ payment.lessonsBillable }} / {{ payment.lessonsPlanned }}
                   </span>
+                  <div v-if="payment.lessonsExcused" class="text-caption text-info">
+                    {{ $t('payments.table.excused', { count: payment.lessonsExcused }) }}
+                  </div>
                 </td>
-                <td>{{ formatCurrency(payment.amountDue) }}</td>
+                <td>
+                  {{ formatCurrency(payment.amountDue) }}
+                  <div
+                    v-if="payment.refundedAmount && payment.refundedAmount > 0"
+                    class="text-caption text-success"
+                  >
+                    {{ $t('payments.table.refunded', { amount: formatCurrency(payment.refundedAmount) }) }}
+                  </div>
+                </td>
                 <td>{{ formatCurrency(payment.amountPaid) }}</td>
                 <td :class="{ 'text-error font-weight-bold': payment.remainingAmount > 0 }">
                   {{ formatCurrency(payment.remainingAmount) }}
@@ -337,6 +348,12 @@
                 <span class="info-label">{{ $t('payments.dialog.lessonsBillable') }}:</span>
                 <span class="info-value">
                   {{ partialPaymentModal.calculation.lessonsBillable }}
+                </span>
+              </div>
+              <div v-if="partialPaymentModal.calculation.lessonsExcused" class="info-row mb-2">
+                <span class="info-label">{{ $t('payments.dialog.lessonsExcused') }}:</span>
+                <span class="info-value text-info">
+                  {{ partialPaymentModal.calculation.lessonsExcused }}
                 </span>
               </div>
               <div class="info-row mb-2">

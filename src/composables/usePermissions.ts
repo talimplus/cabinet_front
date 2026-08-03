@@ -33,11 +33,12 @@ export function usePermissions() {
     // O'quvchilar: tahrirlash/status/chegirma — reception va teacher qila olmaydi
     canEditStudent: computed(() => has('super_admin', 'admin', 'manager')),
 
-    // Davomat: reception qila olmaydi
-    canManageAttendance: computed(() => has('super_admin', 'admin', 'manager', 'teacher')),
+    // Davomat: reception ham qila oladi (backend ruxsat berdi)
+    canManageAttendance: computed(() => has('super_admin', 'admin', 'manager', 'teacher', 'reception')),
 
-    // Bugundan oldingi (o'tgan) sanalar bo'yicha davomat qilish: admin va o'qituvchi
-    canManagePastAttendance: computed(() => has('super_admin', 'admin', 'teacher')),
+    // Bugundan oldingi (o'tgan) sanalar bo'yicha davomat qilish: admin, o'qituvchi va reception.
+    // Reception "sababli↔keldi" (makeup) tuzatishlarini o'tgan sanalarda ham qila olishi kerak.
+    canManagePastAttendance: computed(() => has('super_admin', 'admin', 'teacher', 'reception')),
 
     /**
      * Dars rejasini tahrirlash (mavzu biriktirish, AI taqsimlash).

@@ -1,4 +1,5 @@
-export type AttendanceStatus = 'present' | 'absent'
+// present = keldi, absent = kelmadi (sababsiz), late = kechikdi, excused = sababli (uzrли)
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused'
 
 export interface AttendanceItem {
   studentId: number

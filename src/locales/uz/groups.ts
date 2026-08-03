@@ -31,6 +31,18 @@ export default {
     clear: 'Tozalash',
     noStudents: "Bu guruhda o'quvchilar yo'q",
     student: "O'quvchi",
+    selectStatus: 'Davomat holatini tanlang',
+    status: {
+      present: 'Keldi',
+      absent: 'Kelmadi',
+      late: 'Kechikdi',
+      excused: 'Sababli',
+    },
+    comment: 'Izoh (sabab)',
+    commentRequired: "Sababli (excused) uchun sabab yozilishi shart",
+    commentRequiredHint: 'Sababli uchun sababni yozing...',
+    saved: 'Davomat saqlandi',
+    submitError: 'Davomatni saqlashda xatolik',
   },
   override: {
     cancelled: 'Bekor qilindi',

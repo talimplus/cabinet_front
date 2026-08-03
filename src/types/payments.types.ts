@@ -27,6 +27,10 @@ export interface Payment {
   isOverdue: boolean
   lessonsPlanned: number
   lessonsBillable: number
+  // Shu oyda chegirilgan sababli (excused) darslar soni
+  lessonsExcused?: number
+  // To'langan oyga sababli qo'shilsa, ortiqcha summa shu yerga qaytariladi (refund)
+  refundedAmount?: number
   createdAt: string
   hasPendingReceipt?: boolean
   pendingReceiptsCount?: number
@@ -94,6 +98,8 @@ export interface PaymentCalculationResponse {
   plannedStudyUntilDate: string
   lessonsPlanned: number
   lessonsBillable: number
+  // Chegirilgan sababli (excused) darslar soni
+  lessonsExcused?: number
   discountPercent: number
   amountDue: number
   currentAmountDue: number

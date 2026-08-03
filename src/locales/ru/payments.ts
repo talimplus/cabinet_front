@@ -37,6 +37,8 @@ export default {
     hardDueDate: 'Крайний срок',
     emptyState: 'Платежи за этот месяц не найдены',
     requests: '{count} запросов',
+    excused: 'Уважительные пропуски: {count}',
+    refunded: 'Возвращено: {amount}',
   },
   chips: {
     overdue: 'ПРОСРОЧЕНО',
@@ -60,6 +62,7 @@ export default {
     calcResults: 'Результаты расчёта',
     lessonsPlanned: 'Запланированные уроки',
     lessonsBillable: 'Оплачиваемые уроки',
+    lessonsExcused: 'Уважительные пропуски',
     discount: 'Скидка',
     currentAmount: 'Текущая сумма платежа',
     calculatedAmount: 'Рассчитанная сумма платежа',

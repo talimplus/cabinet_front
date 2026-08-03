@@ -115,7 +115,7 @@
                         }"
                         @click="handleCellClick($event, student.id, date)"
                       >
-                        <div class="cell-content">
+                        <div class="cell-content" :title="getCellComment(student.id, date)">
                           <v-icon
                             :color="getCellIconColor(student.id, date)"
                             :icon="getCellIcon(student.id, date)"
@@ -125,6 +125,10 @@
                               'icon-future': isFuture(date),
                             }"
                           ></v-icon>
+                          <span
+                            v-if="getCellComment(student.id, date)"
+                            class="comment-dot"
+                          ></span>
                         </div>
                       </td>
                     </tr>
@@ -298,26 +302,61 @@
     <v-menu
       v-model="attendanceDialog.show"
       :activator="attendanceDialog.activator"
+      :open-on-click="false"
       :close-on-content-click="false"
       location="bottom"
       offset="6"
     >
-      <v-card class="pa-2" elevation="4">
-        <div class="attendance-quick-actions">
+      <v-card class="pa-3 attendance-status-card" elevation="4">
+        <div class="text-caption text-medium-emphasis mb-2">
+          {{ $t('groups.attendance.selectStatus') }}
+        </div>
+        <div class="attendance-status-options mb-3">
           <v-btn
-            color="success"
-            variant="text"
-            icon="mdi-check"
-            @click="markAttendance('present')"
-            :loading="submittingAttendance"
-          ></v-btn>
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :color="opt.color"
+            :variant="attendanceForm.status === opt.value ? 'flat' : 'tonal'"
+            size="small"
+            class="status-option-btn"
+            @click="attendanceForm.status = opt.value"
+          >
+            <v-icon :icon="opt.icon" size="18" start></v-icon>
+            {{ opt.label }}
+          </v-btn>
+        </div>
+
+        <v-textarea
+          v-model="attendanceForm.comment"
+          :label="$t('groups.attendance.comment')"
+          :placeholder="
+            attendanceForm.status === 'excused'
+              ? $t('groups.attendance.commentRequiredHint')
+              : ''
+          "
+          :error-messages="commentError"
+          density="compact"
+          variant="outlined"
+          rows="2"
+          auto-grow
+          hide-details="auto"
+          class="mb-3 attendance-comment"
+        ></v-textarea>
+
+        <div class="d-flex justify-end" style="gap: 8px">
+          <v-btn size="small" variant="text" @click="attendanceDialog.show = false">
+            {{ $t('common.cancel') }}
+          </v-btn>
           <v-btn
-            color="error"
-            variant="text"
-            icon="mdi-close"
-            @click="markAttendance('absent')"
+            size="small"
+            color="primary"
+            variant="flat"
             :loading="submittingAttendance"
-          ></v-btn>
+            :disabled="!canSubmitAttendance"
+            @click="saveAttendance"
+          >
+            {{ $t('common.save') }}
+          </v-btn>
         </div>
       </v-card>
     </v-menu>
@@ -384,6 +423,7 @@ import { fetchGroupById, fetchLessonDates, submitAttendance, rescheduleAttendanc
 import { fetchStudents } from '@/services/pages/students'
 import GroupPlanTab from '@/components/pages/group/GroupPlanTab.vue'
 import { usePermissions } from '@/composables/usePermissions'
+import { useNotificationStore } from '@/stores/notification'
 import type { StudentsParams } from '@/types/students.types'
 import { StudentStatus } from '@/types/students.enum'
 
@@ -395,6 +435,29 @@ defineOptions({
 const route = useRoute()
 const { t } = useI18n()
 const { canManageAttendance, canManagePastAttendance, isReception, userId } = usePermissions()
+const notify = useNotificationStore()
+
+// Davomat status'lari uchun ko'rinish (ikon + rang)
+const STATUS_ICONS: Record<AttendanceStatus, string> = {
+  present: 'mdi-check-circle',
+  absent: 'mdi-close-circle',
+  late: 'mdi-clock-alert',
+  excused: 'mdi-account-clock',
+}
+const STATUS_COLORS: Record<AttendanceStatus, string> = {
+  present: 'success',
+  absent: 'error',
+  late: 'warning',
+  excused: 'info',
+}
+const statusOptions = computed<{ value: AttendanceStatus; label: string; icon: string; color: string }[]>(
+  () => [
+    { value: 'present', label: t('groups.attendance.status.present'), icon: STATUS_ICONS.present, color: STATUS_COLORS.present },
+    { value: 'absent', label: t('groups.attendance.status.absent'), icon: STATUS_ICONS.absent, color: STATUS_COLORS.absent },
+    { value: 'late', label: t('groups.attendance.status.late'), icon: STATUS_ICONS.late, color: STATUS_COLORS.late },
+    { value: 'excused', label: t('groups.attendance.status.excused'), icon: STATUS_ICONS.excused, color: STATUS_COLORS.excused },
+  ],
+)
 
 // Tabs — reception davomatni ko'ra olmaydi, shuning uchun boshqa tabdan boshlaymiz
 const activeTab = ref(canManageAttendance.value ? 'attendance' : 'students')
@@ -445,7 +508,35 @@ const attendanceDialog = ref({
   activator: null as HTMLElement | null,
 })
 
+// Tanlangan katak uchun status + izoh formasi
+const attendanceForm = ref<{ status: AttendanceStatus; comment: string }>({
+  status: 'present',
+  comment: '',
+})
+
+// "excused" (sababli) tanlanganda izoh (sabab) majburiy
+const commentError = computed<string[]>(() => {
+  if (attendanceForm.value.status === 'excused' && !attendanceForm.value.comment.trim()) {
+    return [t('groups.attendance.commentRequired')]
+  }
+  return []
+})
+const canSubmitAttendance = computed(
+  () => commentError.value.length === 0 && !submittingAttendance.value,
+)
+
 const submittingAttendance = ref(false)
+
+// Berilgan o'quvchi/sanadagi mavjud davomat qatorini topish
+const getStudentAttendance = (
+  studentId: number,
+  date: string,
+): { status: AttendanceStatus; comment?: string } | undefined => {
+  const attendance = attendanceData.value?.attendanceByDate[date]
+  if (!attendance?.exists) return undefined
+  const rows = attendance.rows ?? attendance.items ?? []
+  return rows.find((r: { studentId: number }) => r.studentId === studentId)
+}
 
 // Load group data
 const loadGroup = async () => {
@@ -553,6 +644,13 @@ const handleCellClick = async (event: MouseEvent, studentId: number, lessonDate:
     await nextTick()
   }
 
+  // Formani mavjud davomat bilan to'ldiramiz (yo'q bo'lsa — default "present")
+  const existing = getStudentAttendance(studentId, lessonDate)
+  attendanceForm.value = {
+    status: existing?.status ?? 'present',
+    comment: existing?.comment ?? '',
+  }
+
   attendanceDialog.value = {
     show: true,
     studentId,
@@ -561,9 +659,17 @@ const handleCellClick = async (event: MouseEvent, studentId: number, lessonDate:
   }
 }
 
-// Mark attendance
-const markAttendance = async (status: AttendanceStatus) => {
+// Save attendance (status + comment) for the selected student/date
+const saveAttendance = async () => {
+  // Frontend validatsiya: excused bo'lsa sabab majburiy — backend 400'ini oldini olamiz
+  if (commentError.value.length > 0) {
+    notify.error(commentError.value[0])
+    return
+  }
+
   const { studentId, lessonDate } = attendanceDialog.value
+  const status = attendanceForm.value.status
+  const comment = attendanceForm.value.comment.trim()
 
   submittingAttendance.value = true
   try {
@@ -574,7 +680,7 @@ const markAttendance = async (status: AttendanceStatus) => {
         {
           studentId: studentId,
           status: status,
-          comment: '',
+          ...(comment ? { comment } : {}),
         },
       ],
     }
@@ -611,7 +717,7 @@ const markAttendance = async (status: AttendanceStatus) => {
         {
           studentId: studentId,
           status: status,
-          comment: '',
+          comment: comment,
         },
       ]
 
@@ -620,9 +726,16 @@ const markAttendance = async (status: AttendanceStatus) => {
     }
 
     attendanceDialog.value.show = false
-  } catch (error) {
+    notify.success(t('groups.attendance.saved'))
+    // Status o'zgargach backend to'lovni qayta hisoblaydi. To'lovlar alohida
+    // sahifada bo'lgani uchun bu yerda ko'rsatiladigan narsa yo'q; davomatni
+    // backenddan qayta o'qib, avtoritativ holatga keltiramiz.
+    await loadAttendance()
+  } catch (error: unknown) {
+    // Backend 400 (masalan sababsiz excused) xabarini foydalanuvchiga ko'rsatamiz
+    const err = error as { response?: { data?: { message?: string } } }
+    notify.error(err?.response?.data?.message || t('groups.attendance.submitError'))
     console.error('Failed to submit attendance:', error)
-    // Optionally show error message to user
   } finally {
     submittingAttendance.value = false
   }
@@ -640,7 +753,7 @@ const getCellIcon = (studentId: number, date: string): string => {
   const item = rows.find((r: { studentId: number }) => r.studentId === studentId)
   if (!item) return 'mdi-help-circle-outline'
 
-  return item.status === 'present' ? 'mdi-check-circle' : 'mdi-close-circle'
+  return STATUS_ICONS[item.status] ?? 'mdi-help-circle-outline'
 }
 
 // Get cell icon color
@@ -657,8 +770,13 @@ const getCellIconColor = (studentId: number, date: string): string => {
   const item = rows.find((r: { studentId: number }) => r.studentId === studentId)
   if (!item) return 'grey'
 
-  // Return actual colors (success/error) - CSS will handle visual distinction for past dates
-  return item.status === 'present' ? 'success' : 'error'
+  // Return actual colors - CSS will handle visual distinction for past dates
+  return STATUS_COLORS[item.status] ?? 'grey'
+}
+
+// Katak uchun izoh (mavjud bo'lsa) — hover'da ko'rsatish uchun
+const getCellComment = (studentId: number, date: string): string => {
+  return getStudentAttendance(studentId, date)?.comment?.trim() || ''
 }
 
 // Check if date is past
@@ -987,10 +1105,34 @@ onMounted(() => {
   min-height: 32px;
 }
 
-.attendance-quick-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.attendance-status-card {
+  min-width: 280px;
+  max-width: 320px;
+}
+
+.attendance-status-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.status-option-btn {
+  justify-content: flex-start;
+  text-transform: none;
+}
+
+.cell-content {
+  position: relative;
+}
+
+.comment-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(1, 192, 200);
 }
 
 .student-name {

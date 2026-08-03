@@ -37,6 +37,8 @@ export default {
     hardDueDate: "Qat'iy muddat",
     emptyState: "Bu oy uchun to'lovlar topilmadi",
     requests: "{count} ta so'rov",
+    excused: 'Sababli darslar: {count}',
+    refunded: 'Qaytarilgan: {amount}',
   },
   chips: {
     overdue: "MUDDATI O'TGAN",
@@ -60,6 +62,7 @@ export default {
     calcResults: 'Hisoblash natijalari',
     lessonsPlanned: 'Rejalashtirilgan darslar',
     lessonsBillable: "To'lovga yaroqli darslar",
+    lessonsExcused: 'Sababli darslar',
     discount: 'Chegirma',
     currentAmount: "Hozirgi to'lov summasi",
     calculatedAmount: "Hisoblangan to'lov summasi",

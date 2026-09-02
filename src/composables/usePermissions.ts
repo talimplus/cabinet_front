@@ -32,6 +32,8 @@ export function usePermissions() {
 
     // O'quvchilar: tahrirlash/status/chegirma — reception va teacher qila olmaydi
     canEditStudent: computed(() => has('super_admin', 'admin', 'manager')),
+    // O'quvchini o'chirish — faqat admin (va super_admin)
+    canDeleteStudent: computed(() => has('super_admin', 'admin')),
 
     // Davomat: reception ham qila oladi (backend ruxsat berdi)
     canManageAttendance: computed(() => has('super_admin', 'admin', 'manager', 'teacher', 'reception')),

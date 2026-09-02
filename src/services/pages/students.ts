@@ -24,3 +24,7 @@ export const updateStudentStatus = async (
 ) => {
         return await http.put(`/students/change-status/${id}?status=${status}`, body || {})
 }
+
+export const deleteStudent = async (id: number) => {
+        return await http.delete(`/students/${id}`)
+}

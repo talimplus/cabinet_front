@@ -141,6 +141,15 @@
           class="me-2"
           variant="text"
         ></v-btn>
+        <v-btn
+          v-if="canDeleteStudent"
+          @click="openDeleteDialog(item)"
+          density="compact"
+          color="error"
+          icon="mdi-delete"
+          size="small"
+          variant="text"
+        ></v-btn>
       </template>
       </v-data-table>
       <v-pagination
@@ -187,6 +196,19 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="deleteDialog.show" max-width="400">
+      <v-card>
+        <v-card-title class="text-h6 pa-4">{{ $t('common.delete') }}</v-card-title>
+        <v-card-text class="pa-4">{{ $t('common.confirmDelete') }}</v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="closeDeleteDialog">{{ $t('common.cancel') }}</v-btn>
+          <v-btn color="error" variant="flat" @click="confirmDeleteDialog" :loading="deleteDialog.loading">
+            {{ $t('common.delete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
       <template #actions>
@@ -200,7 +222,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { StudentsParams, Student } from '@/types/students.types'
-import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
+import { fetchStudents, updateStudentStatus, deleteStudent } from '@/services/pages/students'
+import { usePermissions } from '@/composables/usePermissions'
 import { StudentStatus, StudentPreferredTime, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import { fetchAllCenters } from '@/services/pages/centers'
@@ -211,6 +234,7 @@ import type { Subject } from '@/types/subject.types'
 import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
+const { canDeleteStudent } = usePermissions()
 
 const statusList = computed(() => {
   return [
@@ -270,6 +294,12 @@ const subjectOptions = computed(() => {
 const preferredTimeOptions = computed(() => [
   { title: t('students.time.morning'), value: StudentPreferredTime.MORNING },
   { title: t('students.time.evening'), value: StudentPreferredTime.EVENING },
+])
+
+const returnLikelihoodOptions = computed(() => [
+  { title: t('students.returnLikelihood.never'), value: 'never' },
+  { title: t('students.returnLikelihood.maybe'), value: 'maybe' },
+  { title: t('students.returnLikelihood.sure'), value: 'sure' },
 ])
 
 const dayOptions = computed(() => [
@@ -391,6 +421,42 @@ const returnDialog = ref({
   status: undefined as StudentStatus | undefined,
   studentId: undefined as number | undefined,
 })
+
+const deleteDialog = ref({
+  show: false,
+  loading: false,
+  studentId: undefined as number | undefined,
+})
+
+const openDeleteDialog = (item: Student) => {
+  deleteDialog.value = {
+    show: true,
+    loading: false,
+    studentId: item.id,
+  }
+}
+
+const closeDeleteDialog = () => {
+  deleteDialog.value = {
+    show: false,
+    loading: false,
+    studentId: undefined,
+  }
+}
+
+const confirmDeleteDialog = async () => {
+  if (!deleteDialog.value.studentId) return
+  deleteDialog.value.loading = true
+  try {
+    await deleteStudent(deleteDialog.value.studentId)
+    closeDeleteDialog()
+    await getStudents()
+  } catch (err) {
+    console.log(err)
+  } finally {
+    deleteDialog.value.loading = false
+  }
+}
 
 const closeReturnDialog = () => {
   returnDialog.value = {

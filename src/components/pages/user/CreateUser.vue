@@ -74,7 +74,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col v-if="isAdmin" cols="12" sm="6">
               <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   v-model="form.centerId"
@@ -135,6 +135,11 @@ import type { Center } from '@/types/center.types'
 import type { UserForm, User } from '@/types/users.types'
 import { createUser, updateUser } from '@/services/pages/users'
 import { userRoles } from '@/types/users.enum'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+
 interface Props {
   centers: Center[]
   formForEdit: User
@@ -219,6 +224,10 @@ watch(open, (newValue) => {
       salary: undefined,
       commissionPercentage: undefined,
     }
+  }
+  // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
+  if (newValue && !isAdmin.value && userStore.user?.centerId) {
+    form.value.centerId = userStore.user.centerId
   }
 })
 </script>

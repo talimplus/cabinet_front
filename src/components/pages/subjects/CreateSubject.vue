@@ -13,7 +13,7 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text class="pt-0">
+        <v-card-text class="pt-0" v-if="isAdmin">
           <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.centerId"
@@ -38,11 +38,16 @@
 
 
 <script setup lang="ts">
-import { ref, defineModel, defineEmits, defineProps, watch } from 'vue'
+import { ref, defineModel, defineEmits, defineProps, watch, computed } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { createSubjects, editSubject } from '@/services/pages/subjects'
 import type { SubjectForm, Subject } from '@/types/subject.types'
 import type { Center } from '@/types/center.types'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+
 interface Emits {
   (e: 'updateData'): void
   (e: 'clearForm'): void
@@ -76,6 +81,10 @@ watch(
         name: '',
         centerId: undefined,
       }
+    }
+    // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
+    if (newValue && !isAdmin.value && userStore.user?.centerId) {
+      form.value.centerId = userStore.user.centerId
     }
   }
 )

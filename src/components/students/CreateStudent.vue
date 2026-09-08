@@ -125,7 +125,7 @@
                 ></v-autocomplete>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col v-if="isAdmin" cols="12" sm="6">
               <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="centers"
@@ -398,8 +398,12 @@ import { WeekDay } from '@/types/groups.enum'
 import dayjs from 'dayjs'
 import { fetchSubjects } from '@/services/pages/subjects'
 import type { Subject } from '@/types/subject.types'
+import { useUserStore } from '@/stores/user'
 
 const { t } = useI18n()
+
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
@@ -556,6 +560,10 @@ watch(open, async (newValue) => {
     groups.value = []
     students.value = []
   }
+  // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz (yaratish rejimida)
+  if (newValue && !props.formForEdit?.id && !isAdmin.value && userStore.user?.centerId) {
+    form.value.centerId = userStore.user.centerId
+  }
 })
 
 watch(identityTab, (value) => {
@@ -686,14 +694,20 @@ const submit = async () => {
     delete form.value.discountPercent
     delete form.value.discountReason
   } else {
-    // When not using period discounts, check if discountPercent exists and is not 0
+    // Davriy chegirma ishlatilmaganda: discountPercent kiritilmagan bo'lsa (undefined/null/''),
+    // uni yubormaymiz. Lekin 0 — bu HAM haqiqiy qiymat (chegirmani bekor qilish uchun),
+    // shuning uchun 0 bo'lsa ham backendga yuboramiz, aks holda eski chegirma o'zgarmaydi.
     const discountPercent = form.value.discountPercent
-    if (discountPercent === undefined || discountPercent === null || discountPercent === '' || discountPercent === 0 || discountPercent === '0') {
+    if (discountPercent === undefined || discountPercent === null || (discountPercent as unknown as string) === '') {
       delete form.value.discountPercent
       delete form.value.discountReason
     } else {
-      // If discountPercent exists but discountReason is empty, remove it
-      if (!form.value.discountReason) {
+      form.value.discountPercent = Number(discountPercent)
+      if (Number.isNaN(form.value.discountPercent)) {
+        delete form.value.discountPercent
+        delete form.value.discountReason
+      } else if (!form.value.discountReason) {
+        // Chegirma bor, lekin sabab bo'sh bo'lsa — sababni yubormaymiz
         delete form.value.discountReason
       }
     }

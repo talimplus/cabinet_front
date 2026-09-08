@@ -144,7 +144,24 @@
                     v-if="payment.refundedAmount && payment.refundedAmount > 0"
                     class="text-caption text-success"
                   >
-                    {{ $t('payments.table.refunded', { amount: formatCurrency(payment.refundedAmount) }) }}
+                    {{
+                      $t('payments.table.refunded', {
+                        amount: formatCurrency(payment.refundedAmount),
+                      })
+                    }}
+                  </div>
+                  <div
+                    v-if="payment.manualExcludedAmount && payment.manualExcludedAmount > 0"
+                    class="text-caption text-warning"
+                  >
+                    {{
+                      $t('payments.table.excluded', {
+                        amount: formatCurrency(payment.manualExcludedAmount),
+                      })
+                    }}
+                    <span v-if="payment.manualExcludedReason"
+                      >({{ payment.manualExcludedReason }})</span
+                    >
                   </div>
                 </td>
                 <td>{{ formatCurrency(payment.amountPaid) }}</td>
@@ -192,29 +209,51 @@
                 <td>{{ formatDate(payment.dueDate) }}</td>
                 <td>{{ formatDate(payment.hardDueDate) }}</td>
                 <td>
-                  <div v-if="payment.status === PaymentStatus.PAID" class="d-flex align-center">
-                    <v-icon color="success" size="small">mdi-check-circle</v-icon>
-                    <span class="ml-2 text-caption text-medium-emphasis">{{ $t('payments.status.paid') }}</span>
-                  </div>
-                  <div v-else class="d-flex gap-2">
-                    <v-btn
-                      color="success"
-                      size="small"
-                      variant="flat"
-                      @click="openMarkAsPaidDialog(payment)"
-                      :disabled="processingPayment"
+                  <div class="d-flex align-center gap-2">
+                    <template v-if="payment.status === PaymentStatus.PAID">
+                      <v-icon color="success" size="small">mdi-check-circle</v-icon>
+                      <span class="text-caption text-medium-emphasis">{{
+                        $t('payments.status.paid')
+                      }}</span>
+                    </template>
+                    <template v-else>
+                      <v-btn
+                        color="success"
+                        size="small"
+                        variant="flat"
+                        @click="openMarkAsPaidDialog(payment)"
+                        :disabled="processingPayment"
+                      >
+                        {{ $t('payments.buttons.payFull') }}
+                      </v-btn>
+                      <v-btn
+                        color="primary"
+                        size="small"
+                        variant="flat"
+                        @click="openPartialPaymentModal(payment)"
+                        :disabled="processingPayment"
+                      >
+                        {{ $t('payments.buttons.payPartial') }}
+                      </v-btn>
+                    </template>
+
+                    <!-- To'lov tarixi — to'lov qilingan bo'lsa istalgan vaqtda chek chop etish -->
+                    <v-tooltip
+                      v-if="hasPayments(payment)"
+                      :text="$t('payments.history.title')"
+                      location="top"
                     >
-                      {{ $t('payments.buttons.payFull') }}
-                    </v-btn>
-                    <v-btn
-                      color="primary"
-                      size="small"
-                      variant="flat"
-                      @click="openPartialPaymentModal(payment)"
-                      :disabled="processingPayment"
-                    >
-                      {{ $t('payments.buttons.payPartial') }}
-                    </v-btn>
+                      <template v-slot:activator="{ props: tooltipProps }">
+                        <v-btn
+                          v-bind="tooltipProps"
+                          icon="mdi-history"
+                          size="small"
+                          variant="text"
+                          color="primary"
+                          @click="openHistoryModal(payment)"
+                        ></v-btn>
+                      </template>
+                    </v-tooltip>
                   </div>
                 </td>
               </tr>
@@ -242,7 +281,7 @@
               })
             }}
           </p>
-          <div class="mt-4">
+          <div class="mt-4 mb-4">
             <div class="info-row mb-2">
               <span class="info-label">{{ $t('payments.dialog.remainingSum') }}:</span>
               <span class="info-value font-weight-bold">
@@ -250,6 +289,41 @@
               </span>
             </div>
           </div>
+
+          <v-select
+            v-model="markAsPaidDialog.paymentMethod"
+            :items="paymentMethodOptions"
+            item-title="title"
+            item-value="value"
+            :label="$t('payments.reception.paymentMethod')"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="mb-4"
+          ></v-select>
+
+          <!-- Karta bo'lsa — to'lov qilingan sana -->
+          <v-text-field
+            v-if="markAsPaidDialog.paymentMethod === 'card'"
+            v-model="markAsPaidDialog.paidAt"
+            :label="$t('payments.reception.paidAt')"
+            placeholder="YYYY-MM-DD"
+            persistent-placeholder
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="mb-4"
+          ></v-text-field>
+
+          <v-textarea
+            v-model="markAsPaidDialog.comment"
+            :label="$t('payments.reception.comment')"
+            rows="2"
+            variant="outlined"
+            density="compact"
+            auto-grow
+            hide-details
+          ></v-textarea>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
@@ -286,6 +360,27 @@
               </span>
             </div>
             <div class="info-row mb-3">
+              <span class="info-label">{{ $t('payments.dialog.lessonsBillable') }}:</span>
+              <span class="info-value">
+                {{ partialPaymentModal.payment?.lessonsBillable ?? '—' }}
+                <template v-if="partialPaymentModal.payment?.lessonsPlanned != null">
+                  / {{ partialPaymentModal.payment?.lessonsPlanned }}
+                </template>
+              </span>
+            </div>
+            <div v-if="partialPaymentModal.payment?.perLessonAmount != null" class="info-row mb-3">
+              <span class="info-label">{{ $t('payments.exclusion.perLesson') }}:</span>
+              <span class="info-value">
+                {{ formatCurrency(partialPaymentModal.payment.perLessonAmount) }}
+              </span>
+            </div>
+            <div v-if="partialPaymentModal.payment?.fullAmount != null" class="info-row mb-3">
+              <span class="info-label">{{ $t('payments.exclusion.fullAmount') }}:</span>
+              <span class="info-value">
+                {{ formatCurrency(partialPaymentModal.payment.fullAmount) }}
+              </span>
+            </div>
+            <div class="info-row mb-3">
               <span class="info-label">{{ $t('payments.dialog.remainingSum') }}:</span>
               <span class="info-value font-weight-bold text-primary">
                 {{ formatCurrency(partialPaymentModal.payment?.remainingAmount || 0) }}
@@ -293,10 +388,106 @@
             </div>
           </div>
 
+          <!-- Darslarni/summani chiqarib tashlash (ixtiyoriy) -->
+          <v-card variant="outlined" class="mb-4">
+            <v-card-text class="pa-3">
+              <div class="text-body-2 font-weight-medium mb-2">
+                {{ $t('payments.exclusion.title') }}
+              </div>
+              <v-btn-toggle
+                :model-value="partialPaymentModal.exclusionMode"
+                @update:model-value="setExclusionMode"
+                color="primary"
+                density="compact"
+                variant="outlined"
+                divided
+                class="mb-3"
+              >
+                <v-btn value="lessons" size="small">{{ $t('payments.exclusion.byLessons') }}</v-btn>
+                <v-btn value="amount" size="small">{{ $t('payments.exclusion.byAmount') }}</v-btn>
+              </v-btn-toggle>
+
+              <v-text-field
+                v-if="partialPaymentModal.exclusionMode === 'lessons'"
+                v-model.number="partialPaymentModal.excludeLessons"
+                :label="$t('payments.exclusion.excludeLessons')"
+                type="number"
+                :min="0"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="mb-3"
+                @update:model-value="runExclusionPreview"
+              ></v-text-field>
+
+              <v-text-field
+                v-if="partialPaymentModal.exclusionMode === 'amount'"
+                v-model.number="partialPaymentModal.excludeAmount"
+                :label="$t('payments.exclusion.excludeAmount')"
+                type="number"
+                :min="0"
+                variant="outlined"
+                density="compact"
+                :suffix="$t('payments.dialog.sumSuffix')"
+                hide-details
+                class="mb-3"
+                @update:model-value="runExclusionPreview"
+              ></v-text-field>
+
+              <!-- Chiqarib tashlash bo'lsa comment majburiy -->
+              <v-textarea
+                v-if="hasExclusion"
+                v-model="partialPaymentModal.exclusionComment"
+                :label="$t('payments.exclusion.comment')"
+                rows="2"
+                variant="outlined"
+                density="compact"
+                auto-grow
+                :error-messages="exclusionCommentError"
+                hide-details="auto"
+                class="mb-2"
+              ></v-textarea>
+
+              <!-- Jonli hisob natijasi -->
+              <div v-if="hasExclusion" class="mt-2">
+                <div
+                  v-if="partialPaymentModal.previewing"
+                  class="text-caption text-medium-emphasis"
+                >
+                  {{ $t('payments.exclusion.calculating') }}
+                </div>
+                <template v-else-if="partialPaymentModal.exclusionPreview">
+                  <div class="info-row mb-1">
+                    <span class="info-label">{{ $t('payments.exclusion.excludedAmount') }}:</span>
+                    <span class="info-value text-warning">
+                      − {{ formatCurrency(partialPaymentModal.exclusionPreview.excludedAmount) }}
+                    </span>
+                  </div>
+                  <div class="info-row mb-1">
+                    <span class="info-label">{{ $t('payments.exclusion.newAmountDue') }}:</span>
+                    <span class="info-value font-weight-medium">
+                      {{ formatCurrency(partialPaymentModal.exclusionPreview.newAmountDue) }}
+                    </span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label font-weight-bold"
+                      >{{ $t('payments.exclusion.newRemaining') }}:</span
+                    >
+                    <span class="info-value font-weight-bold text-primary">
+                      {{ formatCurrency(partialPaymentModal.exclusionPreview.newRemaining) }}
+                    </span>
+                  </div>
+                </template>
+              </div>
+            </v-card-text>
+          </v-card>
+
           <!-- Calculator Section -->
           <div class="mb-4">
             <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-body-2 font-weight-medium">{{ $t('payments.dialog.stopStudyDate') }}</span>
+              <span class="text-body-2 font-weight-medium">{{
+                $t('payments.dialog.stopStudyDate')
+              }}</span>
               <v-btn
                 color="primary"
                 size="small"
@@ -336,7 +527,9 @@
             variant="outlined"
             class="mb-4 calculation-results"
           >
-            <v-card-title class="text-subtitle-1 pa-3"> {{ $t('payments.dialog.calcResults') }} </v-card-title>
+            <v-card-title class="text-subtitle-1 pa-3">
+              {{ $t('payments.dialog.calcResults') }}
+            </v-card-title>
             <v-card-text class="pa-3">
               <div class="info-row mb-2">
                 <span class="info-label">{{ $t('payments.dialog.lessonsPlanned') }}:</span>
@@ -376,7 +569,9 @@
                 </span>
               </div>
               <div class="info-row">
-                <span class="info-label font-weight-bold">{{ $t('payments.dialog.difference') }}:</span>
+                <span class="info-label font-weight-bold"
+                  >{{ $t('payments.dialog.difference') }}:</span
+                >
                 <span
                   class="info-value font-weight-bold"
                   :class="{
@@ -385,12 +580,42 @@
                   }"
                 >
                   {{ formatCurrency(Math.abs(partialPaymentModal.calculation.difference)) }}
-                  <span v-if="partialPaymentModal.calculation.difference < 0"> {{ $t('payments.dialog.refunded') }}</span>
-                  <span v-else-if="partialPaymentModal.calculation.difference > 0"> {{ $t('payments.dialog.additional') }}</span>
+                  <span v-if="partialPaymentModal.calculation.difference < 0">
+                    {{ $t('payments.dialog.refunded') }}</span
+                  >
+                  <span v-else-if="partialPaymentModal.calculation.difference > 0">
+                    {{ $t('payments.dialog.additional') }}</span
+                  >
                 </span>
               </div>
             </v-card-text>
           </v-card>
+
+          <!-- To'lov usuli -->
+          <v-select
+            v-model="partialPaymentModal.paymentMethod"
+            :items="paymentMethodOptions"
+            item-title="title"
+            item-value="value"
+            :label="$t('payments.reception.paymentMethod')"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="mb-4"
+          ></v-select>
+
+          <!-- Karta bo'lsa — to'lov qilingan sana -->
+          <v-text-field
+            v-if="partialPaymentModal.paymentMethod === 'card'"
+            v-model="partialPaymentModal.paidAt"
+            :label="$t('payments.reception.paidAt')"
+            placeholder="YYYY-MM-DD"
+            persistent-placeholder
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="mb-4"
+          ></v-text-field>
 
           <v-text-field
             v-model.number="partialPaymentModal.amount"
@@ -399,7 +624,7 @@
             variant="outlined"
             density="compact"
             :min="0.01"
-            :max="partialPaymentModal.payment?.remainingAmount || 0"
+            :max="effectiveRemaining"
             :rules="amountRules"
             :suffix="$t('payments.dialog.sumSuffix')"
             :error-messages="amountError"
@@ -426,6 +651,16 @@
       </v-card>
     </v-dialog>
 
+    <!-- To'lovlar tarixi modali -->
+    <PaymentHistoryModal
+      v-model="historyModal.show"
+      :payment="historyModal.payment"
+      @print="openCheckModal"
+    />
+
+    <!-- Chek modali -->
+    <CheckModal v-model="checkModal.show" :checks="checkModal.checks" />
+
     <!-- Success Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top>
       {{ snackbar.message }}
@@ -439,13 +674,29 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Payment, PaymentCalculationResponse } from '@/types/payments.types'
+import type {
+  Payment,
+  PaymentCalculationResponse,
+  ExclusionPreviewResponse,
+  PaymentMethod,
+  PaymentCheck,
+} from '@/types/payments.types'
 import { PaymentStatus } from '@/types/payments.types'
-import { fetchPayments, markAsPaid, payPartial, calculatePayment, updatePayment } from '@/services/pages/payments'
+import {
+  fetchPayments,
+  markAsPaid,
+  payPartial,
+  calculatePayment,
+  updatePayment,
+  previewExclusion,
+  applyExclusion,
+} from '@/services/pages/payments'
 import { fetchAllGroups } from '@/services/pages/groups'
 import type { Group } from '@/types/groups.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
+import CheckModal from '@/components/pages/payments/CheckModal.vue'
+import PaymentHistoryModal from '@/components/pages/payments/PaymentHistoryModal.vue'
 
 // Component name
 defineOptions({
@@ -475,9 +726,12 @@ const totalPages = ref(1)
 const markAsPaidDialog = ref({
   show: false,
   payment: null as Payment | null,
+  paymentMethod: 'cash' as PaymentMethod,
+  paidAt: null as string | null,
+  comment: '',
 })
 
-const partialPaymentModal = ref({
+const emptyPartialModal = () => ({
   show: false,
   payment: null as Payment | null,
   amount: 0 as number,
@@ -485,7 +739,56 @@ const partialPaymentModal = ref({
   showDatePicker: false as boolean,
   calculation: null as PaymentCalculationResponse | null,
   calculating: false as boolean,
+  // To'lov usuli va (karta bo'lsa) to'lov qilingan sana
+  paymentMethod: 'cash' as PaymentMethod,
+  paidAt: null as string | null,
+  // Darslarni/summani chiqarib tashlash
+  exclusionMode: null as null | 'lessons' | 'amount',
+  excludeLessons: null as number | null,
+  excludeAmount: null as number | null,
+  exclusionComment: '',
+  exclusionPreview: null as ExclusionPreviewResponse | null,
+  previewing: false as boolean,
 })
+
+const partialPaymentModal = ref(emptyPartialModal())
+
+// To'lov usuli variantlari (reception)
+const paymentMethodOptions = computed(() => [
+  { title: t('payments.reception.method.cash'), value: 'cash' as PaymentMethod },
+  { title: t('payments.reception.method.card'), value: 'card' as PaymentMethod },
+  { title: t('payments.reception.method.bank_transfer'), value: 'bank_transfer' as PaymentMethod },
+  { title: t('payments.reception.method.online'), value: 'online' as PaymentMethod },
+])
+
+// Chek modali — muvaffaqiyatli to'lovdan keyin ochiladi
+const checkModal = ref({
+  show: false,
+  checks: [] as PaymentCheck[],
+})
+
+const openCheckModal = (checks: (PaymentCheck | undefined)[]) => {
+  const valid = checks.filter((c): c is PaymentCheck => !!c)
+  if (valid.length === 0) return
+  checkModal.value = { show: true, checks: valid }
+}
+
+// To'lovlar tarixi modali — chekni istalgan vaqtda qayta chop etish uchun
+const historyModal = ref({
+  show: false,
+  payment: null as Payment | null,
+})
+
+// Tarix tugmasi faqat to'lov qilingan (yoki tasdiq kutayotgan) qatorlarda ko'rinadi
+const hasPayments = (payment: Payment): boolean =>
+  (payment.amountPaid || 0) > 0 || !!payment.hasPendingReceipt
+
+const openHistoryModal = (payment: Payment) => {
+  historyModal.value = { show: true, payment }
+}
+
+// Chiqarib tashlash uchun preview debounce timer'i
+let previewTimer: ReturnType<typeof setTimeout> | null = null
 
 // Snackbar
 const snackbar = ref({
@@ -564,13 +867,37 @@ const remainingAmount = computed(() => {
   return partialPaymentModal.value.payment?.remainingAmount || 0
 })
 
+// Chiqarib tashlash kiritilganmi (tanlangan rejimga mos qiymat > 0)
+const hasExclusion = computed(() => {
+  const m = partialPaymentModal.value
+  if (m.exclusionMode === 'lessons') return (m.excludeLessons || 0) > 0
+  if (m.exclusionMode === 'amount') return (m.excludeAmount || 0) > 0
+  return false
+})
+
+// Chiqarib tashlashda comment majburiy
+const exclusionCommentError = computed<string[]>(() => {
+  if (hasExclusion.value && !partialPaymentModal.value.exclusionComment.trim()) {
+    return [t('payments.exclusion.commentRequired')]
+  }
+  return []
+})
+
+// Chiqarib tashlashdan keyingi qolgan qarz (preview bo'lsa undan, aks holda joriy remaining)
+const effectiveRemaining = computed(() => {
+  if (hasExclusion.value && partialPaymentModal.value.exclusionPreview) {
+    return partialPaymentModal.value.exclusionPreview.newRemaining
+  }
+  return remainingAmount.value
+})
+
 const amountError = computed(() => {
   if (!partialPaymentModal.value.amount) return []
   if (partialPaymentModal.value.amount <= 0) return [t('payments.validation.amountGreaterThanZero')]
-  if (partialPaymentModal.value.amount > remainingAmount.value) {
+  if (partialPaymentModal.value.amount > effectiveRemaining.value) {
     return [
       t('payments.validation.amountNotExceedWithSum', {
-        amount: formatCurrency(remainingAmount.value),
+        amount: formatCurrency(effectiveRemaining.value),
       }),
     ]
   }
@@ -580,15 +907,16 @@ const amountError = computed(() => {
 const amountRules = [
   (v: number) => v > 0 || t('payments.validation.amountGreaterThanZero'),
   (v: number) =>
-    v <= remainingAmount.value ||
-    t('payments.validation.amountNotExceed', { amount: formatCurrency(remainingAmount.value) }),
+    v <= effectiveRemaining.value ||
+    t('payments.validation.amountNotExceed', { amount: formatCurrency(effectiveRemaining.value) }),
 ]
 
 const canProcessPartialPayment = computed(() => {
   return (
     partialPaymentModal.value.amount > 0 &&
-    partialPaymentModal.value.amount <= remainingAmount.value &&
-    amountError.value.length === 0
+    partialPaymentModal.value.amount <= effectiveRemaining.value &&
+    amountError.value.length === 0 &&
+    exclusionCommentError.value.length === 0
   )
 })
 
@@ -704,18 +1032,27 @@ const openMarkAsPaidDialog = (payment: Payment) => {
   markAsPaidDialog.value = {
     show: true,
     payment,
+    paymentMethod: 'cash',
+    paidAt: null,
+    comment: '',
   }
 }
 
 const confirmMarkAsPaid = async () => {
-  if (!markAsPaidDialog.value.payment) return
+  const dialog = markAsPaidDialog.value
+  if (!dialog.payment) return
 
   processingPayment.value = true
   try {
-    await markAsPaid(markAsPaidDialog.value.payment.id)
+    const response = await markAsPaid(dialog.payment.id, {
+      paymentMethod: dialog.paymentMethod,
+      paidAt: dialog.paymentMethod === 'card' && dialog.paidAt ? dialog.paidAt : undefined,
+      comment: dialog.comment.trim() || undefined,
+    })
     showSnackbar(t('payments.messages.markSuccess'), 'success')
     markAsPaidDialog.value.show = false
     await loadPayments()
+    openCheckModal([response?.check])
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || t('payments.messages.markError'), 'error')
   } finally {
@@ -724,28 +1061,54 @@ const confirmMarkAsPaid = async () => {
 }
 
 const openPartialPaymentModal = (payment: Payment) => {
-  partialPaymentModal.value = {
-    show: true,
-    payment,
-    amount: 0,
-    plannedStudyUntilDate: null,
-    showDatePicker: false,
-    calculation: null,
-    calculating: false,
-  }
+  partialPaymentModal.value = { ...emptyPartialModal(), show: true, payment }
 }
 
 const closePartialPaymentModal = () => {
   if (processingPayment.value) return
-  partialPaymentModal.value = {
-    show: false,
-    payment: null,
-    amount: 0,
-    plannedStudyUntilDate: null,
-    showDatePicker: false,
-    calculation: null,
-    calculating: false,
+  if (previewTimer) clearTimeout(previewTimer)
+  partialPaymentModal.value = emptyPartialModal()
+}
+
+// Chiqarib tashlash rejimini tanlash (boshqa rejim inputini tozalaymiz)
+const setExclusionMode = (mode: 'lessons' | 'amount' | null | undefined) => {
+  const m = partialPaymentModal.value
+  m.exclusionMode = mode ?? null
+  m.excludeLessons = null
+  m.excludeAmount = null
+  m.exclusionPreview = null
+  if (!mode) m.exclusionComment = ''
+  runExclusionPreview()
+}
+
+// Kiritilgan chiqarib tashlashni jonli hisoblash (preview-exclusion, debounce bilan)
+const runExclusionPreview = () => {
+  if (previewTimer) clearTimeout(previewTimer)
+  const m = partialPaymentModal.value
+  if (!m.payment || !hasExclusion.value) {
+    m.exclusionPreview = null
+    return
   }
+  previewTimer = setTimeout(async () => {
+    const payment = partialPaymentModal.value.payment
+    if (!payment) return
+    partialPaymentModal.value.previewing = true
+    try {
+      const payload =
+        partialPaymentModal.value.exclusionMode === 'lessons'
+          ? { excludeLessons: partialPaymentModal.value.excludeLessons || 0 }
+          : { excludeAmount: partialPaymentModal.value.excludeAmount || 0 }
+      const preview = await previewExclusion(payment.id, payload)
+      partialPaymentModal.value.exclusionPreview = preview
+      // Qolgan qarzni yangi qiymatga moslaymiz (reception odatda to'liq oladi)
+      partialPaymentModal.value.amount = preview.newRemaining
+    } catch (error: any) {
+      showSnackbar(error.response?.data?.message || t('payments.messages.calcError'), 'error')
+      partialPaymentModal.value.exclusionPreview = null
+    } finally {
+      partialPaymentModal.value.previewing = false
+    }
+  }, 400)
 }
 
 const openDatePicker = () => {
@@ -760,7 +1123,7 @@ const clearDate = () => {
 
 const handleDateChange = async (date: string | null) => {
   if (!date || !partialPaymentModal.value.payment) return
-  
+
   partialPaymentModal.value.calculating = true
   try {
     const calculation = await calculatePayment(partialPaymentModal.value.payment.id, date)
@@ -776,43 +1139,59 @@ const handleDateChange = async (date: string | null) => {
 }
 
 const confirmPartialPayment = async () => {
-  if (!partialPaymentModal.value.payment) return
+  const modal = partialPaymentModal.value
+  if (!modal.payment) return
+
+  // Chiqarib tashlash bo'lsa comment majburiy
+  if (hasExclusion.value && exclusionCommentError.value.length > 0) {
+    showSnackbar(exclusionCommentError.value[0], 'error')
+    return
+  }
 
   processingPayment.value = true
   try {
-    if (!partialPaymentModal.value.amount || partialPaymentModal.value.amount <= 0) {
+    if (!modal.amount || modal.amount <= 0) {
       showSnackbar(t('payments.messages.enterValidAmount'), 'error')
       return
     }
-    if (partialPaymentModal.value.amount > remainingAmount.value) {
+    if (modal.amount > effectiveRemaining.value) {
       showSnackbar(t('payments.messages.amountExceeds'), 'error')
       return
     }
 
     // If plannedStudyUntilDate is set, update payment first
-    if (partialPaymentModal.value.plannedStudyUntilDate) {
-      await updatePayment(partialPaymentModal.value.payment.id, {
-        plannedStudyUntilDate: partialPaymentModal.value.plannedStudyUntilDate,
+    if (modal.plannedStudyUntilDate) {
+      await updatePayment(modal.payment.id, {
+        plannedStudyUntilDate: modal.plannedStudyUntilDate,
       })
     }
 
-    await payPartial(partialPaymentModal.value.payment.id, partialPaymentModal.value.amount)
+    // Chiqarib tashlash kiritilgan bo'lsa — avval saqlaymiz (amountDue kamayadi)
+    const comment = modal.exclusionComment.trim()
+    if (hasExclusion.value) {
+      const payload =
+        modal.exclusionMode === 'lessons'
+          ? { excludeLessons: modal.excludeLessons || 0, comment }
+          : { excludeAmount: modal.excludeAmount || 0, comment }
+      await applyExclusion(modal.payment.id, payload)
+    }
+
+    // Keyin to'lovni qabul qilamiz (to'lov usuli, sana va comment bilan)
+    const response = await payPartial(modal.payment.id, modal.amount, {
+      paymentMethod: modal.paymentMethod,
+      paidAt: modal.paymentMethod === 'card' && modal.paidAt ? modal.paidAt : undefined,
+      comment: comment || undefined,
+    })
     showSnackbar(
       t('payments.messages.partialSuccess', {
-        amount: formatCurrency(partialPaymentModal.value.amount),
+        amount: formatCurrency(modal.amount),
       }),
       'success',
     )
-    partialPaymentModal.value = {
-      show: false,
-      payment: null,
-      amount: 0,
-      plannedStudyUntilDate: null,
-      showDatePicker: false,
-      calculation: null,
-      calculating: false,
-    }
+    if (previewTimer) clearTimeout(previewTimer)
+    partialPaymentModal.value = emptyPartialModal()
     await loadPayments()
+    openCheckModal([response?.check])
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || t('payments.messages.partialError'), 'error')
   } finally {

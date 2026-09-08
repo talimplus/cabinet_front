@@ -61,6 +61,50 @@ export interface StudentForm {
         discountReason?: string;
         discountPeriods?: DiscountPeriod[];
 }
+// GET /students/{id} javobidagi guruh (jadval bilan)
+export interface StudentGroupSchedule {
+  day: string;
+  startTime: string;
+}
+export interface StudentGroupBrief {
+  id: number;
+  name: string;
+  monthlyFee?: number;
+  days?: string[];
+  schedule?: StudentGroupSchedule[];
+}
+
+// GET /students/{id} to'liq javobi (edit modali va view sahifasi uchun)
+export interface StudentDetail {
+  id: number;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  secondPhone?: string | null;
+  birthDate?: string | null;
+  comment?: string | null;
+  heardAboutUs?: string | null;
+  preferredTime?: 'morning' | 'evening' | string | null;
+  preferredDays?: string[] | null;
+  studyDays?: string[] | null;
+  passportSeries?: string | null;
+  passportNumber?: string | null;
+  jshshir?: string | null;
+  status: StudentStatus | string;
+  returnLikelihood?: 'never' | 'maybe' | 'sure' | string | null;
+  monthlyFee: number;
+  discountPercent?: number | string;
+  discountReason?: string | null;
+  discountPeriods?: DiscountPeriod[];
+  activatedAt?: string | null;
+  stoppedAt?: string | null;
+  createdAt?: string;
+  centerId?: number;
+  centerName?: string;
+  subject?: Subject | null;
+  groups?: StudentGroupBrief[];
+}
+
 export interface StudentsParams {
         centerId?: number;
         search?: string;

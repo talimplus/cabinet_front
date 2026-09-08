@@ -11,7 +11,7 @@ export default {
     leads: 'Leads',
     students: "O'quvchilar",
     stopped: "To'xtatilgan",
-    ignored: "E'tiborsiz",
+    ignored: "O'qishni xoxlamaganlar",
     finished: 'Tugallangan',
     centers: 'Markazlar',
     subjects: 'Fanlar',

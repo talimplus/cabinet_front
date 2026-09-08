@@ -20,7 +20,7 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text class="py-2">
+        <v-card-text class="py-2" v-if="isAdmin">
           <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.centerId"
@@ -191,10 +191,13 @@ import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { Room } from '@/types/room.types'
 import type { Group } from '@/types/groups.types'
+import { useUserStore } from '@/stores/user'
 
 const subjects = ref<Subject[]>([])
 const users = ref<User[]>([])
 const rooms = ref<Room[]>([])
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 interface Props {
   centers: Center[]
@@ -271,6 +274,14 @@ watch(open, (newValue: boolean) => {
     allTimes.value = ''
     times.value = []
     differentTime.value = false
+
+    // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
+    if (newValue && !isAdmin.value && userStore.user?.centerId) {
+      form.value.centerId = userStore.user.centerId
+      getSubjects()
+      getUsers()
+      getRooms()
+    }
   }
 })
 
@@ -294,10 +305,13 @@ const getUsers = async () => {
     const {
       data: { data },
     } = await fetchUsers({ centerId: form.value.centerId })
-    users.value = data.map((item) => {
-      item.fullName = item.firstName + ' ' + item.lastName
-      return item
-    })
+    // Ustoz sifatida faqat role'i "teacher" bo'lgan xodimlarni tanlash mumkin
+    users.value = data
+      .filter((item) => item.role === 'teacher')
+      .map((item) => {
+        item.fullName = item.firstName + ' ' + item.lastName
+        return item
+      })
   } catch (err) {
     console.log(err)
   }

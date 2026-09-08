@@ -109,7 +109,16 @@
       </template>
       <template v-slot:item.action="{ item }">
         <v-btn
-          v-if="canEditStudent"
+          @click="viewStudent(item)"
+          density="compact"
+          color="primary"
+          icon="mdi-eye"
+          size="small"
+          class="me-2"
+          variant="text"
+        ></v-btn>
+        <v-btn
+          v-if="canEditActiveStudent"
           @click="editStudent(item)"
           density="compact"
           color="medium-emphasis"
@@ -170,6 +179,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
 import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
@@ -180,7 +190,8 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
-const { canEditStudent } = usePermissions()
+const router = useRouter()
+const { canEditStudent, canEditActiveStudent } = usePermissions()
 
 const statusList = computed(() => {
   return [
@@ -234,6 +245,10 @@ function clearFormForEdit() {
 function editStudent(item: Student) {
   openModal.value = true
   formForEdit.value = item
+}
+
+function viewStudent(item: Student) {
+  router.push(`/students/${item.id}`)
 }
 
 const loadCenters = async () => {

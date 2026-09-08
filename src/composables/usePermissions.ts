@@ -32,6 +32,8 @@ export function usePermissions() {
 
     // O'quvchilar: tahrirlash/status/chegirma — reception va teacher qila olmaydi
     canEditStudent: computed(() => has('super_admin', 'admin', 'manager')),
+    // Active (/students) o'quvchining ma'lumotlarini tahrirlash — reception ham qila oladi
+    canEditActiveStudent: computed(() => has('super_admin', 'admin', 'manager', 'reception')),
     // O'quvchini o'chirish — faqat admin (va super_admin)
     canDeleteStudent: computed(() => has('super_admin', 'admin')),
 

@@ -29,9 +29,13 @@
         <div>{{ item.teacher ? item.teacher.firstName + ' ' + item.teacher.lastName : '—' }}</div>
       </template>
       <template v-slot:item.schedules="{ item }">
-        <div v-for="(day, i) in item.schedules" :key="`day-${i}`">
+        <div v-for="(day, i) in item.schedules" :key="`day-${i}`" class="text-no-wrap">
           {{ day.day }} - {{ day.startTime }}
         </div>
+      </template>
+
+      <template v-slot:item.startDate="{ item }">
+        <span class="text-no-wrap">{{ formatDate(item.startDate) }}</span>
       </template>
 
       <template v-slot:item.monthlyFee="{ item }">
@@ -81,13 +85,12 @@
         <div class="d-flex">
           <v-btn
             @click="$router.push('/groups/' + item.id)"
-            density="compact"
-            color="medium-emphasis"
-            icon="mdi-eye"
             size="small"
             class="me-2"
-            variant="text"
+            variant="tonal"
+            prepend-icon="mdi-eye"
           >
+            {{ $t('common.view') }}
           </v-btn>
           <v-btn
             v-if="canEditGroup"
@@ -137,10 +140,8 @@ import { fetchGroups, deleteGroup, changeGroupStatus } from '@/services/pages/gr
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
 import { fetchCenters, fetchAllCenters } from '@/services/pages/centers'
 import { fetchSubjects } from '@/services/pages/subjects'
-import { fetchUsers } from '@/services/pages/users'
 import type { Group } from '@/types/groups.types'
 import type { Center } from '@/types/centers.types'
-import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { GroupsParams } from '@/types/groups.types'
 import { GroupStatus } from '@/types/groups.enum'
@@ -153,7 +154,6 @@ const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
 const openFormModal = ref(false)
 const subjects = ref<Subject[]>([])
-const users = ref<User[]>([])
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
 const loadingCenters = ref(false)
@@ -166,7 +166,7 @@ const params = ref<GroupsParams>({
 })
 
 const centerOptions = computed(() => {
-  return centers.value.map(center => ({
+  return centers.value.map((center) => ({
     title: center.name,
     value: center.id,
   }))
@@ -201,7 +201,7 @@ const loadCenters = async () => {
     const { data } = await fetchAllCenters()
     centers.value = data
     if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
+      const defaultCenter = centers.value.find((c) => c.isDefault) || centers.value[0]
       params.value.centerId = defaultCenter.id
     }
   } catch (err) {
@@ -217,21 +217,6 @@ onMounted(async () => {
     await getGroups()
   }
 })
-
-const getUsers = async () => {
-  try {
-    const {
-      data: { data },
-    } = await fetchUsers()
-    users.value = data.map((item) => {
-      item.fullName = item.firstName + ' ' + item.lastName
-      return item
-    })
-  } catch (err) {
-    console.log(err)
-  }
-}
-getUsers()
 
 const getSubjects = async () => {
   try {
@@ -273,7 +258,8 @@ const headers = computed(() => [
   { title: t('groups.table.id'), key: 'id' },
   { title: t('common.name'), key: 'name' },
   { title: t('groups.table.subject'), key: 'subject.name' },
-  { title: t('groups.table.schedules'), key: 'schedules' },
+  { title: t('groups.table.schedules'), key: 'schedules', minWidth: '160px' },
+  { title: t('groups.table.startDate'), key: 'startDate', minWidth: '120px' },
   { title: t('groups.table.monthlyFee'), key: 'monthlyFee' },
   { title: t('common.status'), key: 'status' },
   { title: t('groups.table.room'), key: 'room.name' },
@@ -281,14 +267,29 @@ const headers = computed(() => [
   { title: t('common.actions'), key: 'actions' },
 ])
 
+// Guruhda dars boshlangan sana
+const formatDate = (dateString?: string | null): string => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+}
+
 const formatCurrency = (amount: number | null): string => {
   if (amount === null || amount === undefined) return '—'
-  return new Intl.NumberFormat('uz-UZ', {
-    style: 'decimal',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(amount) + ' ' + t('common.sum')
+  return (
+    new Intl.NumberFormat('uz-UZ', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount) +
+    ' ' +
+    t('common.sum')
+  )
 }
 
 const getStatusLabel = (status?: GroupStatus): string => {
@@ -328,5 +329,4 @@ const getStatusOptions = (status?: GroupStatus) => {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

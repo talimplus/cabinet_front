@@ -122,7 +122,7 @@
         </v-card-title>
         <Form ref="expenseFormRef" @submit="saveExpense">
           <v-card-text class="pa-4">
-            <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
+            <Field v-if="isAdmin" name="centerId" v-slot="{ handleChange, handleBlur, errors }">
               <v-select
                 v-model="expenseForm.centerId"
                 :items="centerOptions"
@@ -253,6 +253,10 @@ import type { Expense, ExpenseForm, ExpensesParams } from '@/types/expenses.type
 import { fetchExpenses, fetchExpenseById, createExpense, updateExpense, deleteExpense } from '@/services/pages/expenses'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 // Component name
 defineOptions({
@@ -475,7 +479,8 @@ const openCreateModal = () => {
   }
   const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
   expenseForm.value = {
-    centerId: defaultCenter?.id || 0,
+    // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
+    centerId: isAdmin.value ? (defaultCenter?.id || 0) : (userStore.user?.centerId || 0),
     name: '',
     amount: 0,
     description: '',

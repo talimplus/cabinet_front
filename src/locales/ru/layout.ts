@@ -11,7 +11,7 @@ export default {
     leads: 'Лиды',
     students: 'Ученики',
     stopped: 'Приостановленные',
-    ignored: 'Проигнорированные',
+    ignored: 'Не хочет',
     finished: 'Завершённые',
     centers: 'Центры',
     subjects: 'Предметы',

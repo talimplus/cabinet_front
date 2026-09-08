@@ -1,8 +1,9 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="pa-2 pa-md-4 group-view">
   <v-card>
-      <v-card-title class="text-h5 pa-4">
-        {{ group?.name || $t('groups.view.title') }}
+      <v-card-title class="text-h5 pa-3 pa-md-4 d-flex align-center" style="gap: 8px">
+        <v-btn variant="text" icon="mdi-arrow-left" size="small" @click="goBack"></v-btn>
+        <span class="text-truncate">{{ group?.name || $t('groups.view.title') }}</span>
       </v-card-title>
 
       <v-tabs v-model="activeTab" bg-color="primary" slider-color="white">
@@ -16,36 +17,38 @@
         <!-- TAB 1: ATTENDANCE -->
         <v-window-item value="attendance">
           <v-card-text>
-            <!-- Date Range Filter -->
+            <!-- Month Filter (year + month) -->
             <v-row class="mb-4">
-              <v-col cols="12" md="4">
-                <v-date-input
-                  v-model="dateFrom"
-                  :label="$t('groups.attendance.fromDate')"
+              <v-col cols="6" md="3">
+                <v-select
+                  v-model="selectedMonth"
+                  :items="monthOptions"
+                  item-title="label"
+                  item-value="value"
+                  :label="$t('groups.attendance.month')"
                   density="compact"
                   variant="outlined"
-                  :max="today"
-                  @update:model-value="loadAttendance"
-                ></v-date-input>
+                  hide-details
+                ></v-select>
               </v-col>
-              <v-col cols="12" md="4">
-                <v-date-input
-                  v-model="dateTo"
-                  :label="$t('groups.attendance.toDate')"
+              <v-col cols="6" md="3">
+                <v-select
+                  v-model="selectedYear"
+                  :items="yearOptions"
+                  :label="$t('groups.attendance.year')"
                   density="compact"
                   variant="outlined"
-                  :max="today"
-                  @update:model-value="loadAttendance"
-                ></v-date-input>
+                  hide-details
+                ></v-select>
               </v-col>
-              <v-col cols="12" md="4" class="d-flex align-center" style="gap: 8px">
+              <v-col cols="12" md="3" class="d-flex align-center" style="gap: 8px">
                 <v-btn
                   color="secondary"
                   variant="outlined"
-                  @click="clearFilters"
-                  prepend-icon="mdi-close-circle"
+                  @click="goToCurrentMonth"
+                  prepend-icon="mdi-calendar-today"
                 >
-                  {{ $t('groups.attendance.clear') }}
+                  {{ $t('groups.attendance.currentMonth') }}
                 </v-btn>
               </v-col>
             </v-row>
@@ -165,9 +168,6 @@
                 <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
                   {{ item.status }}
                 </v-chip>
-      </template>
-              <template v-slot:item.createdAt="{ item }">
-                {{ item.createdAt ? formatDate(item.createdAt) : '—' }}
       </template>
     </v-data-table>
           </v-card-text>
@@ -411,7 +411,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import type { Student } from '@/types/students.types'
 import type { Group } from '@/types/groups.types'
 import type {
@@ -433,7 +433,14 @@ defineOptions({
 })
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
+
+// Orqaga qaytish (tarix bo'lsa — orqaga, aks holda guruhlar ro'yxatiga)
+const goBack = () => {
+  if (window.history.length > 1) router.back()
+  else router.push('/groups')
+}
 const { canManageAttendance, canManagePastAttendance, isReception, userId } = usePermissions()
 const notify = useNotificationStore()
 
@@ -484,9 +491,43 @@ const lessonDates = computed(() => attendanceData.value?.lessonDates || [])
 const today = computed(() => attendanceData.value?.today || '')
 const overridesByDate = computed(() => attendanceData.value?.overridesByDate || {})
 
-// Date filters
-const dateFrom = ref('')
-const dateTo = ref('')
+// Month filter (year + month). Davomat doim to'liq bir oy ko'rinishida bo'ladi.
+const now = new Date()
+const selectedYear = ref(now.getFullYear())
+const selectedMonth = ref(now.getMonth() + 1) // 1-12
+
+// Oy nomlari (locale'dan)
+const monthOptions = computed(() =>
+  Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: t(`groups.attendance.months.${i}`),
+  })),
+)
+
+// Yil ro'yxati: joriy yildan 3 yil orqaga
+const yearOptions = computed(() => {
+  const current = new Date().getFullYear()
+  return Array.from({ length: 4 }, (_, i) => current - i)
+})
+
+// Tanlangan oyning boshi va oxiri (YYYY-MM-DD)
+const monthRange = computed(() => {
+  const y = selectedYear.value
+  const m = selectedMonth.value
+  const mm = String(m).padStart(2, '0')
+  const lastDay = new Date(y, m, 0).getDate() // keyingi oyning 0-kuni = shu oyning oxirgi kuni
+  return {
+    from: `${y}-${mm}-01`,
+    to: `${y}-${mm}-${String(lastDay).padStart(2, '0')}`,
+  }
+})
+
+// Joriy oyga qaytish
+const goToCurrentMonth = () => {
+  const d = new Date()
+  selectedYear.value = d.getFullYear()
+  selectedMonth.value = d.getMonth() + 1
+}
 
 // Reschedule dialog
 const rescheduleDialog = ref({
@@ -586,34 +627,16 @@ const formatDateForAPI = (date: string | Date | null | undefined): string | unde
   return `${year}-${month}-${day}`
 }
 
-// Clear date filters and reset to default
-const clearFilters = () => {
-  dateFrom.value = ''
-  dateTo.value = ''
-  loadAttendance()
-}
-
-// Load attendance data
+// Load attendance data — doim tanlangan oyning to'liq oralig'i (boshidan oxirigacha).
+// Kelajakdagi (hali o'tilmagan) darslar ham ko'rinadi, lekin ular tahrirlanmaydi.
 const loadAttendance = async () => {
   const groupId = route.params.id
   if (!groupId || Array.isArray(groupId)) return
 
   loadingAttendance.value = true
   try {
-    const params: { mode?: 'last' | 'range'; count?: number; from?: string; to?: string } = {}
-
-    if (dateFrom.value || dateTo.value) {
-      // At least one date selected - use range mode
-      params.mode = 'range'
-      params.from = formatDateForAPI(dateFrom.value)
-      params.to = formatDateForAPI(dateTo.value)
-    } else {
-      // No dates selected - use last 7 days
-      params.mode = 'last'
-      params.count = 7
-    }
-
-    const data = await fetchLessonDates(Number(groupId), params)
+    const { from, to } = monthRange.value
+    const data = await fetchLessonDates(Number(groupId), { mode: 'range', from, to })
     attendanceData.value = data
   } catch (error) {
     console.error('Failed to load attendance:', error)
@@ -928,8 +951,12 @@ const studentHeaders = computed(() => [
   { title: t('groups.studentTable.fullName'), key: 'fullName' },
   { title: t('groups.studentTable.phone'), key: 'phone' },
   { title: t('common.status'), key: 'status' },
-  { title: t('groups.studentTable.createdDate'), key: 'createdAt' },
 ])
+
+// Oy yoki yil o'zgarsa davomatni qayta yuklaymiz
+watch([selectedYear, selectedMonth], () => {
+  loadAttendance()
+})
 
 // Watch for tab changes to load data
 watch(activeTab, (newTab) => {
@@ -954,6 +981,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Mobil ekranda ortiqcha padding'ni kamaytiramiz */
+@media (max-width: 600px) {
+  .group-view :deep(.v-card-text) {
+    padding: 12px;
+  }
+  .group-view :deep(.v-window-item) .v-card-text {
+    padding: 12px;
+  }
+}
+
 .attendance-matrix {
   overflow-x: auto;
   border: 1px solid rgba(0, 0, 0, 0.12);

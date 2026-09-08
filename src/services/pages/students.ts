@@ -1,11 +1,16 @@
 import http from "../baseHttp";
-import type { StudentsParams, StudentForm } from "@/types/students.types";
+import type { StudentsParams, StudentForm, StudentDetail } from "@/types/students.types";
 import { StudentStatus } from "@/types/students.enum";
+import type { AxiosResponse } from "axios";
 export const fetchStudents = async (par?: StudentsParams) => {
         return await http.get('/students', { params: par })
 }
 export const fetchAllStudents = async (params?: StudentsParams) => {
         return await http.get('/students/all', { params })
+}
+
+export const fetchStudentById = async (id: number): Promise<AxiosResponse<StudentDetail>> => {
+        return await http.get(`/students/${id}`)
 }
 
 

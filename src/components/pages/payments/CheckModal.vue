@@ -9,14 +9,16 @@
         <div ref="printArea">
           <div
             v-for="(check, index) in checks"
-            :key="check.checkNo + '-' + index"
+            :key="(check.receiptId ?? check.checkNo ?? '') + '-' + index"
             class="check"
             :class="{ 'mt-6': index > 0 }"
           >
             <!-- Yuqori qism: markaz nomi + katta chek raqami -->
             <div class="check-header">
               <div class="check-brand">{{ brandName }}</div>
-              <div class="check-no">{{ $t('payments.check.number') }} {{ check.checkNo }}</div>
+              <div class="check-no">
+                {{ $t('payments.check.number') }} {{ check.checkNo || '—' }}
+              </div>
               <div v-if="check.status === 'pending'" class="check-pending">
                 {{ $t('payments.check.pending') }}
               </div>
@@ -27,23 +29,23 @@
               <tbody>
                 <tr>
                   <td class="k">{{ $t('payments.check.fullName') }}</td>
-                  <td class="v">{{ check.student.fullName }}</td>
+                  <td class="v">{{ check.student?.fullName || '—' }}</td>
                 </tr>
                 <tr>
                   <td class="k">{{ $t('payments.check.phone') }}</td>
-                  <td class="v">{{ check.student.phone || '—' }}</td>
+                  <td class="v">{{ check.student?.phone || '—' }}</td>
                 </tr>
                 <tr>
                   <td class="k">{{ $t('payments.check.group') }}</td>
-                  <td class="v">{{ check.group.name || '—' }}</td>
+                  <td class="v">{{ check.group?.name || '—' }}</td>
                 </tr>
                 <tr>
                   <td class="k">{{ $t('payments.check.teacher') }}</td>
-                  <td class="v">{{ check.teacher.fullName || '—' }}</td>
+                  <td class="v">{{ check.teacher?.fullName || '—' }}</td>
                 </tr>
                 <tr>
                   <td class="k">{{ $t('payments.check.month') }}</td>
-                  <td class="v">{{ check.forMonth }}</td>
+                  <td class="v">{{ check.forMonth || '—' }}</td>
                 </tr>
                 <tr>
                   <td class="k">{{ $t('payments.check.paymentMethod') }}</td>
@@ -68,7 +70,7 @@
                 </tr>
                 <tr>
                   <td class="k">{{ $t('payments.check.receivedBy') }}</td>
-                  <td class="v">{{ check.receivedBy.fullName || '—' }}</td>
+                  <td class="v">{{ check.receivedBy?.fullName || '—' }}</td>
                 </tr>
                 <tr v-if="check.transactionNo">
                   <td class="k">{{ $t('payments.check.transactionNo') }}</td>
@@ -125,13 +127,14 @@ const printArea = ref<HTMLElement | null>(null)
 
 const brandName = props.brandName || t('payments.check.title')
 
-const methodLabel = (method: PaymentMethod): string => {
+const methodLabel = (method?: PaymentMethod | null): string => {
+  if (!method) return '—'
   const key = `payments.check.method.${method}`
   const label = t(key)
   return label === key ? method : label
 }
 
-const formatCurrency = (amount: number): string => {
+const formatCurrency = (amount?: number | null): string => {
   const value = Number(amount) || 0
   return (
     new Intl.NumberFormat('uz-UZ', {
@@ -144,7 +147,7 @@ const formatCurrency = (amount: number): string => {
   )
 }
 
-const formatDateTime = (value: string): string => {
+const formatDateTime = (value?: string | null): string => {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value

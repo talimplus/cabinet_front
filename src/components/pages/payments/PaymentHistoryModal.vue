@@ -52,7 +52,7 @@
             </thead>
             <tbody>
               <tr v-for="(receipt, index) in receipts" :key="receipt.receiptId ?? index">
-                <td class="font-weight-bold">{{ receipt.checkNo }}</td>
+                <td class="font-weight-bold">{{ receipt.checkNo || '—' }}</td>
                 <td>{{ formatDateTime(receipt.receivedAt || receipt.createdAt) }}</td>
                 <td class="font-weight-bold">{{ formatCurrency(receipt.amount) }}</td>
                 <td>{{ methodLabel(receipt.paymentMethod) }}</td>
@@ -151,7 +151,8 @@ const load = async () => {
   loading.value = true
   error.value = ''
   try {
-    receipts.value = await fetchPaymentReceipts(props.payment.id)
+    const data = await fetchPaymentReceipts(props.payment.id)
+    receipts.value = (data || []).filter(Boolean)
   } catch (e) {
     console.error('Error loading payment history:', e)
     receipts.value = []
@@ -169,7 +170,8 @@ watch(
   },
 )
 
-const methodLabel = (method: PaymentMethod): string => {
+const methodLabel = (method?: PaymentMethod | null): string => {
+  if (!method) return '—'
   const key = `payments.check.method.${method}`
   const label = t(key)
   return label === key ? method : label
@@ -184,7 +186,7 @@ const statusColor = (status: PaymentCheck['status']): string => {
 const statusLabel = (status: PaymentCheck['status']): string =>
   t(`payments.history.status.${status}`)
 
-const formatCurrency = (amount: number): string => {
+const formatCurrency = (amount?: number | null): string => {
   const value = Number(amount) || 0
   return (
     new Intl.NumberFormat('uz-UZ', {
@@ -197,7 +199,7 @@ const formatCurrency = (amount: number): string => {
   )
 }
 
-const formatDateTime = (value: string): string => {
+const formatDateTime = (value?: string | null): string => {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value

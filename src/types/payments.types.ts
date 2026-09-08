@@ -146,18 +146,19 @@ export interface PaymentCheck {
   invoiceNo: number // bazaviy raqam
   installmentIndex?: number // shu oy ichidagi nechanchi to'lov
   status: 'pending' | 'confirmed' | 'rejected'
-  student: { fullName: string; phone: string }
-  group: { name: string }
-  teacher: { fullName: string }
-  forMonth: string // "2026-09"
+  // Backend bog'liq yozuvlarni (guruh, o'qituvchi, qabul qilgan xodim) null qaytarishi mumkin
+  student: { fullName?: string | null; phone?: string | null } | null
+  group: { name?: string | null } | null
+  teacher: { fullName?: string | null } | null
+  forMonth?: string | null // "2026-09"
   amount: number
-  balanceBefore: number
-  balanceAfter: number
-  paymentMethod: PaymentMethod
+  balanceBefore?: number | null
+  balanceAfter?: number | null
+  paymentMethod?: PaymentMethod | null
   paidAt?: string | null // karta sanasi (bo'lsa)
-  receivedAt: string
-  createdAt: string
-  receivedBy: { fullName: string }
+  receivedAt?: string | null
+  createdAt?: string | null
+  receivedBy: { fullName?: string | null } | null
   comment?: string | null
 }
 

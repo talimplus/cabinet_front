@@ -32,7 +32,7 @@ export default {
     lessons: 'Уроки',
     amountDue: 'К оплате',
     amountPaid: 'Оплачено',
-    remaining: 'Остаток',
+    remaining: 'К оплате учеником',
     pendingConfirmation: 'Ожидает подтверждения',
     dueDate: 'Срок',
     hardDueDate: 'Крайний срок',

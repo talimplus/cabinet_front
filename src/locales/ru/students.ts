@@ -104,6 +104,8 @@ export default {
       amountDue: 'Начислено',
       amountPaid: 'Оплачено',
       remaining: 'Остаток долга',
+      payableNow: 'К оплате учеником',
+      cashDebtHint: 'Долг по кассе: {amount}',
       status: 'Статус',
       empty: 'Платежи не найдены',
       lessonsShort: '{billable}/{planned} зан.',

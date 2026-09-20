@@ -32,7 +32,7 @@ export default {
     lessons: 'Darslar',
     amountDue: "To'lanishi kerak",
     amountPaid: "To'langan",
-    remaining: 'Qolgan',
+    remaining: "O'quvchidan olinishi kerak",
     pendingConfirmation: 'Tasdiqlash kutilmoqda',
     dueDate: 'Muddat',
     hardDueDate: "Qat'iy muddat",

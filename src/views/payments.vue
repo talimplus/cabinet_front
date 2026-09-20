@@ -203,8 +203,8 @@
                   </div>
                 </td>
                 <td>{{ formatCurrency(payment.amountPaid) }}</td>
-                <td :class="{ 'text-error font-weight-bold': payment.remainingAmount > 0 }">
-                  {{ formatCurrency(payment.remainingAmount) }}
+                <td :class="{ 'text-error font-weight-bold': payableNowOf(payment) > 0 }">
+                  {{ formatCurrency(payableNowOf(payment)) }}
                 </td>
                 <td>
                   <v-chip :color="getStatusColor(payment.status)" size="small" variant="flat">
@@ -260,7 +260,7 @@
                         size="small"
                         variant="flat"
                         @click="openMarkAsPaidDialog(payment)"
-                        :disabled="processingPayment"
+                        :disabled="processingPayment || payableNowOf(payment) <= 0"
                       >
                         {{ $t('payments.buttons.payFull') }}
                       </v-btn>
@@ -269,7 +269,7 @@
                         size="small"
                         variant="flat"
                         @click="openPartialPaymentModal(payment)"
-                        :disabled="processingPayment"
+                        :disabled="processingPayment || payableNowOf(payment) <= 0"
                       >
                         {{ $t('payments.buttons.payPartial') }}
                       </v-btn>
@@ -367,7 +367,7 @@
             <div class="info-row mb-2">
               <span class="info-label">{{ $t('payments.dialog.remainingSum') }}:</span>
               <span class="info-value font-weight-bold">
-                {{ formatCurrency(markAsPaidDialog.payment?.remainingAmount || 0) }}
+                {{ formatCurrency(payableNowOf(markAsPaidDialog.payment)) }}
               </span>
             </div>
           </div>
@@ -465,7 +465,7 @@
             <div class="info-row mb-3">
               <span class="info-label">{{ $t('payments.dialog.remainingSum') }}:</span>
               <span class="info-value font-weight-bold text-primary">
-                {{ formatCurrency(partialPaymentModal.payment?.remainingAmount || 0) }}
+                {{ formatCurrency(remainingAmount) }}
               </span>
             </div>
           </div>
@@ -881,6 +881,15 @@ const historyModal = ref({
 const hasPayments = (payment: Payment): boolean =>
   (payment.amountPaid || 0) > 0 || !!payment.hasPendingReceipt
 
+// O'quvchidan yana qancha olish kerak: amountDue - (amountPaid + pendingAmount).
+// Backend `payableNow` bermasa, remaining'dan tasdiq kutayotgan pulni ayiramiz.
+// remainingAmount o'zi kassa qarzi bo'lib qoladi — bu yerda ishlatilmaydi.
+const payableNowOf = (payment: Payment | null | undefined): number => {
+  if (!payment) return 0
+  if (payment.payableNow != null) return payment.payableNow
+  return Math.max(0, payment.remainingAmount - (payment.pendingAmount || 0))
+}
+
 const openHistoryModal = (payment: Payment) => {
   historyModal.value = { show: true, payment }
 }
@@ -968,8 +977,10 @@ const selectedMonth = computed(() => {
   )
 })
 
+// Qisman to'lovda kiritilishi mumkin bo'lgan maksimal summa — backend ham
+// remaining - pending bo'yicha tekshiradi, shuning uchun payableNow.
 const remainingAmount = computed(() => {
-  return partialPaymentModal.value.payment?.remainingAmount || 0
+  return payableNowOf(partialPaymentModal.value.payment)
 })
 
 // Chiqarib tashlash kiritilganmi (tanlangan rejimga mos qiymat > 0)
@@ -988,10 +999,13 @@ const exclusionCommentError = computed<string[]>(() => {
   return []
 })
 
-// Chiqarib tashlashdan keyingi qolgan qarz (preview bo'lsa undan, aks holda joriy remaining)
+// Chiqarib tashlashdan keyingi olinishi kerak summa (preview bo'lsa undan, aks holda
+// joriy payableNow). Preview `newRemaining` kassa qarzini beradi — undan ham tasdiq
+// kutayotgan pulni ayiramiz.
 const effectiveRemaining = computed(() => {
-  if (hasExclusion.value && partialPaymentModal.value.exclusionPreview) {
-    return partialPaymentModal.value.exclusionPreview.newRemaining
+  const modal = partialPaymentModal.value
+  if (hasExclusion.value && modal.exclusionPreview) {
+    return Math.max(0, modal.exclusionPreview.newRemaining - (modal.payment?.pendingAmount || 0))
   }
   return remainingAmount.value
 })

@@ -42,7 +42,13 @@ export interface Payment {
   createdAt: string
   hasPendingReceipt?: boolean
   pendingReceiptsCount?: number
+  // Reception olgan, lekin admin hali tasdiqlamagan pul
   pendingAmount?: number
+  // amountPaid + pendingAmount — o'quvchi haqiqatda topshirgan pul
+  receivedAmount?: number
+  // amountDue - receivedAmount — o'quvchidan yana olinishi kerak bo'lgan summa.
+  // remainingAmount (amountDue - amountPaid) esa kassa qarzi bo'lib qoladi.
+  payableNow?: number
 }
 
 // PUT /payments/preview-exclusion/{paymentId} va apply-exclusion body
@@ -208,6 +214,8 @@ export interface StudentSummaryTotals {
   totalPaid: number
   totalDebt: number
   totalPending: number
+  // totalPaid + totalPending — o'quvchi haqiqatda topshirgan pul
+  totalReceived: number
   // Hozir to'lash mumkin bo'lgan maksimal summa (jami qarz)
   payableNow: number
 }
@@ -220,7 +228,12 @@ export interface StudentSummaryMonth {
   amountDue: number
   amountPaid: number
   pendingAmount: number
+  // amountPaid + pendingAmount — o'quvchi shu oyga topshirgan pul
+  receivedAmount: number
+  // Kassa qarzi: amountDue - amountPaid
   remaining: number
+  // O'quvchidan olinishi kerak: amountDue - receivedAmount
+  payableNow: number
   status: 'paid' | 'unpaid' | 'partial'
   // Proratsiya (oy o'rtasida qo'shilganda summa kam chiqishini tushuntirish uchun) —
   // backend qaytarса ko'rsatiladi, aks holda "—" bo'ladi.

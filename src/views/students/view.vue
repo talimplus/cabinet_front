@@ -265,9 +265,18 @@
               {{ formatCurrency(item.amountPaid) }}
             </template>
             <template v-slot:item.remaining="{ item }">
-              <span :class="{ 'text-error font-weight-medium': item.remaining > 0 }">
-                {{ formatCurrency(item.remaining) }}
-              </span>
+              <div class="d-flex flex-column">
+                <span :class="{ 'text-error font-weight-medium': monthPayable(item) > 0 }">
+                  {{ formatCurrency(monthPayable(item)) }}
+                </span>
+                <span v-if="item.pendingAmount > 0" class="text-caption text-medium-emphasis">
+                  {{
+                    $t('students.view.table.cashDebtHint', {
+                      amount: formatCurrency(item.remaining),
+                    })
+                  }}
+                </span>
+              </div>
             </template>
             <template v-slot:item.status="{ item }">
               <v-chip :color="statusColor(item.status)" size="small" variant="flat">
@@ -394,7 +403,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import type { PaymentCheck, PaymentMethod, StudentPaymentSummary } from '@/types/payments.types'
+import type {
+  PaymentCheck,
+  PaymentMethod,
+  StudentPaymentSummary,
+  StudentSummaryMonth,
+} from '@/types/payments.types'
 import type { Student, StudentDetail } from '@/types/students.types'
 import { fetchStudentPaymentSummary, payStudentDebt } from '@/services/pages/payments'
 import { fetchStudentById } from '@/services/pages/students'
@@ -462,11 +476,18 @@ const headers = computed(() => [
   { title: t('students.view.table.lessons'), key: 'lessons', sortable: false },
   { title: t('students.view.table.amountDue'), key: 'amountDue' },
   { title: t('students.view.table.amountPaid'), key: 'amountPaid' },
-  { title: t('students.view.table.remaining'), key: 'remaining' },
+  { title: t('students.view.table.payableNow'), key: 'remaining' },
   { title: t('students.view.table.status'), key: 'status' },
 ])
 
 const payableNow = computed(() => summary.value?.totals.payableNow ?? 0)
+
+// Oy bo'yicha o'quvchidan olinishi kerak summa: amountDue - (amountPaid + pendingAmount).
+// Backend `payableNow` bermasa, kassa qarzidan tasdiq kutayotgan pulni ayiramiz.
+const monthPayable = (month: StudentSummaryMonth): number => {
+  if (month.payableNow != null) return month.payableNow
+  return Math.max(0, month.remaining - (month.pendingAmount || 0))
+}
 
 // Summa validatsiyasi: 0 < amount <= payableNow
 const amountError = computed<string>(() => {
@@ -493,8 +514,9 @@ const allocationPreview = computed(() => {
   const monthsAsc = [...summary.value.months].reverse()
   for (const m of monthsAsc) {
     if (left <= 0) break
-    if (m.remaining <= 0) continue
-    const allocated = Math.min(left, m.remaining)
+    const payable = monthPayable(m)
+    if (payable <= 0) continue
+    const allocated = Math.min(left, payable)
     rows.push({ forMonth: m.forMonth, groupName: m.groupName, allocated })
     left -= allocated
   }

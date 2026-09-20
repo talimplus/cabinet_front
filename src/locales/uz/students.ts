@@ -104,6 +104,8 @@ export default {
       amountDue: 'Hisoblangan',
       amountPaid: "To'langan",
       remaining: 'Qolgan qarz',
+      payableNow: "O'quvchidan olinishi kerak",
+      cashDebtHint: 'Kassa qarzi: {amount}',
       status: 'Holati',
       empty: "To'lovlar topilmadi",
       lessonsShort: '{billable}/{planned} dars',

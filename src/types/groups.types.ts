@@ -21,7 +21,6 @@ export interface Group {
         teacher: Teacher | null;
         room?: Room | null;
         status?: GroupStatus;
-        durationMonths?: number | null;
         statusLoading?: boolean;
         schedules?: GroupSchedule[];
         startDate?: string;
@@ -37,7 +36,10 @@ export interface GroupForm {
         teacherId?: number,
         roomId?: number,
         monthlyFee?: number | null,
-        durationMonths?: number | null,
+        // Darslar boshlanish/tugash sanalari: YYYY-MM-DD.
+        // endDate ixtiyoriy; null yuborilsa muddat olib tashlanadi (guruh "muddatsiz" bo'ladi).
+        startDate?: string | null,
+        endDate?: string | null,
         days?: GroupFormDays[],
         centerId?: number
 }

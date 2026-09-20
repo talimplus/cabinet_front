@@ -18,9 +18,22 @@ export interface LessonDateOverride {
   reason?: string
 }
 
+// GET /groups/:id/attendance/lesson-dates javobidagi guruh o'quvchisi.
+// joinedAt — o'quvchi SHU guruhga qo'shilgan sana (guruh timezone'ida, YYYY-MM-DD).
+// To'lov proratsiyasi ham aynan shu sanadan boshlanadi, shuning uchun davomat
+// chegarasi to'lov bilan bir xil bo'ladi. null — sana noma'lum, cheklov yo'q.
+export interface GroupStudent {
+  id: number
+  firstName: string
+  lastName: string
+  joinedAt: string | null
+}
+
 export interface LessonDatesResponse {
   timezone: string
   today: string
+  // Eski backend bu maydonni qaytarmasligi mumkin — u holda cheklov qo'llanmaydi
+  students?: GroupStudent[]
   lessonDates: string[]
   attendanceByDate: Record<string, AttendanceByDate>
   overridesByDate?: Record<string, LessonDateOverride>

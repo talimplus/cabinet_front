@@ -133,7 +133,6 @@ export interface GroupPlan {
                 status: GroupStatus;
                 startDate: string | null;
                 endDate: string | null;
-                durationMonths: number | null;
                 subject: Pick<Subject, 'id' | 'name'> | null;
         };
         syllabus: {

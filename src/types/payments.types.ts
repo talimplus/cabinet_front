@@ -67,6 +67,18 @@ export interface ExclusionPreviewResponse {
   newRemaining: number
 }
 
+// ExclusionCard komponenti parentga qaytaradigan holat.
+// `payload` — apply-exclusion uchun tayyor body (comment bilan), chiqarib tashlash
+// kiritilmagan bo'lsa null.
+export interface ExclusionChange {
+  active: boolean
+  payload: ExclusionPayload | null
+  preview: ExclusionPreviewResponse | null
+  // comment to'ldirilganmi (chiqarib tashlashda majburiy)
+  valid: boolean
+  previewing: boolean
+}
+
 export interface PaymentsResponse {
   data: Payment[]
   meta?: {
@@ -109,10 +121,20 @@ export interface PendingReceipt {
   receivedAt: string
   confirmedById: number | null
   confirmedAt: string | null
-  status: 'pending' | 'confirmed'
+  status: 'pending' | 'confirmed' | 'rejected'
   comment: string | null
   createdAt: string
   payment: PendingReceiptPayment
+}
+
+// GET /payments/pending-receipts va GET /payments/receipts-stats bir xil filterlarni oladi.
+// Sana — pul qabul qilingan kun (receivedAt, bo'sh bo'lsa createdAt); dateTo kuni to'liq kiradi.
+export interface PendingReceiptsParams {
+  centerId?: number
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  perPage?: number
 }
 
 export interface PendingReceiptsResponse {
@@ -122,7 +144,51 @@ export interface PendingReceiptsResponse {
     page: number
     perPage: number
     totalPages: number
+    // Filterga mos BARCHA pending receiptlar summasi (joriy sahifa emas)
+    totalAmount?: number
   }
+}
+
+// PUT /payments/confirm-receipts body — yo `receiptIds`, yo `all: true` bo'lishi shart.
+// `all: true` bo'lganda joriy filterga mos hammasi tasdiqlanadi.
+export interface ConfirmReceiptsPayload {
+  receiptIds?: number[]
+  all?: boolean
+  centerId?: number
+  dateFrom?: string
+  dateTo?: string
+}
+
+export interface ConfirmedReceiptResult {
+  receiptId: number
+  amount: number
+  checkNo: string
+}
+
+export interface ConfirmReceiptsResponse {
+  requested: number
+  confirmedCount: number
+  confirmedAmount: number
+  skippedCount: number
+  failedCount: number
+  confirmed: ConfirmedReceiptResult[]
+  // Topilmagan (allaqachon tasdiqlangan/rad etilgan yoki boshqa markazniki) id'lar
+  skipped: number[]
+  failed: unknown[]
+}
+
+// GET /payments/receipts-stats — har bir status bo'yicha soni va summasi.
+// total = confirmed + pending (rejected qo'shilmaydi — u pul kassaga kirmagan).
+export interface ReceiptsStatsBucket {
+  count: number
+  amount: number
+}
+
+export interface ReceiptsStatsResponse {
+  confirmed: ReceiptsStatsBucket
+  pending: ReceiptsStatsBucket
+  rejected: ReceiptsStatsBucket
+  total: ReceiptsStatsBucket
 }
 
 export interface PaymentCalculationResponse {

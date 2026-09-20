@@ -52,6 +52,23 @@
         <span class="text-no-wrap">{{ formatDate(item.startDate) }}</span>
       </template>
 
+      <template v-slot:item.endDate="{ item }">
+        <v-tooltip v-if="!item.endDate" :text="$t('groups.noEndDateHint')" location="top">
+          <template v-slot:activator="{ props: tooltipProps }">
+            <v-chip
+              v-bind="tooltipProps"
+              color="warning"
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-alert-outline"
+            >
+              {{ $t('groups.noEndDate') }}
+            </v-chip>
+          </template>
+        </v-tooltip>
+        <span v-else class="text-no-wrap">{{ formatDate(item.endDate) }}</span>
+      </template>
+
       <template v-slot:item.monthlyFee="{ item }">
         {{ formatCurrency(item.monthlyFee) }}
       </template>
@@ -144,6 +161,24 @@
       @clearEditForm="clearEditForm"
       :formForEdit="formForEdit"
     />
+    <!-- Guruhni yakunlashda ogohlantirish -->
+    <v-dialog v-model="finishConfirm.show" width="480">
+      <v-card>
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ $t('groups.statusChange.finishTitle') }}
+        </v-card-title>
+        <v-card-text>{{ $t('groups.statusChange.finishText') }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="finishConfirm.show = false">
+            {{ $t('common.cancel') }}
+          </v-btn>
+          <v-btn color="primary" variant="flat" @click="confirmFinish">
+            {{ $t('groups.statusChange.confirm') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -162,9 +197,21 @@ import type { Subject } from '@/types/subject.types'
 import type { GroupsParams } from '@/types/groups.types'
 import { GroupStatus } from '@/types/groups.enum'
 import { usePermissions } from '@/composables/usePermissions'
+import { useNotificationStore } from '@/stores/notification'
 
 const { t } = useI18n()
 const { canCreateGroup, canEditGroup, canDeleteGroup, isTeacher } = usePermissions()
+const notify = useNotificationStore()
+
+// Backend xatoliklari: 422 — {errors: {field: msg}}, 400 — {message}
+interface ApiErrorData {
+  message?: string | string[]
+  errors?: Record<string, string | string[]>
+}
+const errorData = (err: unknown): ApiErrorData | undefined =>
+  (err as { response?: { data?: ApiErrorData } })?.response?.data
+const firstMessage = (value?: string | string[]): string =>
+  (Array.isArray(value) ? value[0] : value) || ''
 
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
@@ -172,6 +219,7 @@ const openFormModal = ref(false)
 const subjects = ref<Subject[]>([])
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
+const finishConfirm = ref<{ show: boolean; item: Group | null }>({ show: false, item: null })
 const loadingCenters = ref(false)
 const teachers = ref<TeacherListItem[]>([])
 const loadingTeachers = ref(false)
@@ -300,16 +348,53 @@ const remove = async (id: number) => {
   }
 }
 
+const todayISO = () => new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD
+
 const changeStatus = async (status: GroupStatus, item: Group) => {
+  // Tugash sanasi kelajakda bo'lsa, backend guruhni bugunga yopadi — avval ogohlantiramiz
+  if (status === GroupStatus.FINISHED && item.endDate && item.endDate.slice(0, 10) > todayISO()) {
+    finishConfirm.value = { show: true, item }
+    return
+  }
+  await applyStatus(status, item)
+}
+
+const confirmFinish = async () => {
+  const item = finishConfirm.value.item
+  finishConfirm.value.show = false
+  if (item) await applyStatus(GroupStatus.FINISHED, item)
+}
+
+const applyStatus = async (status: GroupStatus, item: Group) => {
   item.statusLoading = true
   try {
     await changeGroupStatus(item.id, status)
+    notify.success(t('groups.statusChange.success'))
+    // Tugash sanasi bilan birga o'quvchilar va to'lovlar ham qayta hisoblanadi
     await getGroups()
   } catch (err) {
-    console.log(err)
+    handleStatusError(err, item)
   } finally {
     item.statusLoading = false
   }
+}
+
+/**
+ * 422 — maydonga bog'liq validatsiya (odatda endDate yo'q yoki o'tib ketgan):
+ * xabarni ko'rsatib, guruh tahrirlash formasini ochamiz.
+ * 400 — umumiy biznes qoidasi: faqat xabarni ko'rsatamiz.
+ */
+const handleStatusError = (err: unknown, item: Group) => {
+  const response = errorData(err)
+  const endDateError = response?.errors?.endDate
+  if (endDateError) {
+    notify.error(firstMessage(endDateError) || t('groups.statusChange.endDateRequired'))
+    // Tugash sanasi tahrirlash formasi orqali kiritiladi
+    edit(item)
+    return
+  }
+  notify.error(firstMessage(response?.message) || t('groups.statusChange.error'))
+  console.log(err)
 }
 
 const headers = computed(() => [
@@ -318,6 +403,7 @@ const headers = computed(() => [
   { title: t('groups.table.subject'), key: 'subject.name' },
   { title: t('groups.table.schedules'), key: 'schedules', minWidth: '160px' },
   { title: t('groups.table.startDate'), key: 'startDate', minWidth: '120px' },
+  { title: t('groups.table.endDate'), key: 'endDate', minWidth: '120px' },
   { title: t('groups.table.monthlyFee'), key: 'monthlyFee' },
   { title: t('common.status'), key: 'status' },
   { title: t('groups.table.room'), key: 'room.name' },
@@ -382,6 +468,10 @@ const getStatusOptions = (status?: GroupStatus) => {
       { title: getStatusLabel(GroupStatus.NEW), value: GroupStatus.NEW },
       { title: getStatusLabel(GroupStatus.FINISHED), value: GroupStatus.FINISHED },
     ]
+  }
+  // Tugagan guruhni qayta boshlash mumkin (avval tugash sanasi kelajakka surilishi kerak)
+  if (status === GroupStatus.FINISHED) {
+    return [{ title: getStatusLabel(GroupStatus.STARTED), value: GroupStatus.STARTED }]
   }
   return []
 }

@@ -12,6 +12,10 @@ import type {
   PaymentReceiptsResponse,
   ExclusionPayload,
   ExclusionPreviewResponse,
+  PendingReceiptsParams,
+  ConfirmReceiptsPayload,
+  ConfirmReceiptsResponse,
+  ReceiptsStatsResponse,
 } from '@/types/payments.types'
 
 // Ro'yxat va Excel eksporti bir xil filterlarni ishlatadi — query shu yerda yig'iladi.
@@ -167,8 +171,39 @@ export const applyExclusion = async (paymentId: number, payload: ExclusionPayloa
   return await http.put(`/payments/apply-exclusion/${paymentId}`, payload)
 }
 
-export const fetchPendingReceipts = async (): Promise<PendingReceiptsResponse> => {
-  const response = await http.get('/payments/pending-receipts')
+// Ro'yxat va statistika bir xil filterlarni ishlatadi — query shu yerda yig'iladi.
+const buildReceiptsQuery = (params?: PendingReceiptsParams): Record<string, unknown> => {
+  const queryParams: Record<string, unknown> = {}
+
+  if (params?.centerId) {
+    queryParams.centerId = params.centerId
+  }
+
+  if (params?.dateFrom) {
+    queryParams.dateFrom = params.dateFrom
+  }
+
+  if (params?.dateTo) {
+    queryParams.dateTo = params.dateTo
+  }
+
+  return queryParams
+}
+
+export const fetchPendingReceipts = async (
+  params?: PendingReceiptsParams,
+): Promise<PendingReceiptsResponse> => {
+  const queryParams = buildReceiptsQuery(params)
+
+  if (params?.page) {
+    queryParams.page = params.page
+  }
+
+  if (params?.perPage) {
+    queryParams.perPage = params.perPage
+  }
+
+  const response = await http.get('/payments/pending-receipts', { params: queryParams })
   // Backend returns array directly, wrap it in response format
   if (Array.isArray(response.data)) {
     return {
@@ -178,8 +213,29 @@ export const fetchPendingReceipts = async (): Promise<PendingReceiptsResponse> =
   return response.data
 }
 
+// Chek statistikasi: tasdiqlangan / kutilayotgan / rad etilgan / jami.
+// Filterlar pending-receipts bilan aynan bir xil, shuning uchun
+// stats.pending.amount va ro'yxatning meta.totalAmount har doim mos keladi.
+export const fetchReceiptsStats = async (
+  params?: PendingReceiptsParams,
+): Promise<ReceiptsStatsResponse> => {
+  const response = await http.get('/payments/receipts-stats', {
+    params: buildReceiptsQuery(params),
+  })
+  return response.data
+}
+
 export const confirmReceipt = async (id: number) => {
   return await http.put(`/payments/confirm-receipt/${id}`)
+}
+
+// Ko'p yoki hammasini tasdiqlash. Body: { receiptIds: [...] } yoki { all: true, ...filterlar }.
+// Ikkalasi ham berilmasa backend 400 qaytaradi — tasodifan hammasini tasdiqlamaslik uchun.
+export const confirmReceipts = async (
+  payload: ConfirmReceiptsPayload,
+): Promise<ConfirmReceiptsResponse> => {
+  const response = await http.put('/payments/confirm-receipts', payload)
+  return response.data
 }
 
 export const calculatePayment = async (id: number, plannedStudyUntilDate: string) => {

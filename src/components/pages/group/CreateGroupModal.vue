@@ -96,17 +96,33 @@
           </Field>
         </v-card-text>
         <v-card-text class="py-2">
-          <Field name="durationMonths" v-slot="{ handleChange, handleBlur, errors }">
-            <v-text-field
-              v-model="form.durationMonths"
-              :label="$t('groups.form.durationMonths')"
-              type="number"
+          <Field name="endDate" v-slot="{ handleChange, handleBlur, errors }">
+            <v-date-input
+              v-model="endDate"
+              :label="$t('groups.form.endDate')"
+              prepend-icon=""
+              prepend-inner-icon="$calendar"
               variant="outlined"
-              :error-messages="errors"
+              clearable
+              :min="startDateISO"
+              :error-messages="endDateError ? [endDateError] : errors"
+              :hint="$t('groups.form.endDateHint')"
+              persistent-hint
               @update:model-value="handleChange"
               @blur="handleBlur"
-            ></v-text-field>
+            ></v-date-input>
           </Field>
+          <!-- Tugash sanasi bo'sh bo'lsa guruh muddatsiz bo'ladi -->
+          <v-alert
+            v-if="!endDate"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mt-3"
+          >
+            <span class="font-weight-medium">{{ $t('groups.noEndDate') }}</span>
+            — {{ $t('groups.noEndDateHint') }}
+          </v-alert>
         </v-card-text>
         <v-card-text class="py-2">
           <v-row dense>
@@ -175,6 +191,25 @@
       </v-card>
     </Form>
   </v-dialog>
+
+  <!-- Tugash sanasi qisqartirilganda tasdiqlash -->
+  <v-dialog v-model="shortenConfirm" width="480">
+    <v-card>
+      <v-card-title class="text-h6 font-weight-bold">
+        {{ $t('groups.form.shortenTitle') }}
+      </v-card-title>
+      <v-card-text>{{ $t('groups.form.shortenText') }}</v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn variant="text" :disabled="loading" @click="shortenConfirm = false">
+          {{ $t('common.cancel') }}
+        </v-btn>
+        <v-btn color="primary" variant="flat" :loading="loading" @click="confirmShorten">
+          {{ $t('groups.form.confirm') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -192,11 +227,26 @@ import type { Subject } from '@/types/subject.types'
 import type { Room } from '@/types/room.types'
 import type { Group } from '@/types/groups.types'
 import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/notification'
+import { useI18n } from 'vue-i18n'
+import dayjs from 'dayjs'
+
+// Backend xatoliklari: 422 — {errors: {field: msg}}, 400 — {message}
+interface ApiErrorData {
+  message?: string | string[]
+  errors?: Record<string, string | string[]>
+}
+const errorData = (err: unknown): ApiErrorData | undefined =>
+  (err as { response?: { data?: ApiErrorData } })?.response?.data
+const firstMessage = (value?: string | string[]): string =>
+  (Array.isArray(value) ? value[0] : value) || ''
 
 const subjects = ref<Subject[]>([])
 const users = ref<User[]>([])
 const rooms = ref<Room[]>([])
 const userStore = useUserStore()
+const notify = useNotificationStore()
+const { t } = useI18n()
 const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
 
 interface Props {
@@ -222,9 +272,38 @@ const form = ref<GroupForm>({
   teacherId: undefined,
   roomId: undefined,
   monthlyFee: undefined,
-  durationMonths: undefined,
   days: [],
   centerId: '',
+})
+
+// Darslar tugash sanasi (ixtiyoriy). Bo'sh bo'lsa guruh muddatsiz.
+const endDate = ref<Date | null>(null)
+const shortenConfirm = ref(false)
+
+// YYYY-MM-DD ko'rinishiga keltirish — backend shu formatni kutadi
+const toISODate = (value?: Date | string | null): string | null => {
+  if (!value) return null
+  const d = dayjs(value)
+  return d.isValid() ? d.format('YYYY-MM-DD') : null
+}
+
+// Guruh boshlanish sanasi: tugash sanasi undan oldin bo'lishi mumkin emas
+const startDateISO = computed(() => toISODate(props.formForEdit?.startDate) ?? undefined)
+const selectedEndDate = computed(() => toISODate(endDate.value))
+const previousEndDate = computed(() => toISODate(props.formForEdit?.endDate))
+
+const endDateError = computed(() => {
+  const iso = selectedEndDate.value
+  if (!iso || !startDateISO.value) return ''
+  return iso < startDateISO.value ? t('groups.form.endDateBeforeStart') : ''
+})
+
+// Sana qisqartirilyaptimi — bunda darslar va to'lanmagan to'lovlar o'chadi
+const isShortening = computed(() => {
+  const iso = selectedEndDate.value
+  const prev = previousEndDate.value
+  if (!iso || !prev) return false
+  return iso < prev
 })
 
 watch(open, (newValue: boolean) => {
@@ -236,7 +315,7 @@ watch(open, (newValue: boolean) => {
     form.value.roomId = props.formForEdit?.room?.id
     form.value.teacherId = props.formForEdit?.teacher?.id
     form.value.monthlyFee = props.formForEdit?.monthlyFee ?? undefined
-    form.value.durationMonths = props.formForEdit?.durationMonths ?? undefined
+    endDate.value = props.formForEdit?.endDate ? dayjs(props.formForEdit.endDate).toDate() : null
 
     // Convert schedules to days format
     if (props.formForEdit?.schedules && props.formForEdit.schedules.length > 0) {
@@ -266,10 +345,10 @@ watch(open, (newValue: boolean) => {
       teacherId: undefined,
       roomId: undefined,
       monthlyFee: undefined,
-      durationMonths: undefined,
       days: [],
       centerId: '',
     }
+    endDate.value = null
     days.value = []
     allTimes.value = ''
     times.value = []
@@ -353,6 +432,21 @@ function changedCenter() {
 }
 
 const submit = async () => {
+  if (endDateError.value) return
+  // Sana qisqartirilsa avval tasdiqlatamiz
+  if (isShortening.value) {
+    shortenConfirm.value = true
+    return
+  }
+  await save()
+}
+
+const confirmShorten = async () => {
+  shortenConfirm.value = false
+  await save()
+}
+
+const save = async () => {
   // Prepare form data
   // Handle monthlyFee: if it's a valid number (including 0), use it; otherwise send null
 
@@ -368,12 +462,8 @@ const submit = async () => {
       form.value.monthlyFee !== ''
         ? +form.value.monthlyFee
         : null,
-    durationMonths:
-      form.value.durationMonths !== undefined &&
-      form.value.durationMonths !== null &&
-      form.value.durationMonths !== ''
-        ? +form.value.durationMonths
-        : null,
+    // null yuborilsa muddat olib tashlanadi (guruh muddatsiz bo'ladi)
+    endDate: selectedEndDate.value,
     days: [],
   }
 
@@ -392,8 +482,9 @@ const submit = async () => {
     delete submitData.days
   }
 
-  if (submitData.durationMonths === null || Number.isNaN(submitData.durationMonths)) {
-    delete submitData.durationMonths
+  // Yaratishda bo'sh sanani umuman yubormaymiz
+  if (!props.formForEdit?.id && submitData.endDate === null) {
+    delete submitData.endDate
   }
 
   try {
@@ -403,12 +494,19 @@ const submit = async () => {
     } else {
       await createGroup(submitData)
     }
+    shortenConfirm.value = false
     open.value = false
+    // endDate o'zgarganda backend guruh statusi, o'quvchilar va to'lovlarni ham
+    // qayta hisoblaydi — shuning uchun ro'yxatlarni qaytadan yuklaymiz
     emits('updateData')
   } catch (err) {
-    const errors = (err as any)?.response?.data?.errors
-    if (errors) {
-      groupFormRef.value?.setErrors(errors)
+    const response = errorData(err)
+    if (response?.errors) {
+      // 422 — maydonga bog'liq validatsiya, xabar shu input ostida chiqadi
+      groupFormRef.value?.setErrors(response.errors)
+    } else {
+      // 400 — umumiy biznes qoidasi
+      notify.error(firstMessage(response?.message) || t('groups.form.saveError'))
     }
     console.log(err)
   } finally {

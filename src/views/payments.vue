@@ -352,7 +352,7 @@
     </v-dialog>
 
     <!-- Mark as Paid Confirmation Dialog -->
-    <v-dialog v-model="markAsPaidDialog.show" max-width="400">
+    <v-dialog v-model="markAsPaidDialog.show" max-width="600">
       <v-card>
         <v-card-title class="text-h6 pa-4"> {{ $t('payments.dialog.markTitle') }} </v-card-title>
         <v-card-text class="pa-4">
@@ -365,12 +365,36 @@
           </p>
           <div class="mt-4 mb-4">
             <div class="info-row mb-2">
+              <span class="info-label">{{ $t('payments.dialog.lessonsBillable') }}:</span>
+              <span class="info-value">
+                {{ markAsPaidDialog.payment?.lessonsBillable ?? '—' }}
+                <template v-if="markAsPaidDialog.payment?.lessonsPlanned != null">
+                  / {{ markAsPaidDialog.payment?.lessonsPlanned }}
+                </template>
+              </span>
+            </div>
+            <div v-if="markAsPaidDialog.payment?.perLessonAmount != null" class="info-row mb-2">
+              <span class="info-label">{{ $t('payments.exclusion.perLesson') }}:</span>
+              <span class="info-value">
+                {{ formatCurrency(markAsPaidDialog.payment.perLessonAmount) }}
+              </span>
+            </div>
+            <div class="info-row mb-2">
               <span class="info-label">{{ $t('payments.dialog.remainingSum') }}:</span>
               <span class="info-value font-weight-bold">
-                {{ formatCurrency(payableNowOf(markAsPaidDialog.payment)) }}
+                {{ formatCurrency(markPayableNow) }}
               </span>
             </div>
           </div>
+
+          <!-- Darslarni/summani chiqarib tashlash (ixtiyoriy) -->
+          <ExclusionCard
+            :key="`excl-full-${markAsPaidDialog.payment?.id}`"
+            :payment="markAsPaidDialog.payment"
+            :disabled="processingPayment"
+            @change="onMarkExclusionChange"
+            @error="showSnackbar($event, 'error')"
+          />
 
           <v-select
             v-model="markAsPaidDialog.paymentMethod"
@@ -421,6 +445,7 @@
             variant="flat"
             @click="confirmMarkAsPaid"
             :loading="processingPayment"
+            :disabled="markConfirmDisabled"
           >
             {{ $t('payments.dialog.confirm') }}
           </v-btn>
@@ -471,98 +496,14 @@
           </div>
 
           <!-- Darslarni/summani chiqarib tashlash (ixtiyoriy) -->
-          <v-card variant="outlined" class="mb-4">
-            <v-card-text class="pa-3">
-              <div class="text-body-2 font-weight-medium mb-2">
-                {{ $t('payments.exclusion.title') }}
-              </div>
-              <v-btn-toggle
-                :model-value="partialPaymentModal.exclusionMode"
-                @update:model-value="setExclusionMode"
-                color="primary"
-                density="compact"
-                variant="outlined"
-                divided
-                class="mb-3"
-              >
-                <v-btn value="lessons" size="small">{{ $t('payments.exclusion.byLessons') }}</v-btn>
-                <v-btn value="amount" size="small">{{ $t('payments.exclusion.byAmount') }}</v-btn>
-              </v-btn-toggle>
-
-              <v-text-field
-                v-if="partialPaymentModal.exclusionMode === 'lessons'"
-                v-model.number="partialPaymentModal.excludeLessons"
-                :label="$t('payments.exclusion.excludeLessons')"
-                type="number"
-                :min="0"
-                variant="outlined"
-                density="compact"
-                hide-details
-                class="mb-3"
-                @update:model-value="runExclusionPreview"
-              ></v-text-field>
-
-              <v-text-field
-                v-if="partialPaymentModal.exclusionMode === 'amount'"
-                v-model.number="partialPaymentModal.excludeAmount"
-                :label="$t('payments.exclusion.excludeAmount')"
-                type="number"
-                :min="0"
-                variant="outlined"
-                density="compact"
-                :suffix="$t('payments.dialog.sumSuffix')"
-                hide-details
-                class="mb-3"
-                @update:model-value="runExclusionPreview"
-              ></v-text-field>
-
-              <!-- Chiqarib tashlash bo'lsa comment majburiy -->
-              <v-textarea
-                v-if="hasExclusion"
-                v-model="partialPaymentModal.exclusionComment"
-                :label="$t('payments.exclusion.comment')"
-                rows="2"
-                variant="outlined"
-                density="compact"
-                auto-grow
-                :error-messages="exclusionCommentError"
-                hide-details="auto"
-                class="mb-2"
-              ></v-textarea>
-
-              <!-- Jonli hisob natijasi -->
-              <div v-if="hasExclusion" class="mt-2">
-                <div
-                  v-if="partialPaymentModal.previewing"
-                  class="text-caption text-medium-emphasis"
-                >
-                  {{ $t('payments.exclusion.calculating') }}
-                </div>
-                <template v-else-if="partialPaymentModal.exclusionPreview">
-                  <div class="info-row mb-1">
-                    <span class="info-label">{{ $t('payments.exclusion.excludedAmount') }}:</span>
-                    <span class="info-value text-warning">
-                      − {{ formatCurrency(partialPaymentModal.exclusionPreview.excludedAmount) }}
-                    </span>
-                  </div>
-                  <div class="info-row mb-1">
-                    <span class="info-label">{{ $t('payments.exclusion.newAmountDue') }}:</span>
-                    <span class="info-value font-weight-medium">
-                      {{ formatCurrency(partialPaymentModal.exclusionPreview.newAmountDue) }}
-                    </span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label font-weight-bold"
-                      >{{ $t('payments.exclusion.newRemaining') }}:</span
-                    >
-                    <span class="info-value font-weight-bold text-primary">
-                      {{ formatCurrency(partialPaymentModal.exclusionPreview.newRemaining) }}
-                    </span>
-                  </div>
-                </template>
-              </div>
-            </v-card-text>
-          </v-card>
+          <ExclusionCard
+            :key="`excl-partial-${partialPaymentModal.payment?.id}`"
+            :payment="partialPaymentModal.payment"
+            :disabled="processingPayment"
+            @change="onPartialExclusionChange"
+            @preview="onPartialExclusionPreview"
+            @error="showSnackbar($event, 'error')"
+          />
 
           <!-- Calculator Section -->
           <div class="mb-4">
@@ -760,6 +701,7 @@ import type {
   Payment,
   PaymentsParams,
   PaymentCalculationResponse,
+  ExclusionChange,
   ExclusionPreviewResponse,
   PaymentMethod,
   PaymentCheck,
@@ -772,7 +714,6 @@ import {
   payPartial,
   calculatePayment,
   updatePayment,
-  previewExclusion,
   applyExclusion,
 } from '@/services/pages/payments'
 import { fetchAllGroups } from '@/services/pages/groups'
@@ -783,6 +724,7 @@ import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 import CheckModal from '@/components/pages/payments/CheckModal.vue'
 import PaymentHistoryModal from '@/components/pages/payments/PaymentHistoryModal.vue'
+import ExclusionCard from '@/components/pages/payments/ExclusionCard.vue'
 
 // Component name
 defineOptions({
@@ -821,6 +763,14 @@ const periodExportDialog = ref({
 })
 
 // Dialogs
+const emptyExclusionChange = (): ExclusionChange => ({
+  active: false,
+  payload: null,
+  preview: null,
+  valid: true,
+  previewing: false,
+})
+
 const markAsPaidDialog = ref({
   show: false,
   payment: null as Payment | null,
@@ -828,6 +778,12 @@ const markAsPaidDialog = ref({
   paidAt: null as string | null,
   comment: '',
 })
+
+// To'liq to'lash oynasidagi chiqarib tashlash holati (ExclusionCard'dan keladi)
+const markExclusion = ref<ExclusionChange>(emptyExclusionChange())
+
+// Qisman to'lov oynasidagi chiqarib tashlash holati
+const partialExclusion = ref<ExclusionChange>(emptyExclusionChange())
 
 const emptyPartialModal = () => ({
   show: false,
@@ -840,13 +796,6 @@ const emptyPartialModal = () => ({
   // To'lov usuli va (karta bo'lsa) to'lov qilingan sana
   paymentMethod: 'cash' as PaymentMethod,
   paidAt: null as string | null,
-  // Darslarni/summani chiqarib tashlash
-  exclusionMode: null as null | 'lessons' | 'amount',
-  excludeLessons: null as number | null,
-  excludeAmount: null as number | null,
-  exclusionComment: '',
-  exclusionPreview: null as ExclusionPreviewResponse | null,
-  previewing: false as boolean,
 })
 
 const partialPaymentModal = ref(emptyPartialModal())
@@ -893,9 +842,6 @@ const payableNowOf = (payment: Payment | null | undefined): number => {
 const openHistoryModal = (payment: Payment) => {
   historyModal.value = { show: true, payment }
 }
-
-// Chiqarib tashlash uchun preview debounce timer'i
-let previewTimer: ReturnType<typeof setTimeout> | null = null
 
 // Snackbar
 const snackbar = ref({
@@ -983,32 +929,36 @@ const remainingAmount = computed(() => {
   return payableNowOf(partialPaymentModal.value.payment)
 })
 
-// Chiqarib tashlash kiritilganmi (tanlangan rejimga mos qiymat > 0)
-const hasExclusion = computed(() => {
-  const m = partialPaymentModal.value
-  if (m.exclusionMode === 'lessons') return (m.excludeLessons || 0) > 0
-  if (m.exclusionMode === 'amount') return (m.excludeAmount || 0) > 0
-  return false
-})
-
-// Chiqarib tashlashda comment majburiy
-const exclusionCommentError = computed<string[]>(() => {
-  if (hasExclusion.value && !partialPaymentModal.value.exclusionComment.trim()) {
-    return [t('payments.exclusion.commentRequired')]
+// Chiqarib tashlashdan keyingi olinishi kerak summa. Preview `newRemaining` kassa
+// qarzini beradi — undan tasdiq kutayotgan pulni ham ayiramiz. Preview hali
+// kelmagan bo'lsa joriy payableNow qoladi.
+const payableAfterExclusion = (
+  payment: Payment | null,
+  exclusion: ExclusionChange,
+): number => {
+  if (exclusion.active && exclusion.preview) {
+    return Math.max(0, exclusion.preview.newRemaining - (payment?.pendingAmount || 0))
   }
-  return []
-})
+  return payableNowOf(payment)
+}
 
-// Chiqarib tashlashdan keyingi olinishi kerak summa (preview bo'lsa undan, aks holda
-// joriy payableNow). Preview `newRemaining` kassa qarzini beradi — undan ham tasdiq
-// kutayotgan pulni ayiramiz.
-const effectiveRemaining = computed(() => {
-  const modal = partialPaymentModal.value
-  if (hasExclusion.value && modal.exclusionPreview) {
-    return Math.max(0, modal.exclusionPreview.newRemaining - (modal.payment?.pendingAmount || 0))
-  }
-  return remainingAmount.value
-})
+const effectiveRemaining = computed(() =>
+  payableAfterExclusion(partialPaymentModal.value.payment, partialExclusion.value),
+)
+
+// To'liq to'lashda o'quvchidan olinadigan summa (chiqarib tashlash hisobga olingan)
+const markPayableNow = computed(() =>
+  payableAfterExclusion(markAsPaidDialog.value.payment, markExclusion.value),
+)
+
+// Chiqarib tashlash hisoblanayotgan, sababi yozilmagan yoki chiqarib tashlashdan
+// keyin olinadigan summa 0 bo'lsa tasdiqlab bo'lmaydi (backend 0 to'lovni rad etadi)
+const markConfirmDisabled = computed(
+  () =>
+    markExclusion.value.previewing ||
+    !markExclusion.value.valid ||
+    markPayableNow.value <= 0,
+)
 
 const amountError = computed(() => {
   if (!partialPaymentModal.value.amount) return []
@@ -1035,7 +985,8 @@ const canProcessPartialPayment = computed(() => {
     partialPaymentModal.value.amount > 0 &&
     partialPaymentModal.value.amount <= effectiveRemaining.value &&
     amountError.value.length === 0 &&
-    exclusionCommentError.value.length === 0
+    !partialExclusion.value.previewing &&
+    partialExclusion.value.valid
   )
 })
 
@@ -1195,6 +1146,7 @@ const handlePageChange = () => {
 }
 
 const openMarkAsPaidDialog = (payment: Payment) => {
+  markExclusion.value = emptyExclusionChange()
   markAsPaidDialog.value = {
     show: true,
     payment,
@@ -1204,12 +1156,39 @@ const openMarkAsPaidDialog = (payment: Payment) => {
   }
 }
 
+const onMarkExclusionChange = (value: ExclusionChange) => {
+  markExclusion.value = value
+}
+
+const onPartialExclusionChange = (value: ExclusionChange) => {
+  partialExclusion.value = value
+}
+
+// Yangi hisob kelganda summani moslaymiz (reception odatda qolgan qarzni to'liq oladi).
+// Faqat shu yerda — aks holda izoh yozilganda qo'lda kiritilgan summa tiklanib ketardi.
+const onPartialExclusionPreview = (preview: ExclusionPreviewResponse) => {
+  partialPaymentModal.value.amount = preview.newRemaining
+}
+
 const confirmMarkAsPaid = async () => {
   const dialog = markAsPaidDialog.value
   if (!dialog.payment) return
 
+  const exclusion = markExclusion.value
+  // Chiqarib tashlash bo'lsa sabab majburiy
+  if (exclusion.active && !exclusion.valid) {
+    showSnackbar(t('payments.exclusion.commentRequired'), 'error')
+    return
+  }
+
   processingPayment.value = true
   try {
+    // Chiqarib tashlash kiritilgan bo'lsa — avval saqlaymiz (amountDue kamayadi),
+    // keyingi mark-as-paid bazadan yangi summani o'qiydi.
+    if (exclusion.active && exclusion.payload) {
+      await applyExclusion(dialog.payment.id, exclusion.payload)
+    }
+
     const response = await markAsPaid(dialog.payment.id, {
       paymentMethod: dialog.paymentMethod,
       paidAt: dialog.paymentMethod === 'card' && dialog.paidAt ? dialog.paidAt : undefined,
@@ -1227,54 +1206,14 @@ const confirmMarkAsPaid = async () => {
 }
 
 const openPartialPaymentModal = (payment: Payment) => {
+  partialExclusion.value = emptyExclusionChange()
   partialPaymentModal.value = { ...emptyPartialModal(), show: true, payment }
 }
 
 const closePartialPaymentModal = () => {
   if (processingPayment.value) return
-  if (previewTimer) clearTimeout(previewTimer)
+  partialExclusion.value = emptyExclusionChange()
   partialPaymentModal.value = emptyPartialModal()
-}
-
-// Chiqarib tashlash rejimini tanlash (boshqa rejim inputini tozalaymiz)
-const setExclusionMode = (mode: 'lessons' | 'amount' | null | undefined) => {
-  const m = partialPaymentModal.value
-  m.exclusionMode = mode ?? null
-  m.excludeLessons = null
-  m.excludeAmount = null
-  m.exclusionPreview = null
-  if (!mode) m.exclusionComment = ''
-  runExclusionPreview()
-}
-
-// Kiritilgan chiqarib tashlashni jonli hisoblash (preview-exclusion, debounce bilan)
-const runExclusionPreview = () => {
-  if (previewTimer) clearTimeout(previewTimer)
-  const m = partialPaymentModal.value
-  if (!m.payment || !hasExclusion.value) {
-    m.exclusionPreview = null
-    return
-  }
-  previewTimer = setTimeout(async () => {
-    const payment = partialPaymentModal.value.payment
-    if (!payment) return
-    partialPaymentModal.value.previewing = true
-    try {
-      const payload =
-        partialPaymentModal.value.exclusionMode === 'lessons'
-          ? { excludeLessons: partialPaymentModal.value.excludeLessons || 0 }
-          : { excludeAmount: partialPaymentModal.value.excludeAmount || 0 }
-      const preview = await previewExclusion(payment.id, payload)
-      partialPaymentModal.value.exclusionPreview = preview
-      // Qolgan qarzni yangi qiymatga moslaymiz (reception odatda to'liq oladi)
-      partialPaymentModal.value.amount = preview.newRemaining
-    } catch (error: any) {
-      showSnackbar(error.response?.data?.message || t('payments.messages.calcError'), 'error')
-      partialPaymentModal.value.exclusionPreview = null
-    } finally {
-      partialPaymentModal.value.previewing = false
-    }
-  }, 400)
 }
 
 const openDatePicker = () => {
@@ -1308,9 +1247,10 @@ const confirmPartialPayment = async () => {
   const modal = partialPaymentModal.value
   if (!modal.payment) return
 
-  // Chiqarib tashlash bo'lsa comment majburiy
-  if (hasExclusion.value && exclusionCommentError.value.length > 0) {
-    showSnackbar(exclusionCommentError.value[0], 'error')
+  const exclusion = partialExclusion.value
+  // Chiqarib tashlash bo'lsa sabab majburiy
+  if (exclusion.active && !exclusion.valid) {
+    showSnackbar(t('payments.exclusion.commentRequired'), 'error')
     return
   }
 
@@ -1333,13 +1273,9 @@ const confirmPartialPayment = async () => {
     }
 
     // Chiqarib tashlash kiritilgan bo'lsa — avval saqlaymiz (amountDue kamayadi)
-    const comment = modal.exclusionComment.trim()
-    if (hasExclusion.value) {
-      const payload =
-        modal.exclusionMode === 'lessons'
-          ? { excludeLessons: modal.excludeLessons || 0, comment }
-          : { excludeAmount: modal.excludeAmount || 0, comment }
-      await applyExclusion(modal.payment.id, payload)
+    const comment = exclusion.payload?.comment?.trim() ?? ''
+    if (exclusion.active && exclusion.payload) {
+      await applyExclusion(modal.payment.id, exclusion.payload)
     }
 
     // Keyin to'lovni qabul qilamiz (to'lov usuli, sana va comment bilan)
@@ -1354,7 +1290,7 @@ const confirmPartialPayment = async () => {
       }),
       'success',
     )
-    if (previewTimer) clearTimeout(previewTimer)
+    partialExclusion.value = emptyExclusionChange()
     partialPaymentModal.value = emptyPartialModal()
     await loadPayments()
     openCheckModal([response?.check])

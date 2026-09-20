@@ -114,11 +114,12 @@
                           'cell-past': isPast(date),
                           'cell-future': isFuture(date),
                           'cell-cancelled': isCancelledDate(date),
-                          'cell-editable': canEditCell(date),
+                          'cell-before-join': isBeforeJoin(student.id, date),
+                          'cell-editable': canEditCell(student.id, date),
                         }"
                         @click="handleCellClick($event, student.id, date)"
                       >
-                        <div class="cell-content" :title="getCellComment(student.id, date)">
+                        <div class="cell-content" :title="getCellTitle(student.id, date)">
                           <v-icon
                             :color="getCellIconColor(student.id, date)"
                             :icon="getCellIcon(student.id, date)"
@@ -236,17 +237,26 @@
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">{{ $t('groups.info.duration') }}</span>
+                      <span class="info-label">{{ $t('groups.info.startDate') }}</span>
                       <span class="info-value">
-                        {{ group.durationMonths ?? '—' }}
+                        {{ group.startDate ? formatDate(group.startDate) : '—' }}
                       </span>
                     </div>
                   </v-col>
                   <v-col cols="12" md="6">
                     <div class="info-row">
-                      <span class="info-label">{{ $t('groups.info.startDate') }}</span>
+                      <span class="info-label">{{ $t('groups.info.endDate') }}</span>
                       <span class="info-value">
-                        {{ group.startDate ? formatDate(group.startDate) : '—' }}
+                        <v-chip
+                          v-if="!group.endDate"
+                          color="warning"
+                          size="small"
+                          variant="tonal"
+                          prepend-icon="mdi-alert-outline"
+                        >
+                          {{ $t('groups.noEndDate') }}
+                        </v-chip>
+                        <template v-else>{{ formatDate(group.endDate) }}</template>
                       </span>
                     </div>
                   </v-col>
@@ -284,10 +294,18 @@
                   </v-col>
                   <v-col cols="12" md="4">
                     <div class="info-row">
-                      <span class="info-label">{{ $t('groups.info.startDate') }}</span>
-                      <span class="info-value">{{
-                        group.startDate ? formatDate(group.startDate) : '—'
-                      }}</span>
+                      <span class="info-label">{{ $t('groups.info.endDate') }}</span>
+                      <span class="info-value">
+                        <v-chip
+                          v-if="!group.endDate"
+                          color="warning"
+                          size="small"
+                          variant="tonal"
+                        >
+                          {{ $t('groups.noEndDate') }}
+                        </v-chip>
+                        <template v-else>{{ formatDate(group.endDate) }}</template>
+                      </span>
                     </div>
                   </v-col>
                 </v-row>
@@ -491,6 +509,24 @@ const lessonDates = computed(() => attendanceData.value?.lessonDates || [])
 const today = computed(() => attendanceData.value?.today || '')
 const overridesByDate = computed(() => attendanceData.value?.overridesByDate || {})
 
+// Har bir o'quvchi shu guruhga qachon qo'shilgan (YYYY-MM-DD, guruh timezone'ida).
+// Backend `students` bermasa yoki joinedAt null bo'lsa — o'sha o'quvchiga cheklov
+// qo'llanmaydi.
+const joinedAtByStudent = computed(() => {
+  const map = new Map<number, string>()
+  for (const s of attendanceData.value?.students ?? []) {
+    if (s.joinedAt) map.set(s.id, s.joinedAt)
+  }
+  return map
+})
+
+// Shu dars kunida o'quvchi hali guruhda bo'lmaganmi. Chegara backend bilan bir xil:
+// submit'da lessonDate < joinedAt bo'lsa server 400 qaytaradi.
+const isBeforeJoin = (studentId: number, date: string): boolean => {
+  const joined = joinedAtByStudent.value.get(studentId)
+  return !!joined && date < joined
+}
+
 // Month filter (year + month). Davomat doim to'liq bir oy ko'rinishida bo'ladi.
 const now = new Date()
 const selectedYear = ref(now.getFullYear())
@@ -645,9 +681,11 @@ const loadAttendance = async () => {
   }
 }
 
-// Katakni tahrirlash mumkinmi: kelajak va bekor qilingan darslar hech qachon,
-// bugun — har doim, o'tgan sanalar — faqat admin/o'qituvchi uchun.
-const canEditCell = (date: string): boolean => {
+// Katakni tahrirlash mumkinmi: o'quvchi qo'shilishidan oldingi darslar, kelajak va
+// bekor qilingan darslar hech qachon, bugun — har doim, o'tgan sanalar — faqat
+// admin/o'qituvchi uchun.
+const canEditCell = (studentId: number, date: string): boolean => {
+  if (isBeforeJoin(studentId, date)) return false
   if (isFuture(date) || isCancelledDate(date)) return false
   if (isToday(date)) return true
   if (isPast(date)) return canManagePastAttendance.value
@@ -656,7 +694,7 @@ const canEditCell = (date: string): boolean => {
 
 // Cell click handler
 const handleCellClick = async (event: MouseEvent, studentId: number, lessonDate: string) => {
-  if (!canEditCell(lessonDate)) return
+  if (!canEditCell(studentId, lessonDate)) return
 
   const sameTarget =
     attendanceDialog.value.studentId === studentId &&
@@ -767,6 +805,11 @@ const saveAttendance = async () => {
 // Get cell icon
 const getCellIcon = (studentId: number, date: string): string => {
   if (isCancelledDate(date)) return 'mdi-cancel'
+  // Qo'shilishdan oldingi darslar — "?" emas, chiziqcha (davomat kutilmaydi).
+  // Eski ma'lumot bo'lsa (avval noto'g'ri yozilgan) — uni yashirmaymiz, ko'rsatamiz.
+  if (isBeforeJoin(studentId, date) && !getStudentAttendance(studentId, date)) {
+    return 'mdi-minus'
+  }
   if (isFuture(date)) return 'mdi-circle-outline'
 
   const attendance = attendanceData.value?.attendanceByDate[date]
@@ -800,6 +843,16 @@ const getCellIconColor = (studentId: number, date: string): string => {
 // Katak uchun izoh (mavjud bo'lsa) — hover'da ko'rsatish uchun
 const getCellComment = (studentId: number, date: string): string => {
   return getStudentAttendance(studentId, date)?.comment?.trim() || ''
+}
+
+// Hover matni: qo'shilishdan oldingi darslarda sababni tushuntiramiz,
+// aks holda odatdagi davomat izohi.
+const getCellTitle = (studentId: number, date: string): string => {
+  const joined = joinedAtByStudent.value.get(studentId)
+  if (joined && date < joined) {
+    return t('groups.attendance.beforeJoin', { date: formatJoinedAt(joined) })
+  }
+  return getCellComment(studentId, date)
 }
 
 // Check if date is past
@@ -862,6 +915,12 @@ const isAllowedRescheduleDate = (date: string): boolean => {
   if (!formatted || !today.value) return false
   if (formatted <= today.value) return false
   return !lessonDates.value.includes(formatted)
+}
+
+// joinedAt'ni o'qishga qulay ko'rinishda ("15.08.2026") chiqarish
+const formatJoinedAt = (date: string): string => {
+  const [y, m, d] = date.split('-')
+  return `${d}.${m}.${y}`
 }
 
 // Format date header
@@ -946,6 +1005,7 @@ const submitReschedule = async () => {
 }
 
 
+// Tugash sanasi o'zgargach guruh ham, dars sanalari ham o'zgarishi mumkin
 // Student table headers
 const studentHeaders = computed(() => [
   { title: t('groups.studentTable.fullName'), key: 'fullName' },
@@ -1118,6 +1178,18 @@ onMounted(() => {
 
 .attendance-cell.cell-cancelled:hover {
   background-color: rgba(0, 0, 0, 0.03);
+  cursor: not-allowed;
+}
+
+/* O'quvchi guruhga qo'shilishidan oldingi darslar — tahrirlanmaydi */
+.attendance-cell.cell-before-join {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.attendance-cell.cell-before-join:hover {
+  background-color: rgba(0, 0, 0, 0.04);
   cursor: not-allowed;
 }
 

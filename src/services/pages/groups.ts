@@ -11,9 +11,13 @@ export const fetchGroups = async (params?: GroupsParams) => {
         return await http.get('/groups', { params })
 }
 
-export const fetchAllGroups = async (centerId?: number) => {
-        const params = centerId ? { centerId } : undefined
-        return await http.get('/groups/all', { params })
+export const fetchAllGroups = async (centerId?: number, teacherId?: number) => {
+        const params: Record<string, number> = {}
+        if (centerId) params.centerId = centerId
+        if (teacherId) params.teacherId = teacherId
+        return await http.get('/groups/all', {
+          params: Object.keys(params).length ? params : undefined,
+        })
 }
 
 export const fetchGroupById = async (id: number | string) => {

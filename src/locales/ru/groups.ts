@@ -2,6 +2,7 @@ export default {
   title: 'Группы',
   filter: {
     center: 'Центр',
+    teacher: 'Преподаватель',
   },
   table: {
     id: 'ID',

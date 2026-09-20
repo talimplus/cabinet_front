@@ -44,6 +44,7 @@ export interface GroupForm {
 
 export interface GroupsParams {
         centerId?: number;
+        teacherId?: number;
         page?: number;
         perPage?: number;
 }

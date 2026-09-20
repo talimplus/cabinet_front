@@ -16,6 +16,20 @@ http.interceptors.request.use(function (config) {
         return Promise.reject(error);
 });
 
+// responseType: 'blob' bo'lgan so'rovlarda (masalan, Excel eksporti) xato body'si ham
+// Blob bo'lib keladi — undagi JSON matnni ochib beramiz, aks holda xabar yo'qoladi.
+const normalizeBlobError = async (error: AxiosError): Promise<void> => {
+        const data = error.response?.data
+        if (!(data instanceof Blob)) return
+
+        try {
+                error.response!.data = JSON.parse(await data.text())
+        } catch {
+                // JSON emas (yoki o'qib bo'lmadi) — status bo'yicha umumiy matn ishlatiladi
+                error.response!.data = undefined
+        }
+}
+
 // Backend javobidan foydalanuvchiga ko'rsatiladigan xato matnini ajratib olamiz
 const extractErrorMessage = (error: AxiosError): string => {
         const t = i18n.global.t
@@ -54,7 +68,7 @@ const extractErrorMessage = (error: AxiosError): string => {
 
 http.interceptors.response.use(function (response) {
         return response;
-}, function (error: AxiosError) {
+}, async function (error: AxiosError) {
         const status = error.response?.status
 
         if (status === 401) {
@@ -62,6 +76,8 @@ http.interceptors.response.use(function (response) {
                 router.push('/login')
                 return Promise.reject(error);
         }
+
+        await normalizeBlobError(error)
 
         try {
                 const notify = useNotificationStore()

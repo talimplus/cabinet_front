@@ -14,19 +14,13 @@ import type {
   ExclusionPreviewResponse,
 } from '@/types/payments.types'
 
-export const fetchPayments = async (params?: PaymentsParams): Promise<PaymentsResponse> => {
-  const queryParams: any = {}
+// Ro'yxat va Excel eksporti bir xil filterlarni ishlatadi — query shu yerda yig'iladi.
+// Paginatsiya (page/perPage) faqat ro'yxat uchun, eksportda yo'q.
+const buildPaymentsQuery = (params?: PaymentsParams): Record<string, unknown> => {
+  const queryParams: Record<string, unknown> = {}
 
   if (params?.forMonth) {
     queryParams.forMonth = params.forMonth
-  }
-
-  if (params?.page) {
-    queryParams.page = params.page
-  }
-
-  if (params?.perPage) {
-    queryParams.perPage = params.perPage
   }
 
   if (params?.status && params.status !== 'all') {
@@ -41,12 +35,74 @@ export const fetchPayments = async (params?: PaymentsParams): Promise<PaymentsRe
     queryParams.groupId = params.groupId
   }
 
+  if (params?.teacherId) {
+    queryParams.teacherId = params.teacherId
+  }
+
   if (params?.centerId) {
     queryParams.centerId = params.centerId
   }
 
+  if (params?.dateFrom) {
+    queryParams.dateFrom = params.dateFrom
+  }
+
+  if (params?.dateTo) {
+    queryParams.dateTo = params.dateTo
+  }
+
+  return queryParams
+}
+
+export const fetchPayments = async (params?: PaymentsParams): Promise<PaymentsResponse> => {
+  const queryParams = buildPaymentsQuery(params)
+
+  if (params?.page) {
+    queryParams.page = params.page
+  }
+
+  if (params?.perPage) {
+    queryParams.perPage = params.perPage
+  }
+
   const response = await http.get('/payments', { params: queryParams })
   return response.data
+}
+
+// Content-Disposition sarlavhasidan fayl nomini ajratib olamiz.
+// Backend `filename="..."` yuboradi; RFC 5987 (`filename*=UTF-8''...`) ham qo'llab-quvvatlanadi.
+const parseFilename = (disposition?: string): string | null => {
+  if (!disposition) return null
+
+  const utf8Match = /filename\*=\s*UTF-8''([^;]+)/i.exec(disposition)
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1].trim())
+    } catch {
+      return utf8Match[1].trim()
+    }
+  }
+
+  const plainMatch = /filename\s*=\s*"?([^";]+)"?/i.exec(disposition)
+  return plainMatch?.[1]?.trim() || null
+}
+
+// GET /payments/export — ro'yxatdagi filterlar bilan bir xil, paginatsiyasiz .xlsx fayl.
+// Fayl nomi Content-Disposition'dan olinadi (backendda CORS exposedHeaders ochilgan).
+export const exportPayments = async (
+  params?: PaymentsParams,
+): Promise<{ blob: Blob; filename: string }> => {
+  const queryParams = buildPaymentsQuery(params)
+
+  const response = await http.get('/payments/export', {
+    params: queryParams,
+    responseType: 'blob',
+  })
+
+  const fallback = `tolovlar_${new Date().toISOString().slice(0, 10)}.xlsx`
+  const filename = parseFilename(response.headers?.['content-disposition']) || fallback
+
+  return { blob: response.data as Blob, filename }
 }
 
 // To'liq to'lov. Body JSON: { paymentMethod?, paidAt?, comment? }

@@ -2,6 +2,7 @@ export default {
   title: 'Guruhlar',
   filter: {
     center: 'Markaz',
+    teacher: 'Ustoz',
   },
   table: {
     id: 'ID',

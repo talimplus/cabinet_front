@@ -1,7 +1,30 @@
 <template>
   <v-container fluid>
     <v-card>
-      <v-card-title class="text-h5 pa-4"> {{ $t('payments.title') }} </v-card-title>
+      <v-card-title class="text-h5 pa-4 d-flex flex-wrap align-center justify-space-between ga-4">
+        <span>{{ $t('payments.title') }}</span>
+        <div class="d-flex flex-wrap ga-2">
+          <v-btn
+            color="success"
+            variant="tonal"
+            prepend-icon="mdi-microsoft-excel"
+            :loading="exportingMonth"
+            :disabled="exportingMonth || exportingPeriod"
+            @click="handleMonthExport"
+          >
+            {{ $t('payments.export.month') }}
+          </v-btn>
+          <v-btn
+            color="success"
+            variant="outlined"
+            prepend-icon="mdi-calendar-range"
+            :disabled="exportingMonth || exportingPeriod"
+            @click="openPeriodExport"
+          >
+            {{ $t('payments.export.period') }}
+          </v-btn>
+        </div>
+      </v-card-title>
 
       <!-- Filters -->
       <v-card-text class="pb-2">
@@ -42,6 +65,21 @@
               clearable
               :loading="loadingCenters"
               @update:model-value="handleCenterChange"
+            ></v-select>
+          </v-col>
+          <v-col cols="12" md="3">
+            <v-select
+              v-model="selectedTeacherId"
+              :items="teacherOptions"
+              item-title="title"
+              item-value="value"
+              :label="$t('payments.filters.teacher')"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+              :loading="loadingTeachers"
+              @update:model-value="handleTeacherChange"
             ></v-select>
           </v-col>
           <v-col cols="12" md="3">
@@ -268,6 +306,50 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <!-- Oraliq bo'yicha Excel eksporti -->
+    <v-dialog v-model="periodExportDialog.show" max-width="460">
+      <v-card>
+        <v-card-title class="text-h6 pa-4">
+          {{ $t('payments.export.periodTitle') }}
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-date-input
+            v-model="periodExportDialog.dateFrom"
+            :label="$t('payments.export.dateFrom')"
+            variant="outlined"
+            density="compact"
+            clearable
+            class="mb-4"
+          ></v-date-input>
+          <v-date-input
+            v-model="periodExportDialog.dateTo"
+            :label="$t('payments.export.dateTo')"
+            variant="outlined"
+            density="compact"
+            clearable
+          ></v-date-input>
+          <p class="text-caption text-medium-emphasis mt-4 mb-0">
+            {{ $t('payments.export.hint') }}
+          </p>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" :disabled="exportingPeriod" @click="periodExportDialog.show = false">
+            {{ $t('common.cancel') }}
+          </v-btn>
+          <v-btn
+            color="success"
+            variant="flat"
+            prepend-icon="mdi-microsoft-excel"
+            :loading="exportingPeriod"
+            @click="handlePeriodExport"
+          >
+            {{ $t('payments.export.download') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Mark as Paid Confirmation Dialog -->
     <v-dialog v-model="markAsPaidDialog.show" max-width="400">
@@ -676,6 +758,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   Payment,
+  PaymentsParams,
   PaymentCalculationResponse,
   ExclusionPreviewResponse,
   PaymentMethod,
@@ -684,6 +767,7 @@ import type {
 import { PaymentStatus } from '@/types/payments.types'
 import {
   fetchPayments,
+  exportPayments,
   markAsPaid,
   payPartial,
   calculatePayment,
@@ -693,6 +777,8 @@ import {
 } from '@/services/pages/payments'
 import { fetchAllGroups } from '@/services/pages/groups'
 import type { Group } from '@/types/groups.types'
+import { fetchAllTeachers } from '@/services/pages/users'
+import type { TeacherListItem } from '@/types/users.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 import CheckModal from '@/components/pages/payments/CheckModal.vue'
@@ -710,17 +796,29 @@ const selectedYear = ref(new Date().getFullYear())
 const selectedMonthIndex = ref(new Date().getMonth())
 const selectedStatus = ref<PaymentStatus | 'all' | null>(null)
 const selectedGroupId = ref<number | null>(null)
+const selectedTeacherId = ref<number | null>(null)
 const selectedCenterId = ref<number | null>(null)
 const searchQuery = ref('')
 const payments = ref<Payment[]>([])
 const groups = ref<Group[]>([])
+const teachers = ref<TeacherListItem[]>([])
 const centers = ref<Center[]>([])
 const loading = ref(false)
+const exportingMonth = ref(false)
+const exportingPeriod = ref(false)
 const loadingGroups = ref(false)
+const loadingTeachers = ref(false)
 const loadingCenters = ref(false)
 const processingPayment = ref(false)
 const page = ref(1)
 const totalPages = ref(1)
+
+// Oraliq bo'yicha eksport dialogi (dateFrom/dateTo — ikkalasi ham ixtiyoriy)
+const periodExportDialog = ref({
+  show: false,
+  dateFrom: null as Date | string | null,
+  dateTo: null as Date | string | null,
+})
 
 // Dialogs
 const markAsPaidDialog = ref({
@@ -849,6 +947,13 @@ const groupOptions = computed(() => {
   }))
 })
 
+const teacherOptions = computed(() => {
+  return teachers.value.map((teacher) => ({
+    title: `${teacher.firstName} ${teacher.lastName}`.trim(),
+    value: teacher.id,
+  }))
+})
+
 const centerOptions = computed(() => {
   return centers.value.map((center) => ({
     title: center.name,
@@ -931,7 +1036,10 @@ const isPastMonth = (monthValue: string): boolean => {
 const loadGroups = async () => {
   loadingGroups.value = true
   try {
-    const response = await fetchAllGroups(selectedCenterId.value || undefined)
+    const response = await fetchAllGroups(
+      selectedCenterId.value || undefined,
+      selectedTeacherId.value || undefined,
+    )
     groups.value = response.data || []
     // Reset group selection if selected group is not in the new list
     if (selectedGroupId.value && !groups.value.find((g) => g.id === selectedGroupId.value)) {
@@ -942,6 +1050,25 @@ const loadGroups = async () => {
     groups.value = []
   } finally {
     loadingGroups.value = false
+  }
+}
+
+const loadTeachers = async () => {
+  loadingTeachers.value = true
+  try {
+    const data = await fetchAllTeachers(
+      selectedCenterId.value ? { centerId: selectedCenterId.value } : undefined,
+    )
+    teachers.value = data
+    // Tanlangan ustoz yangi ro'yxatda bo'lmasa — tanlovni tozalaymiz
+    if (selectedTeacherId.value && !teachers.value.find((tt) => tt.id === selectedTeacherId.value)) {
+      selectedTeacherId.value = null
+    }
+  } catch (error) {
+    console.error('Ustozlarni yuklashda xatolik:', error)
+    teachers.value = []
+  } finally {
+    loadingTeachers.value = false
   }
 }
 
@@ -962,27 +1089,42 @@ const loadCenters = async () => {
   }
 }
 
+// Joriy filter holati — ro'yxat va Excel eksporti aynan shu paramlarni ishlatadi.
+// Oraliq bo'yicha eksportda forMonth kerak emas (u oraliqni bitta oyga siqib qo'yardi).
+const currentFilterParams = (includeMonth = true): PaymentsParams => {
+  const params: PaymentsParams = {}
+
+  if (includeMonth) {
+    params.forMonth = `${selectedYear.value}-${selectedMonth.value}`
+  }
+
+  if (selectedStatus.value && selectedStatus.value !== 'all') {
+    params.status = selectedStatus.value
+  }
+
+  if (searchQuery.value && searchQuery.value.trim()) {
+    params.search = searchQuery.value.trim()
+  }
+
+  if (selectedGroupId.value) {
+    params.groupId = selectedGroupId.value
+  }
+
+  if (selectedTeacherId.value) {
+    params.teacherId = selectedTeacherId.value
+  }
+
+  if (selectedCenterId.value) {
+    params.centerId = selectedCenterId.value
+  }
+
+  return params
+}
+
 const loadPayments = async () => {
   loading.value = true
   try {
-    const forMonth = `${selectedYear.value}-${selectedMonth.value}`
-    const params: any = { forMonth, page: page.value, perPage: 10 }
-
-    if (selectedStatus.value && selectedStatus.value !== 'all') {
-      params.status = selectedStatus.value
-    }
-
-    if (searchQuery.value && searchQuery.value.trim()) {
-      params.search = searchQuery.value.trim()
-    }
-
-    if (selectedGroupId.value) {
-      params.groupId = selectedGroupId.value
-    }
-
-    if (selectedCenterId.value) {
-      params.centerId = selectedCenterId.value
-    }
+    const params: PaymentsParams = { ...currentFilterParams(), page: page.value, perPage: 10 }
 
     const response = await fetchPayments(params)
     payments.value = response.data || []
@@ -998,10 +1140,20 @@ const loadPayments = async () => {
 const handleCenterChange = async () => {
   // Reset group selection when center changes
   selectedGroupId.value = null
+  selectedTeacherId.value = null
   page.value = 1
-  // Reload groups for the new center
+  // Reload teachers and groups for the new center
+  await loadTeachers()
   await loadGroups()
   // Reload payments
+  loadPayments()
+}
+
+// Ustoz almashganda guruhlar ro'yxati shu ustozning guruhlariga qisqaradi
+const handleTeacherChange = async () => {
+  selectedGroupId.value = null
+  page.value = 1
+  await loadGroups()
   loadPayments()
 }
 
@@ -1247,6 +1399,79 @@ const formatDate = (dateString: string): string => {
   })
 }
 
+// VDateInput Date qaytaradi — backend kutgan YYYY-MM-DD ga o'giramiz.
+// Mahalliy sana qismlaridan yig'amiz: toISOString() UTC ga o'tkazib, kunni bir kunga surib yuborardi.
+const toApiDate = (value: Date | string | null): string | undefined => {
+  if (!value) return undefined
+
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+// Excel faylni brauzerga yuklatamiz (fayl nomi backenddan keladi)
+const downloadExport = async (params: PaymentsParams) => {
+  const { blob, filename } = await exportPayments(params)
+
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
+}
+
+// 1-tugma: joriy oy + joriy filterlar bo'yicha, paginatsiyasiz
+const handleMonthExport = async () => {
+  exportingMonth.value = true
+  try {
+    await downloadExport(currentFilterParams())
+    showSnackbar(t('payments.messages.exportSuccess'))
+  } catch (error) {
+    console.error('Excel eksportida xatolik:', error)
+    showSnackbar(t('payments.messages.exportError'), 'error')
+  } finally {
+    exportingMonth.value = false
+  }
+}
+
+const openPeriodExport = () => {
+  periodExportDialog.value = { show: true, dateFrom: null, dateTo: null }
+}
+
+// 2-tugma: sana oralig'i bo'yicha. dateFrom/dateTo — ikkalasi ham ixtiyoriy,
+// bittasi berilsa ham ishlaydi; oy tabi hisobga olinmaydi.
+const handlePeriodExport = async () => {
+  const dateFrom = toApiDate(periodExportDialog.value.dateFrom)
+  const dateTo = toApiDate(periodExportDialog.value.dateTo)
+
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    showSnackbar(t('payments.messages.exportInvalidRange'), 'error')
+    return
+  }
+
+  exportingPeriod.value = true
+  try {
+    const params: PaymentsParams = { ...currentFilterParams(false) }
+    if (dateFrom) params.dateFrom = dateFrom
+    if (dateTo) params.dateTo = dateTo
+
+    await downloadExport(params)
+    periodExportDialog.value.show = false
+    showSnackbar(t('payments.messages.exportSuccess'))
+  } catch (error) {
+    console.error('Excel eksportida xatolik:', error)
+    showSnackbar(t('payments.messages.exportError'), 'error')
+  } finally {
+    exportingPeriod.value = false
+  }
+}
+
 const showSnackbar = (message: string, color: 'success' | 'error' = 'success') => {
   snackbar.value = {
     show: true,
@@ -1258,6 +1483,7 @@ const showSnackbar = (message: string, color: 'success' | 'error' = 'success') =
 // Lifecycle
 onMounted(async () => {
   await loadCenters()
+  await loadTeachers()
   await loadGroups()
   if (selectedCenterId.value) {
     await loadPayments()

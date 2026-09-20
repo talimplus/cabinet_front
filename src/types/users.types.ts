@@ -1,3 +1,5 @@
+import type { Center } from '@/types/centers.types'
+
 export interface User {
         id: number,
         firstName: string,
@@ -30,4 +32,19 @@ export interface UsersParams {
         phone?: string;
         page?: number;
         perPage?: number
+}
+
+export interface TeachersParams {
+        centerId?: number;
+        name?: string
+}
+
+// GET /users/teachers — paginatsiyasiz o'qituvchilar ro'yxati (filter select'lari uchun)
+export interface TeacherListItem {
+        id: number,
+        firstName: string,
+        lastName: string,
+        phone?: string,
+        role?: string,
+        center?: Center
 }

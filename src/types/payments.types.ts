@@ -78,7 +78,12 @@ export interface PaymentsParams {
   status?: PaymentStatus | 'all'
   search?: string
   groupId?: number
+  teacherId?: number
   centerId?: number
+  // Oraliq bo'yicha filter (YYYY-MM-DD yoki YYYY-MM). Ikkalasi ham ixtiyoriy.
+  // To'lovning oyiga (forMonth) nisbatan ishlaydi: oy o'rtasidagi sana ham o'sha oyni to'liq qamrab oladi.
+  dateFrom?: string
+  dateTo?: string
 }
 
 export interface PendingReceiptPayment {

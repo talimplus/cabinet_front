@@ -4,6 +4,7 @@ export default {
     year: 'Yil',
     center: 'Markaz',
     group: 'Guruh',
+    teacher: 'Ustoz',
     searchPlaceholder: "Ism, telefon va hokazo bo'yicha qidirish",
   },
   months: {
@@ -141,6 +142,16 @@ export default {
       rejected: 'Rad etilgan',
     },
   },
+  export: {
+    button: 'Excelga yuklash',
+    month: 'Shu oy uchun',
+    period: "Oraliq bo'yicha",
+    periodTitle: "Oraliq bo'yicha Excel",
+    dateFrom: 'Sanadan',
+    dateTo: 'Sanagacha',
+    hint: "Ikkalasi ham ixtiyoriy — faqat bittasini tanlasangiz ham bo'ladi. Qolgan filterlar (ustoz, guruh, holat, qidiruv) ham qo'llanadi.",
+    download: 'Yuklab olish',
+  },
   messages: {
     loadError: "To'lovlarni yuklashda xatolik",
     markSuccess: "To'lov to'liq to'langan deb belgilandi",
@@ -150,6 +161,9 @@ export default {
     amountExceeds: 'Miqdor qolgan summadan oshmasligi kerak',
     partialSuccess: "{amount} miqdoridagi qisman to'lov qabul qilindi",
     partialError: "To'lovni qayta ishlashda xatolik",
+    exportSuccess: 'Excel fayl yuklab olindi',
+    exportError: "Excel faylni yuklashda xatolik",
+    exportInvalidRange: "'Sanadan' 'sanagacha'dan keyin bo'lishi mumkin emas",
   },
   validation: {
     amountGreaterThanZero: "Miqdor 0 dan katta bo'lishi kerak",

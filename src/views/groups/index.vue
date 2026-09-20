@@ -19,7 +19,21 @@
             density="compact"
             clearable
             :loading="loadingCenters"
-            @update:model-value="getGroups"
+            @update:model-value="handleCenterChange"
+          ></v-select>
+        </v-col>
+        <v-col v-if="!isTeacher" cols="12" md="4">
+          <v-select
+            v-model="params.teacherId"
+            :items="teacherOptions"
+            item-title="title"
+            item-value="value"
+            :label="$t('groups.filter.teacher')"
+            variant="outlined"
+            density="compact"
+            clearable
+            :loading="loadingTeachers"
+            @update:model-value="handleTeacherChange"
           ></v-select>
         </v-col>
       </v-row>
@@ -139,6 +153,8 @@ import { useI18n } from 'vue-i18n'
 import { fetchGroups, deleteGroup, changeGroupStatus } from '@/services/pages/groups'
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
 import { fetchCenters, fetchAllCenters } from '@/services/pages/centers'
+import { fetchAllTeachers } from '@/services/pages/users'
+import type { TeacherListItem } from '@/types/users.types'
 import { fetchSubjects } from '@/services/pages/subjects'
 import type { Group } from '@/types/groups.types'
 import type { Center } from '@/types/centers.types'
@@ -148,7 +164,7 @@ import { GroupStatus } from '@/types/groups.enum'
 import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
-const { canCreateGroup, canEditGroup, canDeleteGroup } = usePermissions()
+const { canCreateGroup, canEditGroup, canDeleteGroup, isTeacher } = usePermissions()
 
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
@@ -157,10 +173,13 @@ const subjects = ref<Subject[]>([])
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
 const loadingCenters = ref(false)
+const teachers = ref<TeacherListItem[]>([])
+const loadingTeachers = ref(false)
 const totalPages = ref(1)
 
 const params = ref<GroupsParams>({
   centerId: undefined,
+  teacherId: undefined,
   page: 1,
   perPage: 10,
 })
@@ -169,6 +188,13 @@ const centerOptions = computed(() => {
   return centers.value.map((center) => ({
     title: center.name,
     value: center.id,
+  }))
+})
+
+const teacherOptions = computed(() => {
+  return teachers.value.map((teacher) => ({
+    title: `${teacher.firstName} ${teacher.lastName}`.trim(),
+    value: teacher.id,
   }))
 })
 
@@ -195,6 +221,37 @@ const getGroups = async () => {
   }
 }
 
+const loadTeachers = async () => {
+  if (isTeacher.value) return
+  loadingTeachers.value = true
+  try {
+    teachers.value = await fetchAllTeachers(
+      params.value.centerId ? { centerId: params.value.centerId } : undefined,
+    )
+    // Tanlangan ustoz yangi ro'yxatda bo'lmasa — tanlovni tozalaymiz
+    if (params.value.teacherId && !teachers.value.find((it) => it.id === params.value.teacherId)) {
+      params.value.teacherId = undefined
+    }
+  } catch (err) {
+    console.log(err)
+    teachers.value = []
+  } finally {
+    loadingTeachers.value = false
+  }
+}
+
+const handleCenterChange = async () => {
+  params.value.teacherId = undefined
+  params.value.page = 1
+  await loadTeachers()
+  await getGroups()
+}
+
+const handleTeacherChange = async () => {
+  params.value.page = 1
+  await getGroups()
+}
+
 const loadCenters = async () => {
   loadingCenters.value = true
   try {
@@ -213,6 +270,7 @@ const loadCenters = async () => {
 
 onMounted(async () => {
   await loadCenters()
+  await loadTeachers()
   if (params.value.centerId) {
     await getGroups()
   }

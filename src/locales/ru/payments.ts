@@ -4,6 +4,7 @@ export default {
     year: 'Год',
     center: 'Центр',
     group: 'Группа',
+    teacher: 'Преподаватель',
     searchPlaceholder: 'Поиск по имени, телефону и т.д.',
   },
   months: {
@@ -141,6 +142,16 @@ export default {
       rejected: 'Отклонён',
     },
   },
+  export: {
+    button: 'Скачать в Excel',
+    month: 'За текущий месяц',
+    period: 'За период',
+    periodTitle: 'Excel за период',
+    dateFrom: 'С даты',
+    dateTo: 'По дату',
+    hint: 'Оба поля необязательны — можно указать только одно. Остальные фильтры (преподаватель, группа, статус, поиск) тоже применяются.',
+    download: 'Скачать',
+  },
   messages: {
     loadError: 'Ошибка при загрузке платежей',
     markSuccess: 'Платёж отмечен как полностью оплаченный',
@@ -150,6 +161,9 @@ export default {
     amountExceeds: 'Сумма не должна превышать остаток',
     partialSuccess: 'Частичный платёж на сумму {amount} принят',
     partialError: 'Ошибка при обработке платежа',
+    exportSuccess: 'Excel-файл загружен',
+    exportError: 'Ошибка при выгрузке в Excel',
+    exportInvalidRange: "'С даты' не может быть позже 'по дату'",
   },
   validation: {
     amountGreaterThanZero: 'Сумма должна быть больше 0',

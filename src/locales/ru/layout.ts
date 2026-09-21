@@ -18,6 +18,7 @@ export default {
     rooms: 'Комнаты',
     syllabuses: 'Учебные планы',
     todayLessons: 'Уроки на сегодня',
+    roles: 'Роли и права',
   },
   groups: {
     payment: 'Платежи',

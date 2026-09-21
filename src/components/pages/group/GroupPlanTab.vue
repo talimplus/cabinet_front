@@ -8,7 +8,7 @@
     <div v-else-if="plan && !plan.syllabus" class="text-center pa-8">
       <v-icon icon="mdi-book-off-outline" size="56" color="grey-lighten-1" class="mb-3"></v-icon>
       <div class="text-h6 mb-1">{{ $t('syllabuses.plan.noSyllabus') }}</div>
-      <div v-if="canManageGroupSyllabus" class="d-flex justify-center mt-6">
+      <div v-if="canAttachGroupSyllabus && canViewSyllabuses" class="d-flex justify-center mt-6">
         <div style="width: 100%; max-width: 420px">
           <v-select
             v-model="selectedSyllabusId"
@@ -60,7 +60,7 @@
           {{ $t('syllabuses.plan.distribute.button') }}
         </v-btn>
         <v-btn
-          v-if="canManageGroupSyllabus"
+          v-if="canAttachGroupSyllabus"
           variant="outlined"
           prepend-icon="mdi-swap-horizontal"
           @click="openChangeDialog"
@@ -68,7 +68,7 @@
           {{ $t('syllabuses.plan.change') }}
         </v-btn>
         <v-btn
-          v-if="canManageGroupSyllabus"
+          v-if="canAttachGroupSyllabus"
           variant="text"
           color="error"
           prepend-icon="mdi-link-off"
@@ -384,7 +384,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const { t } = useI18n()
-const { canManageGroupSyllabus, canEditLessonPlan } = usePermissions()
+const { canAttachGroupSyllabus, canEditLessonPlan, canViewSyllabuses } = usePermissions()
 
 // Dars rejasini tahrirlash: manager-level har doim; teacher faqat o'z guruhida
 const canEditPlan = computed(() => canEditLessonPlan(props.isOwnGroup ?? false))
@@ -458,6 +458,8 @@ const loadPlan = async () => {
 }
 
 const loadSyllabuses = async () => {
+  // Reja biriktirish uchun ro'yxat kerak — ikkala ruxsat ham bo'lmasa so'ramaymiz
+  if (!canAttachGroupSyllabus.value || !canViewSyllabuses.value) return
   loadingSyllabuses.value = true
   try {
     const subjectId = plan.value?.group?.subject?.id

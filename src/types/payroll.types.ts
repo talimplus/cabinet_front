@@ -10,7 +10,10 @@ export interface StaffUser {
   lastName: string
   login: string
   phone: string
+  /** Rol turi (teacher — foiz oladi). Ko'rsatish uchun `userRole.name`. */
   role: string
+  /** Biriktirilgan dinamik rol */
+  userRole?: { id: number; name: string; baseRole: string } | null
   salary: number
   commissionPercentage: number | null
   createdAt: string

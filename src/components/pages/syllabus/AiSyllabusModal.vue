@@ -139,6 +139,7 @@
                   size="small"
                   :loading="saving"
                   :disabled="!canSave"
+                  v-if="canUseSyllabusAi"
                   @click="savePlan"
                 >
                   {{ $t('syllabuses.aiChat.savePlan') }}
@@ -211,6 +212,7 @@
           color="primary"
           :loading="loading"
           :disabled="!input.trim() || limitReached"
+          v-if="canUseSyllabusAi"
           @click="send"
         ></v-btn>
       </div>
@@ -219,6 +221,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -231,6 +234,8 @@ import type {
 } from '@/types/syllabus.types'
 import type { Subject } from '@/types/subject.types'
 import MarkdownView from './MarkdownView.vue'
+
+const { canUseSyllabusAi } = usePermissions()
 
 defineOptions({ name: 'AiSyllabusModal' })
 

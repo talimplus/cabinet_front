@@ -86,7 +86,7 @@
                     {{ `${staff.user.firstName} ${staff.user.lastName}` }}
                   </div>
                 </td>
-                <td>{{ getRoleLabel(staff.user.role) }}</td>
+                <td>{{ getRoleLabel(staff.user) }}</td>
                 <td>{{ formatCurrency(getBaseSalary(staff)) }}</td>
                 <td v-if="hasTeachers">
                   <span v-if="staff.user.role === 'teacher' && getCommissionAmount(staff)">
@@ -106,7 +106,7 @@
                 </td>
                 <td>
                   <v-btn
-                    v-if="staff.status !== PayrollStatus.PAID"
+                    v-if="canPaySalary && staff.status !== PayrollStatus.PAID"
                     color="primary"
                     size="small"
                     variant="flat"
@@ -239,13 +239,16 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { StaffSalary } from '@/types/payroll.types'
+import type { StaffSalary, StaffUser } from '@/types/payroll.types'
 import { PayrollStatus } from '@/types/payroll.types'
 import { fetchStaffSalaries, payStaffSalary } from '@/services/pages/payroll'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
+
+const { canPaySalary } = usePermissions()
 
 // Component name
 defineOptions({
@@ -561,8 +564,12 @@ const getStatusLabel = (status: PayrollStatus): string => {
   }
 }
 
-const getRoleLabel = (role: string): string => {
-  switch (role) {
+// Rol nomi endi admin tomonidan qo'yiladi ("Kassir") — avval o'shani,
+// bo'lmasa tur bo'yicha tarjimani ko'rsatamiz.
+const getRoleLabel = (user: StaffUser): string => {
+  if (user.userRole?.name) return user.userRole.name
+
+  switch (user.role) {
     case 'teacher':
       return t('payroll.roles.teacher')
     case 'manager':
@@ -572,7 +579,7 @@ const getRoleLabel = (role: string): string => {
     case 'super_admin':
       return t('payroll.roles.superAdmin')
     default:
-      return role
+      return user.role
   }
 }
 

@@ -194,6 +194,7 @@
           {{ $t('students.view.allSettled') }}
         </span>
         <v-btn
+          v-if="canAcceptPayment"
           color="primary"
           variant="flat"
           prepend-icon="mdi-cash-multiple"
@@ -423,7 +424,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const notify = useNotificationStore()
-const { canEditActiveStudent } = usePermissions()
+const { canEditActiveStudent, canAcceptPayment, canViewStudents } = usePermissions()
 
 const studentId = computed(() => {
   const id = route.params.id
@@ -547,7 +548,7 @@ const loadSummary = async () => {
 }
 
 const loadDetail = async () => {
-  if (!studentId.value) return
+  if (!studentId.value || !canViewStudents.value) return
   try {
     const { data } = await fetchStudentById(studentId.value)
     detail.value = data

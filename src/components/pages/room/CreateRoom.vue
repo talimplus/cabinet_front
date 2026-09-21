@@ -29,7 +29,7 @@
         </v-card-text>
         <v-card-actions>
           <v-btn :text="$t('common.cancel')" @click="open = false"></v-btn>
-          <v-btn type="submit" :loading="loading" :disabled="loading" :text="$t('rooms.submit')" color="primary"></v-btn>
+          <v-btn v-if="canManageRooms" type="submit" :loading="loading" :disabled="loading" :text="$t('rooms.submit')" color="primary"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>
@@ -37,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { createRoom, updateRoom } from '@/services/pages/rooms.ts'
@@ -45,10 +46,13 @@ import type { RoomForm } from '@/types/room.types'
 import type { Center } from '@/types/center.types'
 import { useUserStore } from '@/stores/user'
 
+const { canManageRooms } = usePermissions()
+
 const loading = ref(false)
 const centers = ref<Center[]>([])
 const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Emits {
   (e: 'updateData'): void
@@ -86,6 +90,8 @@ watch(open, (newValue: boolean) => {
 })
 
 const getCenters = async () => {
+  // Filial tanlash faqat `centers.view` bo'lganda ko'rinadi — aks holda so'ramaymiz
+  if (!isAdmin.value) return
   try {
     const {
       data: { data },

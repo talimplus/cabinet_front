@@ -2,7 +2,7 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('leads.title') }}
-      <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
+      <v-btn v-if="canCreateLead" color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
 
     <v-card-text>
@@ -34,7 +34,7 @@
             @update:model-value="getLeads"
           ></v-select>
         </v-col>
-        <v-col cols="12" md="3">
+        <v-col v-if="canViewGroups" cols="12" md="3">
           <v-select
             v-model="params.groupId"
             :items="groupOptions"
@@ -93,7 +93,7 @@
             <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
               {{ getStatusLabel(item.status) }}
             </v-chip>
-            <v-menu v-if="getStatusOptions(item.status).length > 0">
+            <v-menu v-if="canEditLead && getStatusOptions(item.status).length > 0">
               <template v-slot:activator="{ props }">
                 <v-btn
                   density="compact"
@@ -116,7 +116,7 @@
               </v-list>
             </v-menu>
             <v-btn
-              v-else
+              v-else-if="canEditLead"
               density="compact"
               color="primary"
               icon="mdi-pencil"
@@ -128,6 +128,7 @@
         </template>
         <template v-slot:item.actions="{ item }">
           <v-btn
+            v-if="canEditLead"
             density="compact"
             color="medium-emphasis"
             icon="mdi-pencil"
@@ -183,6 +184,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchLeads, changeLeadStatus } from '@/services/pages/leads'
@@ -196,6 +198,8 @@ import type { Center } from '@/types/centers.types'
 import type { Group } from '@/types/groups.types'
 import { useUserStore } from '@/stores/user'
 
+const { canCreateLead, canEditLead, canViewGroups } = usePermissions()
+
 const leads = ref<Lead[]>([])
 const openModal = ref(false)
 const formForEdit = ref<Lead | null>(null)
@@ -206,7 +210,8 @@ const totalPages = ref(1)
 const userStore = useUserStore()
 const { t } = useI18n()
 
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 const params = ref<LeadsParams>({
   centerId: undefined,
@@ -257,6 +262,7 @@ const loadCenters = async () => {
 }
 
 const loadGroups = async (centerId?: number) => {
+  if (!canViewGroups.value) return
   try {
     const { data } = await fetchAllGroups(centerId)
     groups.value = data

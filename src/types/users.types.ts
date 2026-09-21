@@ -1,4 +1,5 @@
 import type { Center } from '@/types/centers.types'
+import type { Role } from '@/types/roles.types'
 
 export interface User {
         id: number,
@@ -8,7 +9,11 @@ export interface User {
         login: string,
         phone: string,
         password: string,
+        /** Rol turi (teacher/manager/...). Ko'rsatish uchun `userRole.name` ishlatiladi. */
         role: string,
+        /** Biriktirilgan dinamik rol */
+        userRole?: Pick<Role, 'id' | 'name' | 'baseRole'> | null,
+        center?: Center,
         centerId: number,
         salary: number,
         commissionPercentage: number
@@ -20,10 +25,11 @@ export interface UserForm {
         login: string,
         phone: string,
         password: string,
-        role: string,
-        centerId: number,
-        salary: number,
-        commissionPercentage: number
+        /** Tanlangan rol id'si (backend ruxsatlarni shundan oladi) */
+        roleId?: number,
+        centerId?: number,
+        salary?: number,
+        commissionPercentage?: number
 }
 
 export interface UsersParams {

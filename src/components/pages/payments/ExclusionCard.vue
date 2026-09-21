@@ -1,5 +1,6 @@
 <template>
-  <v-card variant="outlined" class="mb-4">
+  <!-- Chiqarib tashlash alohida ruxsat talab qiladi: payments.exclusion -->
+  <v-card v-if="canManageExclusion" variant="outlined" class="mb-4">
     <v-card-text class="pa-3">
       <div class="text-body-2 font-weight-medium mb-2">
         {{ $t('payments.exclusion.title') }}
@@ -96,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
@@ -105,6 +107,8 @@ import type {
 } from '@/types/payments.types'
 import { previewExclusion } from '@/services/pages/payments'
 import { useDebounceFn } from '@/composables/useDebounceFn'
+
+const { canManageExclusion } = usePermissions()
 
 defineOptions({
   name: 'ExclusionCard',

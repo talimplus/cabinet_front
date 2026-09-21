@@ -22,6 +22,7 @@ export default {
     phone: 'Телефон',
     password: 'Пароль',
     role: 'Роль',
+    roleHint: 'Что сотрудник может делать — зависит от прав, выданных этой роли',
     center: 'Центр',
     salary: 'Зарплата',
     commissionPercentage: 'Процент комиссии',

@@ -61,7 +61,7 @@
                 ></v-date-input>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col v-if="canViewStudents" cols="12" sm="6">
               <Field name="referrerId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="students"
@@ -139,7 +139,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col v-if="canViewGroups" cols="12" sm="6">
               <Field name="groupIds" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="groups"
@@ -154,7 +154,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col v-if="canViewSubjects" cols="12" sm="6">
               <Field name="subjectId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="subjects"
@@ -375,7 +375,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="open = false" :text="$t('common.cancel')"></v-btn>
-          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" :text="$t('common.save')"></v-btn>
+          <v-btn v-if="props.formForEdit?.id ? canEditStudent : canCreateStudent" color="primary" type="submit" :loading="loading" :disabled="loading" :text="$t('common.save')"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>
@@ -383,6 +383,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
@@ -400,10 +401,14 @@ import { fetchSubjects } from '@/services/pages/subjects'
 import type { Subject } from '@/types/subject.types'
 import { useUserStore } from '@/stores/user'
 
+const { canEditStudent, canCreateStudent, canViewGroups, canViewStudents, canViewSubjects } =
+  usePermissions()
+
 const { t } = useI18n()
 
 const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
@@ -460,6 +465,7 @@ const getCenters = async () => {
 }
 
 const getSubjects = async () => {
+  if (!canViewSubjects.value) return
   try {
     const response = await fetchSubjects({ perPage: 999 })
     subjects.value = response?.data?.data || []
@@ -592,6 +598,7 @@ watch(usePeriodDiscounts, (newValue) => {
 })
 
 const getGroups = async (centerId?: number) => {
+  if (!canViewGroups.value) return
   try {
     const { data } = await fetchAllGroups(centerId)
     groups.value = data
@@ -615,6 +622,7 @@ watch(() => form.value.centerId, (newCenterId, oldCenterId) => {
 })
 
 const getStudents = async (centerId?: number) => {
+  if (!canViewStudents.value) return
   try {
     const { data } = await fetchAllStudents(centerId ? { centerId } : undefined)
     students.value = data

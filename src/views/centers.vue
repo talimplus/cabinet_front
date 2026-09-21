@@ -2,7 +2,7 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('centers.title') }}
-      <v-btn @click="dialog = true" color="primary">{{ $t('common.create') }}</v-btn>
+      <v-btn v-if="canManageCenters" @click="dialog = true" color="primary">{{ $t('common.create') }}</v-btn>
     </v-card-title>
     <v-row class="px-4">
       <v-col cols="12" sm="6" md="3">
@@ -30,6 +30,7 @@
             size="small"
             class="me-2"
             variant="text"
+            v-if="canManageCenters"
             @click="edit(item)"
           ></v-btn>
           <v-btn
@@ -39,6 +40,7 @@
             icon="mdi-delete"
             size="small"
             variant="text"
+            v-if="canManageCenters"
             @click="remove(item.id)"
           >
           </v-btn>
@@ -66,11 +68,14 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import CenterCreate from '@/components/pages/center/CenterCreate.vue'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchCenters, deleteCenter } from '@/services/pages/centers'
 import type { Center, CentersParams } from '@/types/center.types'
+
+const { canManageCenters } = usePermissions()
 
 const { t } = useI18n()
 

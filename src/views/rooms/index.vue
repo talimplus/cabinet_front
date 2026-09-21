@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title class="mb-6 d-flex justify-space-between"
         >{{ $t('rooms.title') }}
-        <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
+        <v-btn v-if="canManageRooms" color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
       </v-card-title>
       <v-row class="px-4">
         <v-col cols="12" sm="6" md="3">
@@ -39,6 +39,7 @@
               icon="mdi-pencil"
               size="small"
               class="me-2"
+              v-if="canManageRooms"
               @click="edit(item)"
               variant="text"
             ></v-btn>
@@ -49,6 +50,7 @@
               icon="mdi-delete"
               size="small"
               variant="text"
+              v-if="canManageRooms"
               @click="remove(item.id)"
             >
             </v-btn>
@@ -68,6 +70,7 @@
 
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CreateRoom from '@/components/pages/room/CreateRoom.vue'
@@ -76,6 +79,8 @@ import { fetchAllCenters } from '@/services/pages/centers'
 import { deleteRoom } from '@/services/pages/rooms'
 import type { Room, RoomParams } from '@/types/room.types'
 import type { Center } from '@/types/centers.types'
+
+const { canManageRooms } = usePermissions()
 
 const { t } = useI18n()
 

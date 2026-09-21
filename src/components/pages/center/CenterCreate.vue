@@ -27,7 +27,14 @@
         </v-card-text>
         <template v-slot:actions>
           <v-btn :text="$t('common.cancel')" @click="open = false"></v-btn>
-          <v-btn :loading="loading" :disabled="loading" type="submit" color="primary" :text="$t('common.save')"></v-btn>
+          <v-btn
+            v-if="canManageCenters"
+            :loading="loading"
+            :disabled="loading"
+            type="submit"
+            color="primary"
+            :text="$t('common.save')"
+          ></v-btn>
         </template>
       </v-card>
     </Form>
@@ -35,11 +42,14 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, defineProps, watch, defineEmits, defineModel } from 'vue'
 import { Form, Field } from 'vee-validate'
 import type { CenterForm } from '@/types/centers.types'
 import { createCenter, editCenter } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
+
+const { canManageCenters } = usePermissions()
 
 interface Props {
   test: { name: string }

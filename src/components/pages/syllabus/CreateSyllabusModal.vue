@@ -37,6 +37,7 @@
         <template v-slot:actions>
           <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
           <v-btn
+            v-if="canManageSyllabus"
             type="submit"
             color="primary"
             :text="$t('common.save')"
@@ -50,11 +51,14 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, watch } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { createSyllabus } from '@/services/pages/syllabuses'
 import type { SyllabusForm } from '@/types/syllabus.types'
 import type { Subject } from '@/types/subject.types'
+
+const { canManageSyllabus } = usePermissions()
 
 defineOptions({ name: 'CreateSyllabusModal' })
 

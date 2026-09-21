@@ -18,6 +18,7 @@ export default {
     rooms: 'Xonalar',
     syllabuses: 'Kurs rejalari',
     todayLessons: 'Bugungi darslar',
+    roles: 'Rollar va ruxsatlar',
   },
   groups: {
     payment: "To'lovlar",

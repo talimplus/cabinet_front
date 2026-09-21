@@ -8,6 +8,12 @@ export default {
   confirmSuccess: 'Платёж успешно подтверждён',
   confirmError: 'Ошибка при подтверждении платежа',
   loadError: 'Ошибка при загрузке платежей, ожидающих подтверждения',
+  reject: 'Отклонить',
+  rejectTitle: 'Отклонение чека',
+  rejectQuestion: '— отклонить этот чек? Деньги в кассу не поступят.',
+  rejectReason: 'Причина (необязательно)',
+  rejectSuccess: 'Чек отклонён',
+  rejectError: 'Ошибка при отклонении чека',
   columns: {
     student: 'Ученик',
     group: 'Группа',

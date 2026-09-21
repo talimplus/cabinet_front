@@ -60,14 +60,17 @@
                 ></v-text-field>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
-              <Field name="role" v-slot="{ handleChange, handleBlur, errors }">
+            <v-col v-if="canViewRoles" cols="12" sm="6">
+              <Field name="roleId" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="roleItems"
-                  item-title="title"
-                  item-value="value"
-                  v-model="form.role"
+                  item-title="name"
+                  item-value="id"
+                  :loading="rolesLoading"
+                  v-model="form.roleId"
                   :label="$t('users.form.role')"
+                  :hint="$t('users.form.roleHint')"
+                  persistent-hint
                   :error-messages="errors"
                   @update:model-value="handleChange"
                   @blur="handleBlur"
@@ -117,7 +120,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="open = false" :text="$t('common.cancel')"></v-btn>
-          <v-btn color="primary" type="submit" :loading="loading" :disabled="loading" :text="$t('common.save')"></v-btn>
+          <v-btn v-if="props.formForEdit?.id ? canEditUser : canCreateUser" color="primary" type="submit" :loading="loading" :disabled="loading" :text="$t('common.save')"></v-btn>
         </v-card-actions>
       </v-card>
     </Form>
@@ -128,17 +131,23 @@
 
 
 <script setup lang="ts">
-import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { usePermissions } from '@/composables/usePermissions'
+import { ref, defineProps, defineModel, defineEmits, watch, computed, onMounted } from 'vue'
 import { Form, Field } from 'vee-validate'
 import type { Center } from '@/types/center.types'
 import type { UserForm, User } from '@/types/users.types'
+import type { Role } from '@/types/roles.types'
 import { createUser, updateUser } from '@/services/pages/users'
-import { userRoles } from '@/types/users.enum'
+import { fetchRoles } from '@/services/pages/roles'
 import { useUserStore } from '@/stores/user'
 
+const { canEditUser, canCreateUser, can } = usePermissions()
+
+/** Rollar ro'yxati `roles.view` bilan keladi — ruxsat bo'lmasa select ko'rsatilmaydi */
+const canViewRoles = computed(() => can('roles.view'))
+
 const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Props {
   centers: Center[]
@@ -155,31 +164,43 @@ const open = defineModel('open')
 const loading = ref(false)
 const userFormRef = ref()
 
-const { t } = useI18n()
+// Rollar backenddan keladi — admin yaratgan yangi rollar shu yerda avtomatik chiqadi.
+const roles = ref<Role[]>([])
+const rolesLoading = ref(false)
 
-const roleItems = computed(() =>
-  userRoles.map((role) => ({
-    title: t(`users.roles.${role}`),
-    value: role,
-  })),
-)
+// Administrator roli markaz egasiniki — xodimga biriktirib bo'lmaydi.
+const roleItems = computed(() => roles.value.filter((role) => role.baseRole !== 'admin'))
 
-const form = ref<UserForm>({
+const loadRoles = async () => {
+  if (!canViewRoles.value) return
+  rolesLoading.value = true
+  try {
+    roles.value = await fetchRoles()
+  } finally {
+    rolesLoading.value = false
+  }
+}
+
+onMounted(loadRoles)
+
+const emptyForm = (): UserForm => ({
   firstName: '',
   lastName: '',
   login: '',
   phone: '',
   password: '',
-  role: '',
+  roleId: undefined,
   centerId: undefined,
   salary: undefined,
   commissionPercentage: undefined,
 })
 
+const form = ref<UserForm>(emptyForm())
+
 const submit = async () => {
   loading.value = true
-  form.value.salary = +form.value.salary
-  form.value.commissionPercentage = +form.value.commissionPercentage
+  form.value.salary = +(form.value.salary ?? 0)
+  form.value.commissionPercentage = +(form.value.commissionPercentage ?? 0)
   try {
     if (props.formForEdit?.id) {
       await updateUser(form.value, props.formForEdit.id)
@@ -206,24 +227,14 @@ watch(open, (newValue) => {
     form.value.login = props.formForEdit.login
     form.value.phone = props.formForEdit.phone
     form.value.password = props.formForEdit.password
-    form.value.role = props.formForEdit.role
-    form.value.centerId = props.formForEdit.center.id
+    form.value.roleId = props.formForEdit.userRole?.id
+    form.value.centerId = props.formForEdit.center?.id
     form.value.salary = props.formForEdit.salary
     form.value.commissionPercentage = props.formForEdit.commissionPercentage
   }
   if (!newValue) {
     emits('clearForm')
-    form.value = {
-      firstName: '',
-      lastName: '',
-      login: '',
-      phone: '',
-      password: '',
-      role: '',
-      centerId: undefined,
-      salary: undefined,
-      commissionPercentage: undefined,
-    }
+    form.value = emptyForm()
   }
   // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
   if (newValue && !isAdmin.value && userStore.user?.centerId) {

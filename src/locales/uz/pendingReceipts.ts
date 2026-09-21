@@ -8,6 +8,12 @@ export default {
   confirmSuccess: "To'lov muvaffaqiyatli tasdiqlandi",
   confirmError: "To'lovni tasdiqlashda xatolik",
   loadError: "Tasdiqlash uchun kelgan to'lovlarni yuklashda xatolik",
+  reject: 'Rad etish',
+  rejectTitle: 'Chekni rad etish',
+  rejectQuestion: "uchun kelgan chekni rad etasizmi? Pul kassaga kirmaydi.",
+  rejectReason: 'Sabab (ixtiyoriy)',
+  rejectSuccess: 'Chek rad etildi',
+  rejectError: 'Chekni rad etishda xatolik',
   columns: {
     student: "O'quvchi",
     group: 'Guruh',

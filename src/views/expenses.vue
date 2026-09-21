@@ -3,7 +3,7 @@
     <v-card>
       <v-card-title class="text-h5 pa-4 d-flex justify-space-between">
         {{ $t('expenses.title') }}
-        <v-btn color="primary" @click="openCreateModal">{{ $t('common.create') }}</v-btn>
+        <v-btn v-if="canCreateExpense" color="primary" @click="openCreateModal">{{ $t('common.create') }}</v-btn>
       </v-card-title>
 
       <!-- Filters -->
@@ -86,6 +86,7 @@
             </template>
             <template v-slot:item.actions="{ item }">
               <v-btn
+                v-if="canEditExpense"
                 @click="editExpense(item)"
                 density="compact"
                 color="primary"
@@ -95,6 +96,7 @@
                 variant="text"
               ></v-btn>
               <v-btn
+                v-if="canDeleteExpense"
                 @click="openDeleteDialog(item)"
                 density="compact"
                 color="error"
@@ -246,6 +248,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
@@ -255,8 +258,11 @@ import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 import { useUserStore } from '@/stores/user'
 
+const { canCreateExpense, canEditExpense, canDeleteExpense } = usePermissions()
+
 const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 // Component name
 defineOptions({

@@ -2,18 +2,24 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('syllabuses.title') }}
-      <div v-if="canManageSyllabus" class="d-flex" style="gap: 8px">
-        <v-btn color="primary" variant="tonal" prepend-icon="mdi-creation" @click="openAiModal = true">
+      <div v-if="canManageSyllabus || canUseSyllabusAi" class="d-flex" style="gap: 8px">
+        <v-btn
+          v-if="canUseSyllabusAi"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-creation"
+          @click="openAiModal = true"
+        >
           {{ $t('syllabuses.aiChat.button') }}
         </v-btn>
-        <v-btn color="primary" @click="openModal = true">
+        <v-btn v-if="canManageSyllabus" color="primary" @click="openModal = true">
           {{ $t('common.create') }}
         </v-btn>
       </div>
     </v-card-title>
 
     <v-row class="px-4">
-      <v-col cols="12" md="3">
+      <v-col v-if="canViewSubjects" cols="12" md="3">
         <v-select
           :label="$t('syllabuses.filter.subject')"
           density="compact"
@@ -138,7 +144,7 @@ import { usePermissions } from '@/composables/usePermissions'
 defineOptions({ name: 'SyllabusesList' })
 
 const { t } = useI18n()
-const { canManageSyllabus } = usePermissions()
+const { canManageSyllabus, canUseSyllabusAi, canViewSubjects } = usePermissions()
 
 const items = ref<SyllabusListItem[]>([])
 const subjects = ref<Subject[]>([])
@@ -208,6 +214,7 @@ const onFilterChange = () => {
 }
 
 const getSubjects = async () => {
+  if (!canViewSubjects.value) return
   try {
     const { data } = await fetchAllSubjects()
     subjects.value = data

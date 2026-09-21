@@ -2,7 +2,9 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('students.titles.reception') }}
-      <v-btn @click="openModal = true" color="primary">{{ $t('students.actions.create') }}</v-btn>
+      <v-btn v-if="canCreateStudent" @click="openModal = true" color="primary">{{
+        $t('students.actions.create')
+      }}</v-btn>
     </v-card-title>
     <v-card-text>
       <v-row>
@@ -31,7 +33,7 @@
             @update:model-value="getStudents"
           ></v-select>
         </v-col>
-        <v-col cols="12" md="3">
+        <v-col v-if="canViewSubjects" cols="12" md="3">
           <v-select
             v-model="params.subjectId"
             :items="subjectOptions"
@@ -105,7 +107,7 @@
           <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
             {{ getStatusLabel(item.status) }}
           </v-chip>
-          <v-menu>
+          <v-menu v-if="canChangeStudentStatus">
             <template v-slot:activator="{ props }">
               <v-btn
                 @click="item.openStatus = true"
@@ -133,6 +135,7 @@
       </template>
       <template v-slot:item.action="{ item }">
         <v-btn
+          v-if="canEditStudent"
           @click="editStudent(item)"
           density="compact"
           color="medium-emphasis"
@@ -234,7 +237,13 @@ import type { Subject } from '@/types/subject.types'
 import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
-const { canDeleteStudent } = usePermissions()
+const {
+  canCreateStudent,
+  canEditStudent,
+  canChangeStudentStatus,
+  canDeleteStudent,
+  canViewSubjects,
+} = usePermissions()
 
 const statusList = computed(() => {
   return [
@@ -338,6 +347,8 @@ const loadCenters = async () => {
 }
 
 const loadSubjects = async () => {
+  // Fanlar ro'yxati ruxsatsiz bo'lsa — filtr ham ko'rinmaydi, so'rov ham ketmaydi
+  if (!canViewSubjects.value) return
   loadingSubjects.value = true
   try {
     const { data } = await fetchAllSubjects()

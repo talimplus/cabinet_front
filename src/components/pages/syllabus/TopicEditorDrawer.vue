@@ -91,6 +91,7 @@
               </v-btn-toggle>
               <v-spacer></v-spacer>
               <v-btn
+                v-if="canUseSyllabusAi"
                 color="primary"
                 variant="tonal"
                 size="small"
@@ -190,8 +191,11 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { updateTopic, deleteTopic, generateTopicContent } from '@/services/pages/syllabuses'
+import { usePermissions } from '@/composables/usePermissions'
 import type { SyllabusTopic, TopicDifficulty } from '@/types/syllabus.types'
 import MarkdownView from './MarkdownView.vue'
+
+const { canUseSyllabusAi, canManageSyllabus } = usePermissions()
 
 defineOptions({ name: 'TopicEditorDrawer' })
 
@@ -211,6 +215,10 @@ interface Emits {
 const props = defineProps<Props>()
 const emits = defineEmits<Emits>()
 const open = defineModel<boolean>('open', { default: false })
+
+// Tahrirlash/o'chirish `syllabus.manage` talab qiladi — ota-komponent
+// `readonly` yubormasa ham, ruxsat yo'q bo'lsa faqat o'qish rejimi qoladi.
+const readonly = computed(() => props.readonly || !canManageSyllabus.value)
 
 const { t } = useI18n()
 

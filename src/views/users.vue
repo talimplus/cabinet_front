@@ -2,7 +2,9 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between"
       >{{ $t('users.title') }}
-      <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
+      <v-btn v-if="can('users.create')" color="primary" @click="openModal = true">{{
+        $t('common.create')
+      }}</v-btn>
     </v-card-title>
     <v-row class="px-4">
       <v-col cols="12" sm="6" md="3">
@@ -40,13 +42,14 @@
     <v-card-text>
       <v-data-table :loading="laoding" :items="users" :headers="headers" hide-default-footer>
       <template #item.role="{ item }">
-        {{ roleLabel(item.role) }}
+        {{ roleLabel(item) }}
       </template>
       <template #item.commissionPercentage="{ item }">
         <div v-if="item?.commissionPercentage">{{ item.commissionPercentage }}%</div>
       </template>
       <template v-slot:item.actions="{ item }">
         <v-btn
+          v-if="can('users.update')"
           @click="editUser(item)"
           density="compact"
           color="medium-emphasis"
@@ -56,6 +59,7 @@
           variant="text"
         ></v-btn>
         <v-btn
+          v-if="can('users.delete')"
           @click="remove(item.id)"
           density="compact"
           color="medium-emphasis"
@@ -85,11 +89,21 @@ import type { User, UsersParams } from '@/types/users.types'
 import CreateUser from '../components/pages/user/CreateUser.vue'
 import type { Center } from '@/types/centers.types'
 import { fetchAllCenters } from '@/services/pages/centers'
+import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
+const { can } = usePermissions()
 
-function roleLabel(role: string) {
-  return role ? t(`users.roles.${role}`) : ''
+/**
+ * Rol nomi endi dinamik — admin qo'ygan nom ("Kassir") ko'rsatiladi.
+ * Rol biriktirilmagan eski yozuvlar uchun tur bo'yicha tarjimaga qaytamiz.
+ */
+function roleLabel(item: User) {
+  if (item.userRole?.name) return item.userRole.name
+  if (!item.role) return ''
+  const key = `users.roles.${item.role}`
+  const label = t(key)
+  return label === key ? item.role : label
 }
 
 const centers = ref<Center[]>([])

@@ -7,15 +7,15 @@
       </v-card-title>
 
       <v-tabs v-model="activeTab" bg-color="primary" slider-color="white">
-        <v-tab v-if="canManageAttendance" value="attendance">{{ $t('groups.tabs.attendance') }}</v-tab>
-        <v-tab v-if="!isReception" value="plan">{{ $t('groups.tabs.plan') }}</v-tab>
-        <v-tab value="students">{{ $t('groups.tabs.students') }}</v-tab>
+        <v-tab v-if="can('attendance.view')" value="attendance">{{ $t('groups.tabs.attendance') }}</v-tab>
+        <v-tab v-if="can('groupPlan.view')" value="plan">{{ $t('groups.tabs.plan') }}</v-tab>
+        <v-tab v-if="can('students.view')" value="students">{{ $t('groups.tabs.students') }}</v-tab>
         <v-tab value="info">{{ $t('groups.tabs.info') }}</v-tab>
       </v-tabs>
 
       <v-window v-model="activeTab">
         <!-- TAB 1: ATTENDANCE -->
-        <v-window-item value="attendance">
+        <v-window-item v-if="can('attendance.view')" value="attendance">
           <v-card-text>
             <!-- Month Filter (year + month) -->
             <v-row class="mb-4">
@@ -144,7 +144,7 @@
         </v-window-item>
 
         <!-- TAB 2: LESSON PLAN -->
-        <v-window-item value="plan">
+        <v-window-item v-if="can('groupPlan.view')" value="plan">
           <GroupPlanTab
             v-if="planTabVisited && groupId"
             :group-id="groupId"
@@ -153,7 +153,7 @@
         </v-window-item>
 
         <!-- TAB 3: STUDENTS -->
-        <v-window-item value="students">
+        <v-window-item v-if="can('students.view')" value="students">
           <v-card-text>
             <v-data-table
               :items="students"
@@ -459,7 +459,7 @@ const goBack = () => {
   if (window.history.length > 1) router.back()
   else router.push('/groups')
 }
-const { canManageAttendance, canManagePastAttendance, isReception, userId } = usePermissions()
+const { canManageAttendance, canManagePastAttendance, can, userId } = usePermissions()
 const notify = useNotificationStore()
 
 // Davomat status'lari uchun ko'rinish (ikon + rang)
@@ -484,8 +484,14 @@ const statusOptions = computed<{ value: AttendanceStatus; label: string; icon: s
   ],
 )
 
-// Tabs — reception davomatni ko'ra olmaydi, shuning uchun boshqa tabdan boshlaymiz
-const activeTab = ref(canManageAttendance.value ? 'attendance' : 'students')
+// Tabs — ruxsati bor birinchi tabdan boshlaymiz (davomat → o'quvchilar → reja → ma'lumot)
+const firstAvailableTab = () => {
+  if (can('attendance.view')) return 'attendance'
+  if (can('students.view')) return 'students'
+  if (can('groupPlan.view')) return 'plan'
+  return 'info'
+}
+const activeTab = ref(firstAvailableTab())
 const planTabVisited = ref(false)
 const groupId = computed(() => {
   const id = route.params.id
@@ -633,6 +639,7 @@ const loadGroup = async () => {
 
 // Load students
 const loadStudents = async () => {
+  if (!can('students.view')) return
   const groupId = route.params.id
   if (!groupId || Array.isArray(groupId)) return
 
@@ -666,6 +673,7 @@ const formatDateForAPI = (date: string | Date | null | undefined): string | unde
 // Load attendance data — doim tanlangan oyning to'liq oralig'i (boshidan oxirigacha).
 // Kelajakdagi (hali o'tilmagan) darslar ham ko'rinadi, lekin ular tahrirlanmaydi.
 const loadAttendance = async () => {
+  if (!can('attendance.view')) return
   const groupId = route.params.id
   if (!groupId || Array.isArray(groupId)) return
 
@@ -685,6 +693,8 @@ const loadAttendance = async () => {
 // bekor qilingan darslar hech qachon, bugun — har doim, o'tgan sanalar — faqat
 // admin/o'qituvchi uchun.
 const canEditCell = (studentId: number, date: string): boolean => {
+  // Davomatni faqat ko'ra oladigan xodim katakchani o'zgartira olmaydi
+  if (!canManageAttendance.value) return false
   if (isBeforeJoin(studentId, date)) return false
   if (isFuture(date) || isCancelledDate(date)) return false
   if (isToday(date)) return true
@@ -898,6 +908,8 @@ const hasAttendanceForDate = (date: string): boolean => {
 
 const canRescheduleDate = (date: string): boolean => {
   return (
+    // Darsni ko'chirish davomat boshqarish ruxsatini talab qiladi
+    canManageAttendance.value &&
     isToday(date) &&
     lessonDates.value.includes(date) &&
     !isCancelledDate(date) &&

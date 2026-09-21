@@ -5,6 +5,7 @@
         <span>{{ $t('payments.title') }}</span>
         <div class="d-flex flex-wrap ga-2">
           <v-btn
+            v-if="canExportPayments"
             color="success"
             variant="tonal"
             prepend-icon="mdi-microsoft-excel"
@@ -15,6 +16,7 @@
             {{ $t('payments.export.month') }}
           </v-btn>
           <v-btn
+            v-if="canExportPayments"
             color="success"
             variant="outlined"
             prepend-icon="mdi-calendar-range"
@@ -67,7 +69,7 @@
               @update:model-value="handleCenterChange"
             ></v-select>
           </v-col>
-          <v-col cols="12" md="3">
+          <v-col v-if="canViewTeachers" cols="12" md="3">
             <v-select
               v-model="selectedTeacherId"
               :items="teacherOptions"
@@ -82,7 +84,7 @@
               @update:model-value="handleTeacherChange"
             ></v-select>
           </v-col>
-          <v-col cols="12" md="3">
+          <v-col v-if="canViewGroups" cols="12" md="3">
             <v-select
               v-model="selectedGroupId"
               :items="groupOptions"
@@ -256,6 +258,7 @@
                     </template>
                     <template v-else>
                       <v-btn
+                        v-if="canAcceptPayment"
                         color="success"
                         size="small"
                         variant="flat"
@@ -265,6 +268,7 @@
                         {{ $t('payments.buttons.payFull') }}
                       </v-btn>
                       <v-btn
+                        v-if="canAcceptPayment"
                         color="primary"
                         size="small"
                         variant="flat"
@@ -389,6 +393,7 @@
 
           <!-- Darslarni/summani chiqarib tashlash (ixtiyoriy) -->
           <ExclusionCard
+            v-if="canManageExclusion"
             :key="`excl-full-${markAsPaidDialog.payment?.id}`"
             :payment="markAsPaidDialog.payment"
             :disabled="processingPayment"
@@ -497,6 +502,7 @@
 
           <!-- Darslarni/summani chiqarib tashlash (ixtiyoriy) -->
           <ExclusionCard
+            v-if="canManageExclusion"
             :key="`excl-partial-${partialPaymentModal.payment?.id}`"
             :payment="partialPaymentModal.payment"
             :disabled="processingPayment"
@@ -505,8 +511,8 @@
             @error="showSnackbar($event, 'error')"
           />
 
-          <!-- Calculator Section -->
-          <div class="mb-4">
+          <!-- Calculator Section — payments.recalculate + payments.update talab qiladi -->
+          <div v-if="canRecalculatePayment && canEditPayment" class="mb-4">
             <div class="d-flex align-center justify-space-between mb-2">
               <span class="text-body-2 font-weight-medium">{{
                 $t('payments.dialog.stopStudyDate')
@@ -695,6 +701,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
@@ -725,6 +732,16 @@ import type { Center } from '@/types/centers.types'
 import CheckModal from '@/components/pages/payments/CheckModal.vue'
 import PaymentHistoryModal from '@/components/pages/payments/PaymentHistoryModal.vue'
 import ExclusionCard from '@/components/pages/payments/ExclusionCard.vue'
+
+const {
+  canAcceptPayment,
+  canExportPayments,
+  canEditPayment,
+  canRecalculatePayment,
+  canManageExclusion,
+  canViewGroups,
+  canViewTeachers,
+} = usePermissions()
 
 // Component name
 defineOptions({
@@ -999,6 +1016,7 @@ const isPastMonth = (monthValue: string): boolean => {
 }
 
 const loadGroups = async () => {
+  if (!canViewGroups.value) return
   loadingGroups.value = true
   try {
     const response = await fetchAllGroups(
@@ -1019,6 +1037,7 @@ const loadGroups = async () => {
 }
 
 const loadTeachers = async () => {
+  if (!canViewTeachers.value) return
   loadingTeachers.value = true
   try {
     const data = await fetchAllTeachers(

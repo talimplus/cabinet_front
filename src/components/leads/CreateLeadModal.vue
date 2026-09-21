@@ -127,7 +127,7 @@
                 ></v-select>
               </Field>
             </v-col>
-            <v-col cols="12" sm="6">
+            <v-col v-if="canViewGroups" cols="12" sm="6">
               <Field name="groupIds" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
                   :items="groups"
@@ -255,6 +255,7 @@
           </v-btn>
           <v-btn
             color="primary"
+            v-if="props.formForEdit?.id ? canEditLead : canCreateLead"
             type="submit"
             :loading="saving"
             :disabled="saving || transferring"
@@ -262,6 +263,7 @@
             {{ props.formForEdit?.id ? $t('leads.form.update') : $t('common.add') }}
           </v-btn>
           <v-btn
+            v-if="canTransferLead"
             color="secondary"
             variant="outlined"
             @click="transferToStudent"
@@ -287,6 +289,7 @@ import type { Group } from '@/types/groups.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllGroups } from '@/services/pages/groups'
 import { createLead, updateLead, transferLeadToStudent } from '@/services/pages/leads'
+import { usePermissions } from '@/composables/usePermissions'
 import { useUserStore } from '@/stores/user'
 import { WeekDay } from '@/types/groups.enum'
 import dayjs from 'dayjs'
@@ -303,7 +306,9 @@ const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
 const userStore = useUserStore()
 const { t } = useI18n()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+const { canTransferLead, canEditLead, canCreateLead, canViewGroups } = usePermissions()
+// Markaz tanlay olish — filiallarni ko'ra oladigan xodimda
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Props {
   formForEdit?: Lead | null
@@ -365,6 +370,7 @@ const getCenters = async () => {
 }
 
 const getGroups = async (centerId?: number) => {
+  if (!canViewGroups.value) return
   try {
     const { data } = await fetchAllGroups(centerId)
     groups.value = data

@@ -163,7 +163,7 @@
       <v-card-title class="text-h5 pa-4 d-flex flex-wrap align-center justify-space-between ga-4">
         <span>{{ $t('pendingReceipts.title') }}</span>
         <v-btn
-          v-if="pendingTotal > 0"
+          v-if="canConfirmReceipt && pendingTotal > 0"
           color="success"
           variant="flat"
           prepend-icon="mdi-check-all"
@@ -195,6 +195,7 @@
               {{ $t('pendingReceipts.bulk.clearSelection') }}
             </v-btn>
             <v-btn
+              v-if="canConfirmReceipt"
               color="success"
               variant="flat"
               size="small"
@@ -225,7 +226,7 @@
           <table class="receipts-table">
             <thead>
               <tr>
-                <th class="checkbox-column">
+                <th v-if="canConfirmReceipt" class="checkbox-column">
                   <v-checkbox
                     :model-value="allOnPageSelected"
                     :indeterminate="someOnPageSelected"
@@ -250,7 +251,7 @@
                 :key="receipt.id"
                 :class="{ 'row-selected': isSelected(receipt.id) }"
               >
-                <td class="checkbox-column">
+                <td v-if="canConfirmReceipt" class="checkbox-column">
                   <v-checkbox
                     :model-value="isSelected(receipt.id)"
                     hide-details
@@ -273,6 +274,7 @@
                 <td>{{ formatDate(receipt.receivedAt || receipt.createdAt) }}</td>
                 <td>
                   <v-btn
+                    v-if="canConfirmReceipt"
                     color="success"
                     size="small"
                     variant="flat"
@@ -281,6 +283,18 @@
                     :loading="processingReceiptId === receipt.id"
                   >
                     {{ $t('pendingReceipts.approve') }}
+                  </v-btn>
+                  <v-btn
+                    v-if="canRejectReceipt"
+                    color="error"
+                    size="small"
+                    variant="tonal"
+                    class="ms-2"
+                    @click="openRejectDialog(receipt)"
+                    :disabled="processing"
+                    :loading="processingReceiptId === receipt.id"
+                  >
+                    {{ $t('pendingReceipts.reject') }}
                   </v-btn>
                 </td>
               </tr>
@@ -331,6 +345,40 @@
           </v-btn>
           <v-btn color="success" variant="flat" @click="handleConfirmReceipt" :loading="processing">
             {{ $t('pendingReceipts.approve') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Chekni rad etish -->
+    <v-dialog v-model="rejectDialog.show" max-width="420">
+      <v-card>
+        <v-card-title class="text-h6 pa-4">{{ $t('pendingReceipts.rejectTitle') }}</v-card-title>
+        <v-card-text class="pa-4">
+          <p class="text-body-1 mb-4">
+            <strong
+              >{{ rejectDialog.receipt?.payment.student.firstName }}
+              {{ rejectDialog.receipt?.payment.student.lastName }}</strong
+            >
+            {{ $t('pendingReceipts.rejectQuestion') }}
+          </p>
+          <v-textarea
+            v-model="rejectDialog.reason"
+            :label="$t('pendingReceipts.rejectReason')"
+            variant="outlined"
+            density="compact"
+            rows="2"
+            auto-grow
+            hide-details="auto"
+          ></v-textarea>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="rejectDialog.show = false" :disabled="processing">
+            {{ $t('common.cancel') }}
+          </v-btn>
+          <v-btn color="error" variant="flat" @click="handleRejectReceipt" :loading="processing">
+            {{ $t('pendingReceipts.reject') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -399,6 +447,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
@@ -413,8 +462,11 @@ import {
   fetchReceiptsStats,
   confirmReceipt,
   confirmReceipts,
+  rejectReceipt,
 } from '@/services/pages/payments'
 import { fetchAllCenters } from '@/services/pages/centers'
+
+const { canConfirmReceipt, canRejectReceipt } = usePermissions()
 
 const { t } = useI18n()
 
@@ -511,6 +563,12 @@ const clearSelection = () => {
 const confirmDialog = ref({
   show: false,
   receipt: null as PendingReceipt | null,
+})
+
+const rejectDialog = ref({
+  show: false,
+  receipt: null as PendingReceipt | null,
+  reason: '',
 })
 
 const bulkDialog = ref({
@@ -659,6 +717,32 @@ const handleConfirmReceipt = async () => {
     await reload()
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || t('pendingReceipts.confirmError'), 'error')
+  } finally {
+    processing.value = false
+    processingReceiptId.value = null
+  }
+}
+
+const openRejectDialog = (receipt: PendingReceipt) => {
+  rejectDialog.value = { show: true, receipt, reason: '' }
+}
+
+const handleRejectReceipt = async () => {
+  if (!rejectDialog.value.receipt) return
+
+  const receiptId = rejectDialog.value.receipt.id
+  processing.value = true
+  processingReceiptId.value = receiptId
+  try {
+    await rejectReceipt(receiptId, rejectDialog.value.reason.trim() || undefined)
+    showSnackbar(t('pendingReceipts.rejectSuccess'), 'success')
+    rejectDialog.value.show = false
+    const next = new Map(selected.value)
+    next.delete(receiptId)
+    selected.value = next
+    await reload()
+  } catch (error: any) {
+    showSnackbar(error.response?.data?.message || t('pendingReceipts.rejectError'), 'error')
   } finally {
     processing.value = false
     processingReceiptId.value = null

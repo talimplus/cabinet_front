@@ -97,15 +97,9 @@ const submit = async () => {
       localStorage.setItem('token', data.access_token)
       userStore.setUser(data.user)
 
-      // Redirect based on role
-      const userRole = data.user.role
-      if (userRole === 'admin' || userRole === 'super_admin') {
-        router.push('/statistics')
-      } else if (userRole === 'teacher') {
-        router.push('/today')
-      } else {
-        router.push('/profile')
-      }
+      // Boshlang'ich sahifani rol nomiga emas, ruxsatlarga qarab tanlaymiz —
+      // router guard'idagi bir xil mantiq (resolveHome) ishlaydi.
+      router.push('/')
     }
   } catch (err: any) {
     const errors = err?.response?.data?.errors

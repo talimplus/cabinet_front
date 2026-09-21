@@ -35,7 +35,7 @@
             ></v-select>
           </Field>
         </v-card-text>
-        <v-card-text class="py-2">
+        <v-card-text class="py-2" v-if="canViewSubjects">
           <Field name="subjectId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.subjectId"
@@ -51,7 +51,7 @@
           </Field>
         </v-card-text>
 
-        <v-card-text class="py-2">
+        <v-card-text class="py-2" v-if="canViewRooms">
           <Field name="roomId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.roomId"
@@ -67,7 +67,7 @@
           </Field>
         </v-card-text>
 
-        <v-card-text class="py-2">
+        <v-card-text class="py-2" v-if="canViewEmployees">
           <Field name="teacherId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
               v-model="form.teacherId"
@@ -181,6 +181,7 @@
         <template v-slot:actions>
           <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
           <v-btn
+            v-if="props.formForEdit?.id ? canEditGroup : canCreateGroup"
             type="submit"
             color="primary"
             :text="$t('groups.form.submit')"
@@ -213,6 +214,7 @@
 </template>
 
 <script lang="ts" setup>
+import { usePermissions } from '@/composables/usePermissions'
 import { computed, defineModel, ref, defineProps, defineEmits, watch } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { WeekDay } from '@/types/groups.enum'
@@ -231,6 +233,9 @@ import { useNotificationStore } from '@/stores/notification'
 import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
 
+const { canEditGroup, canCreateGroup, canViewSubjects, canViewRooms, canViewEmployees } =
+  usePermissions()
+
 // Backend xatoliklari: 422 — {errors: {field: msg}}, 400 — {message}
 interface ApiErrorData {
   message?: string | string[]
@@ -247,7 +252,8 @@ const rooms = ref<Room[]>([])
 const userStore = useUserStore()
 const notify = useNotificationStore()
 const { t } = useI18n()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Props {
   centers: Center[]
@@ -380,6 +386,7 @@ const dayList = computed(() => {
 })
 
 const getUsers = async () => {
+  if (!canViewEmployees.value) return
   try {
     const {
       data: { data },
@@ -397,6 +404,7 @@ const getUsers = async () => {
 }
 
 const getSubjects = async () => {
+  if (!canViewSubjects.value) return
   try {
     const {
       data: { data },
@@ -410,6 +418,7 @@ const getSubjects = async () => {
 }
 
 const getRooms = async () => {
+  if (!canViewRooms.value) return
   try {
     const {
       data: { data },

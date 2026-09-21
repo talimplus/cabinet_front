@@ -81,7 +81,7 @@
           >
             {{ getStatusLabel(item.status) }}
           </v-chip>
-          <v-menu v-if="canEditStudent">
+          <v-menu v-if="canChangeStudentStatus">
             <template v-slot:activator="{ props }">
               <v-btn
                 @click="item.openStatus = true"
@@ -109,6 +109,7 @@
       </template>
       <template v-slot:item.action="{ item }">
         <v-btn
+          v-if="canViewPayments"
           @click="viewStudent(item)"
           density="compact"
           color="primary"
@@ -191,7 +192,7 @@ import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
 const router = useRouter()
-const { canEditStudent, canEditActiveStudent } = usePermissions()
+const { canChangeStudentStatus, canEditActiveStudent, canViewPayments } = usePermissions()
 
 const statusList = computed(() => {
   return [

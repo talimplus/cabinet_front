@@ -22,6 +22,7 @@ export default {
     phone: 'Telefon',
     password: 'Parol',
     role: 'Rol',
+    roleHint: 'Xodim nimalarni qila olishi shu rolga berilgan ruxsatlarga bog‘liq',
     center: 'Markaz',
     salary: 'Maosh',
     commissionPercentage: 'Komissiya foizi',

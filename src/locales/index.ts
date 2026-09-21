@@ -14,6 +14,7 @@ import uzSubjects from './uz/subjects'
 import uzSyllabuses from './uz/syllabuses'
 import uzRooms from './uz/rooms'
 import uzUsers from './uz/users'
+import uzRoles from './uz/roles'
 import uzProfile from './uz/profile'
 import uzStatistics from './uz/statistics'
 
@@ -33,6 +34,7 @@ import ruSubjects from './ru/subjects'
 import ruSyllabuses from './ru/syllabuses'
 import ruRooms from './ru/rooms'
 import ruUsers from './ru/users'
+import ruRoles from './ru/roles'
 import ruProfile from './ru/profile'
 import ruStatistics from './ru/statistics'
 
@@ -53,6 +55,7 @@ export const messages = {
     syllabuses: uzSyllabuses,
     rooms: uzRooms,
     users: uzUsers,
+    roles: uzRoles,
     profile: uzProfile,
     statistics: uzStatistics,
   },
@@ -72,6 +75,7 @@ export const messages = {
     syllabuses: ruSyllabuses,
     rooms: ruRooms,
     users: ruUsers,
+    roles: ruRoles,
     profile: ruProfile,
     statistics: ruStatistics,
   },

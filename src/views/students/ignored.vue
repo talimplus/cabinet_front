@@ -66,7 +66,7 @@
           <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
             {{ getStatusLabel(item.status) }}
           </v-chip>
-          <v-menu v-if="canEditStudent">
+          <v-menu v-if="canChangeStudentStatus">
             <template v-slot:activator="{ props }">
               <v-btn
                 @click="item.openStatus = true"
@@ -122,7 +122,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useDebounceFn } from '@/composables/useDebounceFn'
 
 const { t } = useI18n()
-const { canEditStudent } = usePermissions()
+const { canChangeStudentStatus } = usePermissions()
 
 const statusList = computed(() => {
   return [{ title: studentStatusLabels[StudentStatus.NEW], value: StudentStatus.NEW }]

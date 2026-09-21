@@ -22,7 +22,7 @@
             @update:model-value="handleCenterChange"
           ></v-select>
         </v-col>
-        <v-col v-if="!isTeacher" cols="12" md="4">
+        <v-col v-if="!isTeacher && canViewTeachers" cols="12" md="4">
           <v-select
             v-model="params.teacherId"
             :items="teacherOptions"
@@ -78,7 +78,7 @@
           <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
             {{ getStatusLabel(item.status) }}
           </v-chip>
-          <v-menu v-if="canEditGroup && getStatusOptions(item.status).length > 0">
+          <v-menu v-if="canChangeGroupStatus && getStatusOptions(item.status).length > 0">
             <template v-slot:activator="{ props }">
               <v-btn
                 density="compact"
@@ -101,7 +101,7 @@
             </v-list>
           </v-menu>
           <v-btn
-            v-else-if="canEditGroup"
+            v-else-if="canChangeGroupStatus"
             density="compact"
             color="primary"
             icon="mdi-pencil"
@@ -187,20 +187,25 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchGroups, deleteGroup, changeGroupStatus } from '@/services/pages/groups'
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
-import { fetchCenters, fetchAllCenters } from '@/services/pages/centers'
+import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllTeachers } from '@/services/pages/users'
 import type { TeacherListItem } from '@/types/users.types'
-import { fetchSubjects } from '@/services/pages/subjects'
 import type { Group } from '@/types/groups.types'
 import type { Center } from '@/types/centers.types'
-import type { Subject } from '@/types/subject.types'
 import type { GroupsParams } from '@/types/groups.types'
 import { GroupStatus } from '@/types/groups.enum'
 import { usePermissions } from '@/composables/usePermissions'
 import { useNotificationStore } from '@/stores/notification'
 
 const { t } = useI18n()
-const { canCreateGroup, canEditGroup, canDeleteGroup, isTeacher } = usePermissions()
+const {
+  canCreateGroup,
+  canEditGroup,
+  canDeleteGroup,
+  canChangeGroupStatus,
+  canViewTeachers,
+  isTeacher,
+} = usePermissions()
 const notify = useNotificationStore()
 
 // Backend xatoliklari: 422 — {errors: {field: msg}}, 400 — {message}
@@ -216,7 +221,6 @@ const firstMessage = (value?: string | string[]): string =>
 const items = ref<Group[]>([])
 const centers = ref<Center[]>([])
 const openFormModal = ref(false)
-const subjects = ref<Subject[]>([])
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
 const finishConfirm = ref<{ show: boolean; item: Group | null }>({ show: false, item: null })
@@ -270,7 +274,7 @@ const getGroups = async () => {
 }
 
 const loadTeachers = async () => {
-  if (isTeacher.value) return
+  if (isTeacher.value || !canViewTeachers.value) return
   loadingTeachers.value = true
   try {
     teachers.value = await fetchAllTeachers(
@@ -323,18 +327,6 @@ onMounted(async () => {
     await getGroups()
   }
 })
-
-const getSubjects = async () => {
-  try {
-    const {
-      data: { data },
-    } = await fetchSubjects()
-    subjects.value = data
-  } catch (err) {
-    console.log(err)
-  }
-}
-getSubjects()
 
 const remove = async (id: number) => {
   try {

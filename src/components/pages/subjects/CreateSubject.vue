@@ -29,7 +29,7 @@
         </v-card-text>
         <template v-slot:actions>
           <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn type="submit" color="primary" :text="$t('common.save')" :loading="loading" :disabled="loading"></v-btn>
+          <v-btn v-if="canManageSubjects" type="submit" color="primary" :text="$t('common.save')" :loading="loading" :disabled="loading"></v-btn>
         </template>
       </v-card>
     </Form>
@@ -38,6 +38,7 @@
 
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, defineModel, defineEmits, defineProps, watch, computed } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { createSubjects, editSubject } from '@/services/pages/subjects'
@@ -45,8 +46,11 @@ import type { SubjectForm, Subject } from '@/types/subject.types'
 import type { Center } from '@/types/center.types'
 import { useUserStore } from '@/stores/user'
 
+const { canManageSubjects } = usePermissions()
+
 const userStore = useUserStore()
-const isAdmin = computed(() => userStore.user?.role === 'admin' || userStore.user?.role === 'super_admin')
+// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
+const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Emits {
   (e: 'updateData'): void

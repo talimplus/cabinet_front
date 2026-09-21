@@ -199,95 +199,145 @@ const changeLocale = (lang: AppLocale) => {
   setLocale(lang)
 }
 
-// Menu items organized by groups (text = i18n key)
+/**
+ * Menyu (text = i18n kaliti, permission = backenddagi ruxsat kaliti).
+ * Rol nomlari bu yerda umuman ishlatilmaydi — admin yaratgan istalgan rol
+ * o'ziga berilgan ruxsatlarga mos menyuni ko'radi.
+ */
 const allItems = {
   standalone: [
-    { text: 'layout.menu.todayLessons', icon: 'mdi-calendar-today', path: '/today', roles: ['teacher'] },
-    { text: 'layout.menu.statistics', icon: 'mdi-chart-line', path: '/statistics' },
-    { text: 'layout.menu.users', icon: 'mdi-account', path: '/users', roles: ['admin'] },
-    { text: 'layout.menu.groups', icon: 'mdi-flag', path: '/groups' },
-    { text: 'layout.menu.syllabuses', icon: 'mdi-book-open-variant', path: '/syllabuses' },
+    {
+      text: 'layout.menu.todayLessons',
+      icon: 'mdi-calendar-today',
+      path: '/today',
+      permission: ['teacher.today'],
+    },
+    {
+      text: 'layout.menu.statistics',
+      icon: 'mdi-chart-line',
+      path: '/statistics',
+      permission: ['statistics.view'],
+    },
+    {
+      text: 'layout.menu.users',
+      icon: 'mdi-account',
+      path: '/users',
+      permission: ['users.view'],
+    },
+    {
+      text: 'layout.menu.roles',
+      icon: 'mdi-shield-account',
+      path: '/roles',
+      permission: ['roles.view'],
+    },
+    {
+      text: 'layout.menu.groups',
+      icon: 'mdi-flag',
+      path: '/groups',
+      permission: ['groups.view'],
+    },
+    {
+      text: 'layout.menu.syllabuses',
+      icon: 'mdi-book-open-variant',
+      path: '/syllabuses',
+      permission: ['syllabus.view'],
+    },
   ],
   payment: [
-    { text: 'layout.menu.payments', icon: 'mdi-cash', path: '/payments' },
-    { text: 'layout.menu.payroll', icon: 'mdi-cash-multiple', path: '/payroll' },
-    { text: 'layout.menu.expenses', icon: 'mdi-cash-minus', path: '/expenses' },
+    {
+      text: 'layout.menu.payments',
+      icon: 'mdi-cash',
+      path: '/payments',
+      permission: ['payments.view'],
+    },
+    {
+      text: 'layout.menu.payroll',
+      icon: 'mdi-cash-multiple',
+      path: '/payroll',
+      permission: ['payroll.view'],
+    },
+    {
+      text: 'layout.menu.expenses',
+      icon: 'mdi-cash-minus',
+      path: '/expenses',
+      permission: ['expenses.view'],
+    },
     {
       text: 'layout.menu.pendingReceipts',
       icon: 'mdi-receipt-text-check',
       path: '/pending-receipts',
-      adminOnly: true,
+      permission: ['receipts.view'],
     },
   ],
   students: [
-    { text: 'layout.menu.reception', icon: 'mdi-account-school', path: '/reception' },
-    { text: 'layout.menu.leads', icon: 'mdi-account-plus', path: '/leads' },
-    { text: 'layout.menu.students', icon: 'mdi-account-school', path: '/students' },
-    { text: 'layout.menu.stopped', icon: 'mdi-account-school', path: '/stopped' },
-    { text: 'layout.menu.ignored', icon: 'mdi-account-school', path: '/ignored' },
-    { text: 'layout.menu.finished', icon: 'mdi-account-school', path: '/finished' },
+    {
+      text: 'layout.menu.reception',
+      icon: 'mdi-account-school',
+      path: '/reception',
+      permission: ['students.view'],
+    },
+    {
+      text: 'layout.menu.leads',
+      icon: 'mdi-account-plus',
+      path: '/leads',
+      permission: ['leads.view'],
+    },
+    {
+      text: 'layout.menu.students',
+      icon: 'mdi-account-school',
+      path: '/students',
+      permission: ['students.view'],
+    },
+    {
+      text: 'layout.menu.stopped',
+      icon: 'mdi-account-school',
+      path: '/stopped',
+      permission: ['students.view'],
+    },
+    {
+      text: 'layout.menu.ignored',
+      icon: 'mdi-account-school',
+      path: '/ignored',
+      permission: ['students.view'],
+    },
+    {
+      text: 'layout.menu.finished',
+      icon: 'mdi-account-school',
+      path: '/finished',
+      permission: ['students.view'],
+    },
   ],
   settings: [
-    { text: 'layout.menu.centers', icon: 'mdi-domain', path: '/centers' },
-    { text: 'layout.menu.subjects', icon: 'mdi-clock', path: '/subjects' },
-    { text: 'layout.menu.rooms', icon: 'mdi-door', path: '/rooms' },
+    {
+      text: 'layout.menu.centers',
+      icon: 'mdi-domain',
+      path: '/centers',
+      permission: ['centers.view'],
+    },
+    {
+      text: 'layout.menu.subjects',
+      icon: 'mdi-clock',
+      path: '/subjects',
+      permission: ['subjects.view'],
+    },
+    {
+      text: 'layout.menu.rooms',
+      icon: 'mdi-door',
+      path: '/rooms',
+      permission: ['rooms.view'],
+    },
   ],
 }
 
-// Role-based restrictions
-const restrictedRoutesForReception = [
-  '/users',
-  '/statistics',
-  '/payroll',
-  '/expenses',
-  '/centers',
-  '/syllabuses',
-]
-const restrictedRoutesForTeacher = [
-  '/users',
-  '/centers',
-  '/rooms',
-  '/reception',
-  '/leads',
-  '/students',
-  '/stopped',
-  '/ignored',
-  '/finished',
-  '/payments',
-  '/payroll',
-  '/expenses',
-  '/statistics',
-]
-const restrictedRoutesForManager = ['/users', '/statistics', '/payroll', '/expenses']
-
-const filterItems = (items: any[]) => {
-  const user = userStore.user
-  if (!user) return items
-
-  const userRole = user.role
-  let restrictedRoutes: string[] = []
-
-  if (userRole === 'reception') {
-    restrictedRoutes = restrictedRoutesForReception
-  } else if (userRole === 'teacher') {
-    restrictedRoutes = restrictedRoutesForTeacher
-  } else if (userRole === 'manager') {
-    restrictedRoutes = restrictedRoutesForManager
-  }
-
-  return items.filter((item) => {
-    // Item aniq rollarga cheklangan bo'lsa (masalan users -> faqat admin, today -> teacher)
-    if (item.roles && !item.roles.includes(userRole)) {
-      return false
-    }
-    // Filter admin-only items
-    if (item.adminOnly && userRole !== 'admin' && userRole !== 'super_admin') {
-      return false
-    }
-    // Filter restricted routes
-    return !restrictedRoutes.includes(item.path)
-  })
+interface MenuItem {
+  text: string
+  icon: string
+  path: string
+  permission?: string[]
 }
+
+const filterItems = (items: MenuItem[]) =>
+  items.filter((item) => !item.permission?.length || userStore.can(...item.permission))
 
 const standaloneItems = computed(() => filterItems(allItems.standalone))
 const paymentGroupItems = computed(() => filterItems(allItems.payment))
@@ -301,7 +351,12 @@ const hasSettingsGroup = computed(() => settingsGroupItems.value.length > 0)
 const drawer = ref(null)
 const logoutLoading = ref(false)
 
+// Rol nomi endi admin tomonidan qo'yiladi ("Kassir", "Bosh menejer"...) —
+// shuning uchun avval o'sha nomni ko'rsatamiz, bo'lmasa tur bo'yicha tarjima.
 const getRoleLabel = (role: string): string => {
+  const customName = userStore.user?.roleName
+  if (customName) return customName
+
   if (!role) return ''
   const key = `layout.roles.${role}`
   const label = t(key)

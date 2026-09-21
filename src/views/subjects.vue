@@ -2,7 +2,7 @@
   <v-card>
     <v-card-title class="mb-6 d-flex justify-space-between">
       {{ $t('subjects.title') }}
-      <v-btn color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
+      <v-btn v-if="canManageSubjects" color="primary" @click="openModal = true">{{ $t('common.create') }}</v-btn>
     </v-card-title>
 
     <v-row class="px-4">
@@ -39,6 +39,7 @@
             size="small"
             class="me-2"
             variant="text"
+            v-if="canManageSubjects"
             @click="edit(item)"
           ></v-btn>
           <v-btn
@@ -47,6 +48,7 @@
             icon="mdi-delete"
             size="small"
             variant="text"
+            v-if="canManageSubjects"
             @click="remove(item.id)"
           ></v-btn>
         </div>
@@ -66,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePermissions } from '@/composables/usePermissions'
 import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchSubjects, deleteSubject } from '@/services/pages/subjects'
@@ -73,6 +76,8 @@ import type { Subject, SubjectsParams } from '@/types/subject.types'
 import { fetchAllCenters } from '@/services/pages/centers'
 import type { Center } from '@/types/centers.types'
 import CreateSubjects from '@/components/pages/subjects/CreateSubject.vue'
+
+const { canManageSubjects } = usePermissions()
 
 const { t } = useI18n()
 

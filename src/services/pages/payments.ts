@@ -225,6 +225,11 @@ export const fetchReceiptsStats = async (
   return response.data
 }
 
+/** Chekni rad etish (pul kassaga kirmaydi). `receipts.reject` ruxsati kerak. */
+export const rejectReceipt = async (id: number, reason?: string) => {
+  return await http.put(`/payments/reject-receipt/${id}`, { reason })
+}
+
 export const confirmReceipt = async (id: number) => {
   return await http.put(`/payments/confirm-receipt/${id}`)
 }

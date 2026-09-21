@@ -297,6 +297,9 @@ const formatCurrency = (amount: number): string => {
 }
 
 const getRoleLabel = (role: string): string => {
+  // Rol nomi endi dinamik — avval admin qo'ygan nomni ko'rsatamiz
+  if (profileData.value.roleName) return profileData.value.roleName
+
   const roleCodes = ['admin', 'super_admin', 'teacher', 'reception', 'manager']
   return roleCodes.includes(role) ? t(`profile.roles.${role}`) : role
 }

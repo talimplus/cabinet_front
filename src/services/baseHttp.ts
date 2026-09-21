@@ -2,6 +2,12 @@ import router from '@/router/index';
 import axios, { type AxiosError } from 'axios';
 import i18n from '@/plugins/i18n';
 import { useNotificationStore } from '@/stores/notification';
+import { useUserStore } from '@/stores/user';
+import {
+        PermissionDeniedError,
+        isPermissionDeniedError,
+        permissionsForRequest,
+} from '@/permissions/apiPermissions';
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL
@@ -11,6 +17,28 @@ http.interceptors.request.use(function (config) {
         const token = localStorage.getItem('token');
 
         if (token) config.headers.Authorization = `Bearer ${token}`
+
+        // Ruxsati yo'q endpointga so'rov umuman yubormaymiz — 403 va keraksiz
+        // xato xabari o'rniga jim to'xtatamiz. Asosiy himoya backendda qoladi.
+        const required = permissionsForRequest(config.method, config.url)
+        if (required) {
+                try {
+                        const userStore = useUserStore()
+                        // Foydalanuvchi hali yuklanmagan bo'lsa tekshirmaymiz —
+                        // qaror backendga qoladi (bootstrap paytidagi poyga).
+                        if (userStore.user && !userStore.can(...required)) {
+                                throw new PermissionDeniedError(
+                                        config.method ?? 'get',
+                                        config.url ?? '',
+                                        required,
+                                )
+                        }
+                } catch (error) {
+                        if (isPermissionDeniedError(error)) throw error
+                        // Pinia hali tayyor emas — tekshiruvsiz davom etamiz
+                }
+        }
+
         return config;
 }, function (error) {
         return Promise.reject(error);
@@ -69,6 +97,13 @@ const extractErrorMessage = (error: AxiosError): string => {
 http.interceptors.response.use(function (response) {
         return response;
 }, async function (error: AxiosError) {
+        // Ruxsat yo'qligi sababli biz to'xtatgan so'rov — foydalanuvchiga xabar
+        // ko'rsatilmaydi, chunki UI'da bu blok allaqachon yashirilgan bo'lishi kerak.
+        if (isPermissionDeniedError(error)) {
+                if (import.meta.env.DEV) console.warn(`[permissions] ${(error as Error).message}`)
+                return Promise.reject(error);
+        }
+
         const status = error.response?.status
 
         if (status === 401) {

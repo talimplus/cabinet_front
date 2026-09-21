@@ -119,3 +119,52 @@ export interface StudentsParams {
         preferredDays?: string[];
         subjectId?: number;
 }
+
+// ── Boshqa guruhga ko'chirish ────────────────────────────────────────────────
+
+/** Preview uchun maqsad guruh kerak emas — qarz faqat manba guruhdan o'qiladi. */
+export interface TransferPreviewPayload {
+  studentIds: number[];
+  fromGroupId: number;
+}
+
+export interface TransferStudentsPayload {
+  studentIds: number[];
+  fromGroupId: number;
+  toGroupId: number;
+  /** YYYY-MM-DD. Berilmasa backend bugungi sanani oladi. */
+  transferDate?: string;
+  reason?: string;
+  closeSourceGroup?: boolean;
+}
+
+/** Ko'chirishdan oldin: o'quvchining eski guruhdagi holati. */
+export interface TransferPreviewRow {
+  studentId: number;
+  firstName: string;
+  lastName: string;
+  /** Eski guruhdagi to'lanmagan qarz — ko'chirishdan keyin ham o'sha guruhda qoladi. */
+  debt: number;
+  /** Eski guruhga ortiqcha to'langan pul — yangi guruh to'loviga o'tadi. */
+  overpaid: number;
+}
+
+export interface TransferResultRow {
+  studentId: number;
+  firstName: string;
+  lastName: string;
+  /** Yangi guruh to'loviga o'tkazilgan summa. */
+  carriedOverAmount: number;
+  /** Joy topilmay, o'quvchiga qaytariladigan bo'lib qolgan summa. */
+  refundedAmount: number;
+  remainingDebtInSourceGroup: number;
+}
+
+export interface TransferStudentsResponse {
+  fromGroupId: number;
+  toGroupId: number;
+  transferDate: string;
+  sourceGroupClosed: boolean;
+  transferred: number;
+  results: TransferResultRow[];
+}

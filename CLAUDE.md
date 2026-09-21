@@ -141,11 +141,38 @@ Jadvalda barcha endpointlar bor; `permissions: []` — ochiq endpoint
   `upcomingMonthlyFee ?? monthlyFee` bilan to'ldiradi, "Shu oydan qo'llash" checkbox'i
   esa `applyFeeFrom: 'current_month'` yuboradi (xatoni tuzatish uchun).
   O'quvchining shaxsiy narxi (`student.monthlyFee`) bo'lsa — guruh narxi unga ta'sir qilmaydi.
+- **Boshqa guruhga ko'chirish:** `components/pages/students/TransferStudentsModal.vue`
+  ikki joyda ishlatiladi — guruh sahifasining "O'quvchilar" tabida (belgilab
+  ommaviy ko'chirish, `allow-close-source-group` bilan eski guruhni yopish ham
+  mumkin) va o'quvchi kartasidagi har bir guruh yonida (yakka). Ruxsat —
+  `students.transfer`, lekin tugma `groups.view` bilan ham shartlangan, chunki
+  modal maqsad guruhlar ro'yxatini `/groups/all` dan oladi.
+  Modal ochilganda `POST /students/transfer/preview` bilan qarz/ortiqcha to'lov
+  ko'rsatiladi (qarz **bloklamaydi** — u eski guruhda qoladi), ko'chirgandan
+  keyin esa har bir o'quvchi uchun natija jadvali chiqadi.
+- **Dars jadvali:** `views/schedule/index.vue` + `components/pages/schedule/ScheduleBoard.vue`
+  (ruxsat `schedule.view`). Panjara: kun tanlanadi, ustunlar — xonalar, qatorlar — vaqt;
+  dars bloki `startTime` va `lessonDurationMinutes` dan chiziladi. Ma'lumot bir marta
+  butun hafta uchun olinadi (`GET /group-schedule/board`), kun frontda filtrlanadi.
+  Xonasi biriktirilmagan darslar uchun oxirida "Xonasiz" ustuni chiqadi; eski
+  ma'lumotdagi ustma-ust darslar yonma-yon va qizil ramka bilan ko'rinadi.
+  Shu komponent guruh modalidan ham ochiladi (modal yopilmaydi).
+- **Guruh modalidagi bandlik tekshiruvi:** kun/vaqt/xona/o'qituvchi o'zgarganda
+  `POST /group-schedule/conflicts` ga debounce (400ms) bilan so'rov ketadi; to'qnashuv
+  bo'lsa forma ostida qizil ro'yxat chiqadi va "Saqlash" o'chiriladi. Saqlashda backend
+  baribir qayta tekshiradi va 422 ni `roomId`/`teacherId` maydonlariga bog'laydi.
+- Davomat jurnalida `leftAt` — o'quvchi guruhdan chiqqan sana (**exclusive**).
+  Ketgan o'quvchi jurnalda tarix uchun ko'rinib turadi, lekin kataklari
+  tahrirlanmaydi (`isOutsideEnrollment` = `joinedAt` dan oldin yoki `leftAt`
+  dan keyin).
 - To'lov summalari backendda hisoblanadi; front faqat ko'rsatadi
   (`amountDue`, `amountPaid`, `remaining`, `payableNow`, `lessonsPlanned/Billable`,
   `isProrated`, `fullAmount`, `perLessonAmount`).
 - Guruh `endDate` qisqartirilsa kelajakdagi darslar va to'lanmagan to'lovlar o'chadi —
   shuning uchun modalda tasdiq oynasi bor (`shortenConfirm`).
+- **Statusni `started` qilishda** backend `endDate`/`roomId` yetishmasa 422 qaytaradi.
+  `views/groups/index.vue` bu xatoni ushlab, tahrirlash modalini ochadi va xatolarni
+  `statusErrors` propi orqali maydonlar ostiga qo'yadi (`setErrors`, `nextTick` dan keyin).
 - **Xodim davomati:** `components/pages/staff-attendance/CheckInCard.vue` —
   "Keldim" tugmasi (`/today` va `/staff-attendance` sahifalarida). Bosilganda
   `navigator.geolocation` so'raladi, lekin **rad etilsa ham check-in ketaveradi** —

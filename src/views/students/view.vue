@@ -114,6 +114,16 @@
                   <span v-if="groupScheduleText(group)" class="text-body-2 text-medium-emphasis">
                     · {{ groupScheduleText(group) }}
                   </span>
+                  <v-btn
+                    v-if="canTransferStudents"
+                    size="x-small"
+                    variant="text"
+                    color="primary"
+                    prepend-icon="mdi-account-switch"
+                    @click="openTransferModal(group.id)"
+                  >
+                    {{ $t('students.transfer.action') }}
+                  </v-btn>
                 </div>
               </div>
               <div v-else class="info-value text-medium-emphasis">
@@ -397,6 +407,16 @@
 
     <!-- Chek modali -->
     <CheckModal v-model="checkModal.show" :checks="checkModal.checks" />
+
+    <!-- Boshqa guruhga ko'chirish -->
+    <TransferStudentsModal
+      v-if="transferFromGroupId"
+      v-model="transferModal"
+      :student-ids="transferStudentIds"
+      :from-group-id="transferFromGroupId"
+      :from-group-name="transferFromGroupName"
+      @transferred="onTransferred"
+    />
   </v-container>
 </template>
 
@@ -417,6 +437,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { usePermissions } from '@/composables/usePermissions'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import CheckModal from '@/components/pages/payments/CheckModal.vue'
+import TransferStudentsModal from '@/components/pages/students/TransferStudentsModal.vue'
 
 defineOptions({ name: 'StudentView' })
 
@@ -424,7 +445,8 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const notify = useNotificationStore()
-const { canEditActiveStudent, canAcceptPayment, canViewStudents } = usePermissions()
+const { canEditActiveStudent, canAcceptPayment, canViewStudents, canViewGroups, can } =
+  usePermissions()
 
 const studentId = computed(() => {
   const id = route.params.id
@@ -588,6 +610,28 @@ const submitPayment = async () => {
   } finally {
     paying.value = false
   }
+}
+
+// ── Boshqa guruhga ko'chirish ───────────────────────────────────────────────
+// Modal maqsad guruhlar ro'yxatini `/groups/all` dan oladi — `groups.view` ham kerak.
+const canTransferStudents = computed(
+  () => can('students.transfer') && canViewGroups.value
+)
+const transferModal = ref(false)
+const transferFromGroupId = ref<number | null>(null)
+const transferStudentIds = computed(() => (studentId.value ? [studentId.value] : []))
+const transferFromGroupName = computed(
+  () => detail.value?.groups?.find((g) => g.id === transferFromGroupId.value)?.name ?? null
+)
+
+const openTransferModal = (groupId: number) => {
+  transferFromGroupId.value = groupId
+  transferModal.value = true
+}
+
+// Ko'chirilgandan keyin karta ham, to'lov xulosasi ham yangilanadi.
+const onTransferred = async () => {
+  await Promise.all([loadDetail(), loadSummary()])
 }
 
 // O'quvchini tahrirlash: to'liq ma'lumotni olib, mavjud CreateStudent modalini ochamiz

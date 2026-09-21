@@ -85,9 +85,14 @@ defineOptions({ name: 'CheckInCard' })
 
 const { t } = useI18n()
 const notify = useNotificationStore()
-const { can } = usePermissions()
+const { can, isTeacher } = usePermissions()
 
-const canCheckIn = computed(() => can('staffAttendance.checkIn'))
+/**
+ * "Keldim" ni faqat o'qituvchining o'zi bosadi. Admin `'*'` ruxsatiga ega
+ * bo'lgani uchun `can(...)` unga ham `true` qaytaradi — shuning uchun rol turi
+ * bo'yicha qo'shimcha shart qo'yamiz (backend ham 403 beradi).
+ */
+const canCheckIn = computed(() => can('staffAttendance.checkIn') && isTeacher.value)
 
 const today = ref<StaffAttendanceToday | null>(null)
 const loading = ref(false)

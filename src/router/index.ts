@@ -57,6 +57,12 @@ const router = createRouter({
           meta: { permission: ['groups.view'] },
         },
         {
+          path: '/schedule',
+          name: 'schedule',
+          component: () => import('../views/schedule/index.vue'),
+          meta: { permission: ['schedule.view'] },
+        },
+        {
           path: '/users/:id',
           name: 'staff-view',
           component: () => import('../views/staff/view.vue'),

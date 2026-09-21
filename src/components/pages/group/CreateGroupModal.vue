@@ -140,6 +140,37 @@
           </v-alert>
         </v-card-text>
         <v-card-text class="py-2">
+          <div class="d-flex align-center flex-wrap mb-2" style="gap: 12px">
+            <Field name="lessonDurationMinutes" v-slot="{ handleChange, handleBlur, errors }">
+              <v-text-field
+                v-model="lessonDuration"
+                :label="$t('groups.form.lessonDuration')"
+                type="number"
+                min="5"
+                max="600"
+                variant="outlined"
+                density="compact"
+                hide-details="auto"
+                style="max-width: 220px"
+                :suffix="$t('groups.form.minutesShort')"
+                :error-messages="errors"
+                @update:model-value="handleChange"
+                @blur="handleBlur"
+              ></v-text-field>
+            </Field>
+            <v-spacer></v-spacer>
+            <!-- Modalni yopmasdan xona bo'shligini ko'rish -->
+            <v-btn
+              v-if="canViewSchedule"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-calendar-clock"
+              @click="scheduleDialog = true"
+            >
+              {{ $t('schedule.viewButton') }}
+            </v-btn>
+          </div>
+
           <v-row dense>
             <v-col cols="12" sm="6">
               <Field name="days" v-slot="{ handleChange, handleBlur, errors }">
@@ -192,6 +223,41 @@
               </v-col>
             </template>
           </v-row>
+
+          <!--
+            Bandlik saqlashdan OLDIN tekshiriladi: foydalanuvchi vaqtni
+            tanlagan zahoti javob oladi. Backend saqlashda baribir qayta
+            tekshiradi (422 -> roomId/teacherId maydonlari).
+          -->
+          <div v-if="conflictChecking" class="text-body-2 text-medium-emphasis mt-3">
+            <v-progress-circular indeterminate size="14" width="2" class="me-2"></v-progress-circular>
+            {{ $t('schedule.conflict.checking') }}
+          </div>
+
+          <v-alert
+            v-else-if="conflicts.length"
+            type="error"
+            variant="tonal"
+            density="compact"
+            class="mt-3"
+          >
+            <div class="font-weight-medium mb-1">{{ $t('schedule.conflict.title') }}</div>
+            <ul class="conflict-list">
+              <li v-for="(message, index) in conflictMessages" :key="`conflict-${index}`">
+                {{ message }}
+              </li>
+            </ul>
+            <div class="text-body-2 mt-2">{{ $t('schedule.conflict.hint') }}</div>
+          </v-alert>
+
+          <v-alert
+            v-else-if="conflictChecked && scheduleSlots.length"
+            type="success"
+            variant="tonal"
+            density="compact"
+            class="mt-3"
+            :text="$t('schedule.conflict.free')"
+          ></v-alert>
         </v-card-text>
         <template v-slot:actions>
           <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
@@ -201,11 +267,29 @@
             color="primary"
             :text="$t('groups.form.submit')"
             :loading="loading"
-            :disabled="loading"
+            :disabled="loading || conflicts.length > 0"
           ></v-btn>
         </template>
       </v-card>
     </Form>
+  </v-dialog>
+
+  <!-- Jadval: modal yopilmaydi, foydalanuvchi bo'sh vaqtni ko'rib qaytadi -->
+  <v-dialog v-model="scheduleDialog" width="1100" scrollable>
+    <v-card>
+      <v-card-title class="d-flex align-center justify-space-between py-4">
+        <span class="text-h6 font-weight-bold">{{ $t('schedule.dialogTitle') }}</span>
+        <v-btn icon="mdi-close" variant="text" size="small" @click="scheduleDialog = false"></v-btn>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text>
+        <ScheduleBoard
+          v-if="scheduleDialog"
+          :highlight-room-id="form.roomId ?? null"
+          :initial-day="days[0] ?? null"
+        />
+      </v-card-text>
+    </v-card>
   </v-dialog>
 
   <!-- Tugash sanasi qisqartirilganda tasdiqlash -->
@@ -230,14 +314,18 @@
 
 <script lang="ts" setup>
 import { usePermissions } from '@/composables/usePermissions'
-import { computed, defineModel, ref, defineProps, defineEmits, watch } from 'vue'
+import { computed, defineModel, nextTick, ref, defineProps, defineEmits, watch } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { WeekDay } from '@/types/groups.enum'
 import { fetchSubjects } from '@/services/pages/subjects'
 import { fetchUsers } from '@/services/pages/users'
 import { createGroup, updateGroup } from '@/services/pages/groups'
 import { fetchRooms } from '@/services/pages/rooms'
-import type { GroupFormDays, GroupForm } from '@/types/groups.types'
+import { checkScheduleConflicts } from '@/services/pages/schedule'
+import { useDebounceFn } from '@/composables/useDebounceFn'
+import ScheduleBoard from '@/components/pages/schedule/ScheduleBoard.vue'
+import type { ScheduleConflict } from '@/types/schedule.types'
+import type { GroupForm } from '@/types/groups.types'
 import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { Room } from '@/types/room.types'
@@ -247,8 +335,14 @@ import { useNotificationStore } from '@/stores/notification'
 import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
 
-const { canEditGroup, canCreateGroup, canViewSubjects, canViewRooms, canViewEmployees } =
-  usePermissions()
+const {
+  canEditGroup,
+  canCreateGroup,
+  canViewSubjects,
+  canViewRooms,
+  canViewEmployees,
+  canViewSchedule,
+} = usePermissions()
 
 // Backend xatoliklari: 422 — {errors: {field: msg}}, 400 — {message}
 interface ApiErrorData {
@@ -269,6 +363,11 @@ const { t } = useI18n()
 
 interface Props {
   formForEdit?: Group
+  /**
+   * Tashqaridan (masalan statusni o'zgartirishda) kelgan maydon xatolari.
+   * Forma ochilganda shu inputlar ostida ko'rsatiladi.
+   */
+  statusErrors?: Record<string, string | string[]>
 }
 
 interface Emits {
@@ -365,6 +464,9 @@ watch(open, async (newValue: boolean) => {
     form.value.monthlyFee =
       props.formForEdit?.upcomingMonthlyFee ?? props.formForEdit?.monthlyFee ?? undefined
     applyFeeNow.value = false
+    lessonDuration.value = props.formForEdit?.lessonDurationMinutes ?? 90
+    conflicts.value = []
+    conflictChecked.value = false
     endDate.value = props.formForEdit?.endDate ? dayjs(props.formForEdit.endDate).toDate() : null
 
     // Convert schedules to days format
@@ -387,6 +489,14 @@ watch(open, async (newValue: boolean) => {
     getSubjects()
     getUsers()
     getRooms()
+
+    // Statusni o'zgartirishda yetishmagan maydonlar (endDate/roomId) —
+    // xato aynan shu inputlar ostida chiqishi uchun maydonlar
+    // render bo'lgandan keyin qo'yiladi.
+    await nextTick()
+    if (props.statusErrors && Object.keys(props.statusErrors).length) {
+      groupFormRef.value?.setErrors(props.statusErrors)
+    }
   } else {
     emits('clearEditForm')
     form.value = {
@@ -399,6 +509,9 @@ watch(open, async (newValue: boolean) => {
       centerId: '',
     }
     applyFeeNow.value = false
+    lessonDuration.value = 90
+    conflicts.value = []
+    conflictChecked.value = false
     endDate.value = null
     days.value = []
     allTimes.value = ''
@@ -418,9 +531,96 @@ watch(open, async (newValue: boolean) => {
   }
 })
 
-const times = ref([])
-const days = ref<GroupFormDays[]>([])
+const times = ref<string[]>([])
+// Bu yerda faqat kun nomlari turadi (vaqt alohida: `allTimes` / `times`)
+const days = ref<WeekDay[]>([])
 const allTimes = ref('')
+
+// ── Dars davomiyligi va bandlik tekshiruvi ─────────────────────────────
+// Davomiylik guruh darajasida saqlanadi: xona/o'qituvchi bandligi
+// [startTime .. startTime + davomiylik) oralig'i bo'yicha hisoblanadi.
+const DEFAULT_LESSON_DURATION = 90
+
+const lessonDuration = ref<number | string>(DEFAULT_LESSON_DURATION)
+const scheduleDialog = ref(false)
+const conflicts = ref<ScheduleConflict[]>([])
+const conflictChecking = ref(false)
+const conflictChecked = ref(false)
+
+/** Formadagi jadval: kun + boshlanish vaqti (bo'sh qatorlar tashlanadi) */
+const scheduleSlots = computed(() =>
+  days.value
+    .map((day, i) => ({
+      day,
+      startTime: differentTime.value ? times.value[i] || '' : allTimes.value,
+    }))
+    .filter((slot) => Boolean(slot.day && slot.startTime)),
+)
+
+const durationNumber = computed(() => {
+  const raw = Number(lessonDuration.value)
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_LESSON_DURATION
+})
+
+const conflictMessages = computed(() =>
+  conflicts.value.map((conflict) =>
+    t(`schedule.conflict.${conflict.reason}`, {
+      day: t(`schedule.days.${conflict.day}`),
+      time: `${conflict.requestedStartTime}–${conflict.requestedEndTime}`,
+      room: conflict.roomName ?? '—',
+      teacher: conflict.teacherName ?? '—',
+      group: conflict.groupName,
+      busy: `${conflict.startTime}–${conflict.endTime}`,
+    }),
+  ),
+)
+
+const runConflictCheck = async () => {
+  const slots = scheduleSlots.value
+  // Xona ham, o'qituvchi ham tanlanmagan bo'lsa tekshiradigan narsa yo'q
+  if (!slots.length || (!form.value.roomId && !form.value.teacherId)) {
+    conflicts.value = []
+    conflictChecked.value = false
+    return
+  }
+
+  try {
+    conflictChecking.value = true
+    conflicts.value = await checkScheduleConflicts({
+      days: slots,
+      roomId: form.value.roomId,
+      teacherId: form.value.teacherId,
+      lessonDurationMinutes: durationNumber.value,
+      excludeGroupId: props.formForEdit?.id,
+    })
+    conflictChecked.value = true
+  } catch (err) {
+    // Tekshiruv ishlamay qolsa saqlashni bloklamaymiz — backend baribir tekshiradi
+    conflicts.value = []
+    conflictChecked.value = false
+    console.log(err)
+  } finally {
+    conflictChecking.value = false
+  }
+}
+
+const debouncedConflictCheck = useDebounceFn(runConflictCheck, 400)
+
+watch(
+  [
+    () => form.value.roomId,
+    () => form.value.teacherId,
+    scheduleSlots,
+    durationNumber,
+    open,
+  ],
+  () => {
+    if (!open.value) return
+    conflicts.value = []
+    debouncedConflictCheck()
+  },
+  { deep: true },
+)
 const dayList = computed(() => {
   return [
     WeekDay.MONDAY,
@@ -511,6 +711,7 @@ const save = async () => {
         : null,
     // null yuborilsa muddat olib tashlanadi (guruh muddatsiz bo'ladi)
     endDate: selectedEndDate.value,
+    lessonDurationMinutes: durationNumber.value,
     days: [],
   }
 

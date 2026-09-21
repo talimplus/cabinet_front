@@ -30,6 +30,8 @@ export interface Group {
         schedules?: GroupSchedule[];
         startDate?: string;
         endDate?: string | null;
+        /** Bitta darsning davomiyligi (daqiqa). Xona/o'qituvchi bandligi shu bo'yicha. */
+        lessonDurationMinutes?: number;
 }
 export interface GroupFormDays {
         day: WeekDay,
@@ -51,6 +53,8 @@ export interface GroupForm {
         // endDate ixtiyoriy; null yuborilsa muddat olib tashlanadi (guruh "muddatsiz" bo'ladi).
         startDate?: string | null,
         endDate?: string | null,
+        /** Bitta darsning davomiyligi (daqiqa, default 90) */
+        lessonDurationMinutes?: number,
         days?: GroupFormDays[],
         centerId?: number
 }

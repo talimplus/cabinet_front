@@ -298,6 +298,12 @@ const allItems = {
       permission: ['groups.view'],
     },
     {
+      text: 'layout.menu.schedule',
+      icon: 'mdi-calendar-clock',
+      path: '/schedule',
+      permission: ['schedule.view'],
+    },
+    {
       text: 'layout.menu.syllabuses',
       icon: 'mdi-book-open-variant',
       path: '/syllabuses',

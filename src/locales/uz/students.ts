@@ -147,4 +147,36 @@ export default {
       payError: "To'lovni amalga oshirishda xatolik",
     },
   },
+  transfer: {
+    title: "Boshqa guruhga ko'chirish",
+    subtitle: "{count} ta o'quvchi",
+    toGroup: 'Qaysi guruhga',
+    toGroupRequired: 'Guruhni tanlang',
+    date: "Ko'chirish sanasi",
+    dateHint:
+      "Eski guruhda shu kundan boshlab darslar to'lovga kirmaydi, yangi guruhda shu kundan hisoblanadi",
+    reason: 'Sabab (izoh)',
+    closeSourceGroup: "Ko'chirishdan keyin eski guruhni yopish",
+    closeSourceGroupHint:
+      "Guruhda o'quvchi qolmasa yoki kam qolgani uchun yopilayotgan bo'lsa belgilang",
+    student: "O'quvchi",
+    debt: 'Qarzi',
+    overpaid: "Ortiqcha to'lov",
+    carriedOver: "Yangi guruhga o'tdi",
+    refunded: 'Qaytariladi',
+    remainingDebt: 'Eski guruhdagi qarz',
+    debtWarning:
+      "Bu o'quvchilarda eski guruh bo'yicha {amount} qarz bor. Ko'chirish bloklanmaydi — qarz eski guruh nomi bilan qolaveradi.",
+    overpaidNotice:
+      "Ortiqcha to'langan {amount} avtomatik ravishda yangi guruh to'loviga o'tkaziladi.",
+    billingHint:
+      "Ko'chirilgan oy ikkala guruhda ham o'tgan darslar soniga qarab bo'linadi — o'quvchi bir oy uchun ikki marta to'lamaydi.",
+    submit: "Ko'chirish",
+    done: "{count} ta o'quvchi ko'chirildi",
+    doneHint:
+      "O'qituvchilarning komissiyasi ham shu bo'linish bo'yicha qayta hisoblandi.",
+    action: "Boshqa guruhga ko'chirish",
+    selectStudents: "Ko'chirish uchun o'quvchilarni belgilang",
+    noGroup: "O'quvchi hech qanday guruhda emas",
+  },
 }

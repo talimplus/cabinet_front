@@ -1,5 +1,13 @@
 import http from "../baseHttp";
-import type { StudentsParams, StudentForm, StudentDetail } from "@/types/students.types";
+import type {
+        StudentsParams,
+        StudentForm,
+        StudentDetail,
+        TransferStudentsPayload,
+        TransferPreviewPayload,
+        TransferPreviewRow,
+        TransferStudentsResponse,
+} from "@/types/students.types";
 import { StudentStatus } from "@/types/students.enum";
 import type { AxiosResponse } from "axios";
 export const fetchStudents = async (par?: StudentsParams) => {
@@ -32,4 +40,16 @@ export const updateStudentStatus = async (
 
 export const deleteStudent = async (id: number) => {
         return await http.delete(`/students/${id}`)
+}
+
+export const previewTransferStudents = async (
+        payload: TransferPreviewPayload
+): Promise<AxiosResponse<TransferPreviewRow[]>> => {
+        return await http.post('/students/transfer/preview', payload)
+}
+
+export const transferStudents = async (
+        payload: TransferStudentsPayload
+): Promise<AxiosResponse<TransferStudentsResponse>> => {
+        return await http.post('/students/transfer', payload)
 }

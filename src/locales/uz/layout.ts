@@ -17,6 +17,7 @@ export default {
     centers: 'Markazlar',
     subjects: 'Fanlar',
     rooms: 'Xonalar',
+    schedule: 'Dars jadvali',
     syllabuses: 'Kurs rejalari',
     myPerformance: 'Mening faoliyatim',
     staffAttendance: 'Xodimlar davomati',

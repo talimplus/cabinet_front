@@ -163,6 +163,8 @@ export interface TodayLesson {
                 subject: Pick<Subject, 'id' | 'name'> | null;
                 room: { id: number; name: string } | null;
         };
+        /** Guruh o'qituvchisi — admin ko'rinishida kimning darsi ekanini ko'rsatadi */
+        teacher: { id: number; firstName: string; lastName: string } | null;
         date: string;
         startTime: string | null;
         lessonNumber: number;
@@ -173,5 +175,12 @@ export interface TodayLesson {
 
 export interface TeacherToday {
         date: string;
+        /**
+         * `teacher` — o'qituvchining o'z darslari; `center` — filialning barcha
+         * darslari (admin/menejer uchun, faqat ma'lumot sifatida).
+         */
+        scope: 'teacher' | 'center';
+        /** "Keldim" tugmasi ko'rsatiladimi (faqat o'qituvchida `true`) */
+        canCheckIn: boolean;
         lessons: TodayLesson[];
 }

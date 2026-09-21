@@ -27,6 +27,10 @@ export interface GroupStudent {
   firstName: string
   lastName: string
   joinedAt: string | null
+  // leftAt — o'quvchi shu guruhdan chiqqan sana, **exclusive**: o'sha kungi
+  // darsga ham davomat yozilmaydi va to'lov hisoblanmaydi. Boshqa guruhga
+  // ko'chirilgan o'quvchi jurnalda shu sanagacha ko'rinib turadi (tarix uchun).
+  leftAt?: string | null
 }
 
 export interface LessonDatesResponse {

@@ -114,7 +114,7 @@
                           'cell-past': isPast(date),
                           'cell-future': isFuture(date),
                           'cell-cancelled': isCancelledDate(date),
-                          'cell-before-join': isBeforeJoin(student.id, date),
+                          'cell-before-join': isOutsideEnrollment(student.id, date),
                           'cell-editable': canEditCell(student.id, date),
                         }"
                         @click="handleCellClick($event, student.id, date)"
@@ -155,11 +155,34 @@
         <!-- TAB 3: STUDENTS -->
         <v-window-item v-if="can('students.view')" value="students">
           <v-card-text>
+            <div v-if="canTransferStudents" class="d-flex align-center flex-wrap ga-2 mb-3">
+              <v-btn
+                color="primary"
+                variant="flat"
+                size="small"
+                prepend-icon="mdi-account-switch"
+                :disabled="selectedStudentIds.length === 0"
+                @click="openTransferModal"
+              >
+                {{ $t('students.transfer.action') }}
+              </v-btn>
+              <span class="text-caption text-medium-emphasis">
+                {{
+                  selectedStudentIds.length
+                    ? $t('students.transfer.subtitle', { count: selectedStudentIds.length })
+                    : $t('students.transfer.selectStudents')
+                }}
+              </span>
+            </div>
+
             <v-data-table
+              v-model="selectedStudentIds"
               :items="students"
               :headers="studentHeaders"
               :loading="loadingStudents"
               :items-per-page="10"
+              :show-select="canTransferStudents"
+              item-value="id"
               class="elevation-0"
             >
               <template v-slot:item.fullName="{ item }">
@@ -423,6 +446,16 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Boshqa guruhga ko'chirish -->
+    <TransferStudentsModal
+      v-model="transferModal"
+      :student-ids="selectedStudentIds"
+      :from-group-id="Number(groupId)"
+      :from-group-name="group?.name ?? null"
+      allow-close-source-group
+      @transferred="onTransferred"
+    />
   </v-container>
 </template>
 
@@ -440,6 +473,8 @@ import type {
 import { fetchGroupById, fetchLessonDates, submitAttendance, rescheduleAttendance } from '@/services/pages/groups'
 import { fetchStudents } from '@/services/pages/students'
 import GroupPlanTab from '@/components/pages/group/GroupPlanTab.vue'
+import TransferStudentsModal from '@/components/pages/students/TransferStudentsModal.vue'
+import type { TransferStudentsResponse } from '@/types/students.types'
 import { usePermissions } from '@/composables/usePermissions'
 import { useNotificationStore } from '@/stores/notification'
 import type { StudentsParams } from '@/types/students.types'
@@ -459,7 +494,7 @@ const goBack = () => {
   if (window.history.length > 1) router.back()
   else router.push('/groups')
 }
-const { canManageAttendance, canManagePastAttendance, can, userId } = usePermissions()
+const { canManageAttendance, canManagePastAttendance, canViewGroups, can, userId } = usePermissions()
 const notify = useNotificationStore()
 
 // Davomat status'lari uchun ko'rinish (ikon + rang)
@@ -526,12 +561,32 @@ const joinedAtByStudent = computed(() => {
   return map
 })
 
+// Har bir o'quvchi shu guruhdan qachon chiqqan (boshqa guruhga ko'chirilgan yoki
+// olib tashlangan). `leftAt` — exclusive: o'sha kungi dars ham uniki emas.
+const leftAtByStudent = computed(() => {
+  const map = new Map<number, string>()
+  for (const s of attendanceData.value?.students ?? []) {
+    if (s.leftAt) map.set(s.id, s.leftAt)
+  }
+  return map
+})
+
 // Shu dars kunida o'quvchi hali guruhda bo'lmaganmi. Chegara backend bilan bir xil:
 // submit'da lessonDate < joinedAt bo'lsa server 400 qaytaradi.
 const isBeforeJoin = (studentId: number, date: string): boolean => {
   const joined = joinedAtByStudent.value.get(studentId)
   return !!joined && date < joined
 }
+
+// O'quvchi bu darsdan oldin guruhdan chiqib ketganmi (tarix — faqat o'qish uchun).
+const isAfterLeave = (studentId: number, date: string): boolean => {
+  const left = leftAtByStudent.value.get(studentId)
+  return !!left && date >= left
+}
+
+// A'zolik oynasidan tashqarimi — katak tahrirlanmaydi.
+const isOutsideEnrollment = (studentId: number, date: string): boolean =>
+  isBeforeJoin(studentId, date) || isAfterLeave(studentId, date)
 
 // Month filter (year + month). Davomat doim to'liq bir oy ko'rinishida bo'ladi.
 const now = new Date()
@@ -689,13 +744,14 @@ const loadAttendance = async () => {
   }
 }
 
-// Katakni tahrirlash mumkinmi: o'quvchi qo'shilishidan oldingi darslar, kelajak va
-// bekor qilingan darslar hech qachon, bugun — har doim, o'tgan sanalar — faqat
+// Katakni tahrirlash mumkinmi: o'quvchining a'zolik oynasidan tashqaridagi
+// darslar (qo'shilishidan oldin yoki chiqib ketganidan keyin), kelajak va bekor
+// qilingan darslar hech qachon, bugun — har doim, o'tgan sanalar — faqat
 // admin/o'qituvchi uchun.
 const canEditCell = (studentId: number, date: string): boolean => {
   // Davomatni faqat ko'ra oladigan xodim katakchani o'zgartira olmaydi
   if (!canManageAttendance.value) return false
-  if (isBeforeJoin(studentId, date)) return false
+  if (isOutsideEnrollment(studentId, date)) return false
   if (isFuture(date) || isCancelledDate(date)) return false
   if (isToday(date)) return true
   if (isPast(date)) return canManagePastAttendance.value
@@ -815,9 +871,9 @@ const saveAttendance = async () => {
 // Get cell icon
 const getCellIcon = (studentId: number, date: string): string => {
   if (isCancelledDate(date)) return 'mdi-cancel'
-  // Qo'shilishdan oldingi darslar — "?" emas, chiziqcha (davomat kutilmaydi).
-  // Eski ma'lumot bo'lsa (avval noto'g'ri yozilgan) — uni yashirmaymiz, ko'rsatamiz.
-  if (isBeforeJoin(studentId, date) && !getStudentAttendance(studentId, date)) {
+  // A'zolik oynasidan tashqaridagi darslar — "?" emas, chiziqcha (davomat
+  // kutilmaydi). Eski ma'lumot bo'lsa — uni yashirmaymiz, ko'rsatamiz.
+  if (isOutsideEnrollment(studentId, date) && !getStudentAttendance(studentId, date)) {
     return 'mdi-minus'
   }
   if (isFuture(date)) return 'mdi-circle-outline'
@@ -861,6 +917,10 @@ const getCellTitle = (studentId: number, date: string): string => {
   const joined = joinedAtByStudent.value.get(studentId)
   if (joined && date < joined) {
     return t('groups.attendance.beforeJoin', { date: formatJoinedAt(joined) })
+  }
+  const left = leftAtByStudent.value.get(studentId)
+  if (left && date >= left) {
+    return t('groups.attendance.afterLeave', { date: formatJoinedAt(left) })
   }
   return getCellComment(studentId, date)
 }
@@ -1018,6 +1078,30 @@ const submitReschedule = async () => {
 
 
 // Tugash sanasi o'zgargach guruh ham, dars sanalari ham o'zgarishi mumkin
+// ── Boshqa guruhga ko'chirish ───────────────────────────────────────────────
+// Modal maqsad guruhlar ro'yxatini `/groups/all` dan oladi, shuning uchun
+// `groups.view` ham kerak — aks holda foydalanuvchi bo'sh select ko'radi.
+const canTransferStudents = computed(
+  () => can('students.transfer') && canViewGroups.value
+)
+const selectedStudentIds = ref<number[]>([])
+const transferModal = ref(false)
+
+const openTransferModal = () => {
+  if (!selectedStudentIds.value.length) return
+  transferModal.value = true
+}
+
+// Ko'chirishdan keyin: ro'yxat, davomat va guruh ma'lumoti qayta yuklanadi
+// (o'quvchi chiqib ketgani, guruh yopilgani aks etishi uchun).
+const onTransferred = async (result: TransferStudentsResponse) => {
+  selectedStudentIds.value = []
+  await Promise.all([loadStudents(), loadGroup(), loadAttendance()])
+  if (result.sourceGroupClosed) {
+    notify.info(t('groups.messages.groupClosed'))
+  }
+}
+
 // Student table headers
 const studentHeaders = computed(() => [
   { title: t('groups.studentTable.fullName'), key: 'fullName' },

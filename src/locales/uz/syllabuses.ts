@@ -138,5 +138,10 @@ export default {
     noLessons: 'Bugun darslaringiz yo\'q',
     noLessonsHint: 'Yaxshi dam oling!',
     loadError: 'Bugungi darslarni yuklashda xatolik yuz berdi',
+    viewOnly: 'Faqat ma\'lumot',
+    centerNotice:
+      'Bu — filialning bugungi barcha darslari. Ishga kelganini va davomatni o\'qituvchining o\'zi belgilaydi.',
+    noLessonsCenter: 'Bugun bu filialda dars yo\'q',
+    noLessonsCenterHint: 'Jadval bo\'yicha bugunga dars rejalashtirilmagan',
   },
 }

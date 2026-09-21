@@ -7,6 +7,9 @@
           {{ formatFullDate(data.date) }}
         </div>
       </div>
+      <v-chip v-if="isCenterScope" size="small" variant="tonal" color="info" prepend-icon="mdi-eye-outline">
+        {{ $t('syllabuses.today.viewOnly') }}
+      </v-chip>
       <v-spacer></v-spacer>
       <v-btn
         icon="mdi-refresh"
@@ -17,8 +20,21 @@
       ></v-btn>
     </div>
 
-    <!-- "Keldim" — ishga kelganini belgilash -->
-    <CheckInCard />
+    <!--
+      "Keldim" — ishga kelganini faqat o'qituvchining o'zi belgilaydi.
+      Admin/menejer bu sahifani kuzatuvchi sifatida ochadi.
+    -->
+    <CheckInCard v-if="!isCenterScope" />
+
+    <!-- Admin ko'rinishi: bu ro'yxat faqat ma'lumot -->
+    <v-alert
+      v-else
+      type="info"
+      variant="tonal"
+      density="compact"
+      class="mb-6"
+      :text="$t('syllabuses.today.centerNotice')"
+    ></v-alert>
 
     <div v-if="loading && !data" class="text-center pa-12">
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -28,9 +44,15 @@
     <v-card v-else-if="data && sortedLessons.length === 0">
       <v-card-text class="text-center pa-12">
         <v-icon icon="mdi-white-balance-sunny" size="56" color="warning" class="mb-3"></v-icon>
-        <div class="text-h6">{{ $t('syllabuses.today.noLessons') }}</div>
+        <div class="text-h6">
+          {{ isCenterScope ? $t('syllabuses.today.noLessonsCenter') : $t('syllabuses.today.noLessons') }}
+        </div>
         <div class="text-body-2 text-medium-emphasis mt-1">
-          {{ $t('syllabuses.today.noLessonsHint') }}
+          {{
+            isCenterScope
+              ? $t('syllabuses.today.noLessonsCenterHint')
+              : $t('syllabuses.today.noLessonsHint')
+          }}
         </div>
       </v-card-text>
     </v-card>
@@ -52,6 +74,16 @@
           </div>
 
           <div class="d-flex flex-wrap mb-4" style="gap: 8px">
+            <!-- Admin ro'yxatida kimning darsi ekani ko'rinib turishi kerak -->
+            <v-chip
+              v-if="isCenterScope && lesson.teacher"
+              size="small"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-account-tie"
+            >
+              {{ lesson.teacher.firstName }} {{ lesson.teacher.lastName }}
+            </v-chip>
             <v-chip v-if="lesson.group.subject" size="small" variant="outlined" prepend-icon="mdi-book-open-variant">
               {{ lesson.group.subject.name }}
             </v-chip>
@@ -206,6 +238,13 @@ const contentSections = [
   { key: 'lessonOutline', icon: 'mdi-format-list-bulleted' },
   { key: 'homework', icon: 'mdi-home-edit-outline' },
 ] as const
+
+/**
+ * Admin/menejer ko'rinishi: backend filialning barcha darslarini qaytaradi
+ * (`scope: 'center'`). Bu yerda hech narsa belgilanmaydi — "Keldim" ham,
+ * davomat ham o'qituvchining o'zida qoladi.
+ */
+const isCenterScope = computed(() => data.value?.scope === 'center')
 
 const sortedLessons = computed(() => {
   const lessons = [...(data.value?.lessons || [])]

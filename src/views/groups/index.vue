@@ -154,6 +154,7 @@
       @updateData="getGroups"
       @clearEditForm="clearEditForm"
       :formForEdit="formForEdit"
+      :statusErrors="statusErrors"
     />
     <!-- Guruhni yakunlashda ogohlantirish -->
     <v-dialog v-model="finishConfirm.show" width="480">
@@ -214,6 +215,8 @@ const items = ref<Group[]>([])
 const openFormModal = ref(false)
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
+/** Statusni o'zgartirishda yetishmagan maydonlar (endDate / roomId) */
+const statusErrors = ref<Record<string, string | string[]> | undefined>(undefined)
 const finishConfirm = ref<{ show: boolean; item: Group | null }>({ show: false, item: null })
 const teachers = ref<TeacherListItem[]>([])
 const loadingTeachers = ref(false)
@@ -232,12 +235,18 @@ const teacherOptions = computed(() => {
   }))
 })
 
-const edit = (room: Group) => {
-  formForEdit.value = room
+/**
+ * Tahrirlash formasi. `errors` berilsa (status o'zgartirishda yetishmagan
+ * maydonlar) forma ochilgach xato aynan o'sha inputlar ostida chiqadi.
+ */
+const edit = (group: Group, errors?: Record<string, string | string[]>) => {
+  formForEdit.value = group
+  statusErrors.value = errors
   openFormModal.value = true
 }
 const clearEditForm = () => {
   formForEdit.value = undefined
+  statusErrors.value = undefined
 }
 
 const getGroups = async () => {
@@ -327,17 +336,25 @@ const applyStatus = async (status: GroupStatus, item: Group) => {
 }
 
 /**
- * 422 — maydonga bog'liq validatsiya (odatda endDate yo'q yoki o'tib ketgan):
- * xabarni ko'rsatib, guruh tahrirlash formasini ochamiz.
+ * 422 — maydonga bog'liq validatsiya (guruhni boshlash uchun tugash sanasi
+ * va xona kerak): xabarni ko'rsatib, tahrirlash formasini ochamiz va xatoni
+ * aynan shu maydonlar ostiga qo'yamiz.
  * 400 — umumiy biznes qoidasi: faqat xabarni ko'rsatamiz.
  */
 const handleStatusError = (err: unknown, item: Group) => {
   const response = errorData(err)
-  const endDateError = response?.errors?.endDate
-  if (endDateError) {
-    notify.error(firstMessage(endDateError) || t('groups.statusChange.endDateRequired'))
-    // Tugash sanasi tahrirlash formasi orqali kiritiladi
-    edit(item)
+  const fieldErrors = response?.errors
+  // Bu maydonlar guruh tahrirlash formasi orqali to'ldiriladi
+  const editableFields = ['endDate', 'roomId'] as const
+  const missing = editableFields.filter((field) => fieldErrors?.[field])
+
+  if (missing.length) {
+    const message = missing
+      .map((field) => firstMessage(fieldErrors?.[field]))
+      .filter(Boolean)
+      .join(' · ')
+    notify.error(message || t('groups.statusChange.endDateRequired'))
+    edit(item, fieldErrors)
     return
   }
   notify.error(firstMessage(response?.message) || t('groups.statusChange.error'))

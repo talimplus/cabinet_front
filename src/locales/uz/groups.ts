@@ -63,6 +63,8 @@ export default {
     commentRequired: 'Sababli (excused) uchun sabab yozilishi shart',
     commentRequiredHint: 'Sababli uchun sababni yozing...',
     beforeJoin: "Guruhga {date} da qo'shilgan — bundan oldingi darslarga davomat yozilmaydi",
+    afterLeave:
+      "Guruhdan {date} da chiqqan — bu darsdan boshlab davomat yozilmaydi (tarix uchun ko'rsatilmoqda)",
     saved: 'Davomat saqlandi',
     submitError: 'Davomatni saqlashda xatolik',
   },
@@ -116,6 +118,8 @@ export default {
     room: 'Xona',
     teacher: 'Ustoz',
     monthlyFee: "Oylik to'lov",
+    lessonDuration: 'Dars davomiyligi',
+    minutesShort: 'daqiqa',
     feeNextMonthHint: "Yangi narx {month} dan kuchga kiradi.",
     feeCurrentMonth: "Joriy oy shu narxda qoladi: {fee}.",
     applyFeeNow: "Shu oydan qo'llash (xato kiritilgan narxni tuzatish)",
@@ -134,5 +138,8 @@ export default {
     selectDays: 'Dars kunlarini tanlang',
     differentTime: 'Alohida tanlash',
     submit: 'Saqlash',
+  },
+  messages: {
+    groupClosed: "Guruh yopildi (tugagan deb belgilandi)",
   },
 }

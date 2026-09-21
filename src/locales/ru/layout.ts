@@ -17,6 +17,7 @@ export default {
     centers: 'Центры',
     subjects: 'Предметы',
     rooms: 'Комнаты',
+    schedule: 'Расписание',
     syllabuses: 'Учебные планы',
     myPerformance: 'Моя работа',
     staffAttendance: 'Посещаемость сотрудников',

@@ -3,7 +3,7 @@
     <v-navigation-drawer v-model="drawer" class="sidebar" width="280">
       <div class="sidebar-header">
         <div class="sidebar-logo">
-          <img src="/talimplus-logo.svg" alt="TalimPlus" class="logo-img" />
+          <img :src="brandingStore.logoUrl" :alt="brandingStore.name" class="logo-img" />
         </div>
       </div>
       <v-list density="compact" class="sidebar-menu">
@@ -225,11 +225,13 @@ import { useI18n } from 'vue-i18n'
 import { logout } from '@/services/pages/auth'
 import { useUserStore } from '@/stores/user'
 import { useCenterStore } from '@/stores/center'
+import { useBrandingStore } from '@/stores/branding'
 import { setLocale, type AppLocale } from '@/plugins/i18n'
 
 const router = useRouter()
 const userStore = useUserStore()
 const centerStore = useCenterStore()
+const brandingStore = useBrandingStore()
 const { t, locale } = useI18n()
 
 /** Birinchi punkt — "Barcha filiallar" (centerId umuman yuborilmaydi) */
@@ -268,16 +270,16 @@ const changeLocale = (lang: AppLocale) => {
 const allItems = {
   standalone: [
     {
-      text: 'layout.menu.todayLessons',
-      icon: 'mdi-calendar-today',
-      path: '/today',
-      permission: ['teacher.today'],
-    },
-    {
       text: 'layout.menu.statistics',
       icon: 'mdi-chart-line',
       path: '/statistics',
       permission: ['statistics.view'],
+    },
+    {
+      text: 'layout.menu.todayLessons',
+      icon: 'mdi-calendar-today',
+      path: '/today',
+      permission: ['teacher.today'],
     },
     {
       text: 'layout.menu.users',
@@ -407,6 +409,18 @@ const allItems = {
       path: '/rooms',
       permission: ['rooms.view'],
     },
+    {
+      text: 'layout.menu.organization',
+      icon: 'mdi-palette-outline',
+      path: '/organization',
+      permission: ['organization.settings'],
+    },
+    {
+      text: 'layout.menu.telegram',
+      icon: 'mdi-send-circle',
+      path: '/telegram',
+      permission: ['telegram.settings'],
+    },
   ],
 }
 
@@ -472,6 +486,8 @@ const handleLogout = async () => {
     userStore.clearUser()
     // Boshqa hisobga kirilganda eski filial qolib ketmasin
     centerStore.reset()
+    // Logo/favicon ham standart holatga qaytadi
+    brandingStore.reset()
     // Redirect to login page
     router.push('/login')
     logoutLoading.value = false

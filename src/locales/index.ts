@@ -20,6 +20,8 @@ import uzStatistics from './uz/statistics'
 import uzStaffAttendance from './uz/staffAttendance'
 import uzStaff from './uz/staff'
 import uzSchedule from './uz/schedule'
+import uzTelegram from './uz/telegram'
+import uzOrganization from './uz/organization'
 
 // Russian namespaces
 import ruCommon from './ru/common'
@@ -43,6 +45,8 @@ import ruStatistics from './ru/statistics'
 import ruStaffAttendance from './ru/staffAttendance'
 import ruStaff from './ru/staff'
 import ruSchedule from './ru/schedule'
+import ruTelegram from './ru/telegram'
+import ruOrganization from './ru/organization'
 
 export const messages = {
   uz: {
@@ -67,6 +71,8 @@ export const messages = {
     staffAttendance: uzStaffAttendance,
     staff: uzStaff,
     schedule: uzSchedule,
+    telegram: uzTelegram,
+    organization: uzOrganization,
   },
   ru: {
     common: ruCommon,
@@ -90,5 +96,7 @@ export const messages = {
     staffAttendance: ruStaffAttendance,
     staff: ruStaff,
     schedule: ruSchedule,
+    telegram: ruTelegram,
+    organization: ruOrganization,
   },
 }

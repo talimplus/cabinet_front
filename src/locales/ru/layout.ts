@@ -17,6 +17,8 @@ export default {
     centers: 'Центры',
     subjects: 'Предметы',
     rooms: 'Комнаты',
+    telegram: 'Telegram-бот',
+    organization: 'Учебный центр',
     schedule: 'Расписание',
     syllabuses: 'Учебные планы',
     myPerformance: 'Моя работа',

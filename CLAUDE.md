@@ -181,6 +181,23 @@ Jadvalda barcha endpointlar bor; `permissions: []` — ochiq endpoint
   `views/staff-attendance/index.vue` (kunlik yozuvlar + hisobot).
   Markaz koordinatasi va Wi-Fi IP'si `CenterCreate.vue` ichida (faqat tahrirlashda).
   ⚠️ Geolokatsiya **faqat HTTPS yoki localhost** da ishlaydi.
+- **Ota-onalar Telegram boti:** o'quvchi sahifasida (`views/students/view.vue`)
+  `components/pages/students/TelegramParentCard.vue` — QR kod, ulanish havolasi
+  va ulangan ota-onalar ro'yxati. QR rasmi **backenddan** data URL bo'lib keladi
+  (frontda QR kutubxonasi yo'q). Sozlamalar sahifasi — `views/telegram.vue`
+  (`/telegram`, ruxsat `telegram.settings`, menyuda "Sozlamalar" bo'limida).
+  QR ko'rish `students.view` bilan, yangilash/uzish `students.update` bilan.
+  Bot **har bir tashkilotda o'ziniki**: sozlamalar sahifasida @BotFather
+  tokeni kiritiladi (username qo'lda yozilmaydi — backend `getMe()` dan oladi).
+  Token frontga qaytmaydi, faqat `botConfigured` va `botTokenMasked`. Bot
+  ulanmagan bo'lsa QR o'rniga ogohlantirish chiqadi.
+- **O'quv markazi brendi:** `views/organization.vue` (`/organization`, ruxsat
+  `organization.settings`) — nom, logotip va favicon. Rasm fayldan o'qilib
+  **data URL** ko'rinishida yuboriladi (loyihada fayl yuklash servisi yo'q).
+  Qiymatlar `stores/branding.ts` da: `logoUrl` sidebar logosiga, `name` esa
+  `document.title` va favicon'ga qo'llanadi (`applyToDocument`). Store
+  login'dan keyin (`main.ts` va `login.vue`) yuklanadi, logout'da tozalanadi.
+  Brending kelmasa standart TalimPlus logosi/nomi qoladi — domen o'zgarmaydi.
 - **Xodim sahifasi:** `components/pages/staff/StaffOverview.vue` — bitta komponent
   uchta joyda ishlatiladi: `/users/:id` (`views/staff/view.vue`, admin),
   `/my-performance` (`views/staff/my.vue`, xodimning o'zi) va `/payroll` dagi
@@ -194,5 +211,12 @@ Jadvalda barcha endpointlar bor; `permissions: []` — ochiq endpoint
 - `npm run lint` da ~278 ta eski xato bor (asosan `vue/valid-v-slot` — Vuetify
   `v-slot:item.xxx` uslubi va `vue/multi-word-component-names`). Ular loyiha bo'ylab
   mavjud; yangi kod ularning sonini oshirmasligi kerak.
-- **Asosiy tekshiruv — `npm run type-check`** (u toza bo'lishi shart).
+- ⚠️ **`npm run type-check` hozir hech narsani tekshirmaydi.** Skript
+  `vue-tsc --noEmit` ni ildizdagi `tsconfig.json` ga qarshi ishga tushiradi,
+  u esa `"files": []` + `references` — ya'ni solution rejimisiz **0 ta fayl**
+  tekshiriladi va har doim yashil qaytadi. Haqiqiy tekshiruv:
+  `npx vue-tsc --noEmit -p tsconfig.app.json` (hozir **43 ta eski xato**
+  chiqadi: `CreateStudent.vue`, `students/*.vue`, `users.vue`,
+  `@/types/room.types` yo'qligi va h.k.). Yangi kod yozganda shu buyruq bilan
+  tekshirib, o'z fayllaringizda xato qoldirmang.
 - Test yo'q (Vitest bu papkada sozlanmagan — u `cabinet_front_new/` da).

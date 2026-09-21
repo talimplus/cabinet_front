@@ -9,6 +9,7 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 import i18n from './plugins/i18n'
 import { useUserStore } from './stores/user'
+import { useBrandingStore } from './stores/branding'
 import { getMe } from './services/pages/auth'
 
 // Import global overrides AFTER Vuetify styles so they win on equal specificity
@@ -38,6 +39,9 @@ const initUser = async () => {
       const userStore = useUserStore()
       if (response?.user) {
         userStore.setUser(response.user)
+        // O'quv markazining logotipi/nomi — sidebar va tab sarlavhasi uchun.
+        // Xatosi yutiladi: brending kelmasa standart ko'rinish qoladi.
+        await useBrandingStore().load()
       }
     } catch (error) {
       // If token is invalid, clear it

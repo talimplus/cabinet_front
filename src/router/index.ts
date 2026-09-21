@@ -99,6 +99,18 @@ const router = createRouter({
           meta: { permission: ['rooms.view'] },
         },
         {
+          path: '/organization',
+          name: 'organization',
+          component: () => import('../views/organization.vue'),
+          meta: { permission: ['organization.settings'] },
+        },
+        {
+          path: '/telegram',
+          name: 'telegram',
+          component: () => import('../views/telegram.vue'),
+          meta: { permission: ['telegram.settings'] },
+        },
+        {
           path: '/reception',
           name: 'reception',
           component: () => import('../views/students/reception.vue'),

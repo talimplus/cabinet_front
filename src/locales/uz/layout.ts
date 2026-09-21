@@ -17,6 +17,8 @@ export default {
     centers: 'Markazlar',
     subjects: 'Fanlar',
     rooms: 'Xonalar',
+    telegram: 'Telegram bot',
+    organization: "O'quv markazi",
     schedule: 'Dars jadvali',
     syllabuses: 'Kurs rejalari',
     myPerformance: 'Mening faoliyatim',

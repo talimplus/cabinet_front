@@ -29,7 +29,8 @@ export interface StudentsStats {
 }
 
 export interface DashboardResponse {
-  centerId: number;
+  /** `null` — "Barcha filiallar": butun tashkilot bo'yicha hisoblangan */
+  centerId: number | null;
   fromMonth: string;
   toMonth: string;
   payments: PaymentsStats;

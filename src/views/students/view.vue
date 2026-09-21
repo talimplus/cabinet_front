@@ -134,6 +134,13 @@
         </v-card-text>
       </v-card>
 
+      <!-- Ota-onalar uchun Telegram QR -->
+      <TelegramParentCard
+        v-if="canViewStudents && studentId"
+        :student-id="studentId"
+        :student-name="`${summary.student.firstName} ${summary.student.lastName}`"
+      />
+
       <!-- Stats cards -->
       <v-row class="mb-2">
         <!-- 1. Jami hisoblangan -->
@@ -438,6 +445,7 @@ import { usePermissions } from '@/composables/usePermissions'
 import CreateStudent from '@/components/students/CreateStudent.vue'
 import CheckModal from '@/components/pages/payments/CheckModal.vue'
 import TransferStudentsModal from '@/components/pages/students/TransferStudentsModal.vue'
+import TelegramParentCard from '@/components/pages/students/TelegramParentCard.vue'
 
 defineOptions({ name: 'StudentView' })
 

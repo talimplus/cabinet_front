@@ -114,6 +114,8 @@ export function usePermissions() {
     canManageCenters: computed(() => userStore.can('centers.manage')),
     canManageRooms: computed(() => userStore.can('rooms.manage')),
     canManageSubjects: computed(() => userStore.can('subjects.manage')),
+    /** Ota-onalar boti sozlamalari (menyu + sahifa) */
+    canManageTelegram: computed(() => userStore.can('telegram.settings')),
 
     // ── Xodimlar ───────────────────────────────────────────────────
     canCreateUser: computed(() => userStore.can('users.create')),

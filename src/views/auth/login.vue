@@ -76,10 +76,12 @@ import { Form, Field } from 'vee-validate'
 import type { LoginForm } from '@/types/auth.types'
 import { login } from '@/services/pages/auth'
 import { useUserStore } from '@/stores/user'
+import { useBrandingStore } from '@/stores/branding'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userStore = useUserStore()
+const brandingStore = useBrandingStore()
 const formRef = ref()
 
 const loading = ref(false)
@@ -96,6 +98,8 @@ const submit = async () => {
     if (data?.access_token && data?.user) {
       localStorage.setItem('token', data.access_token)
       userStore.setUser(data.user)
+      // O'quv markazining logotipi/nomi — sidebar va tab sarlavhasi uchun
+      await brandingStore.load()
 
       // Boshlang'ich sahifani rol nomiga emas, ruxsatlarga qarab tanlaymiz —
       // router guard'idagi bir xil mantiq (resolveHome) ishlaydi.
@@ -105,7 +109,7 @@ const submit = async () => {
     const errors = err?.response?.data?.errors
     if (errors) {
       formRef.value?.setErrors(errors)
-    } else if (err.response.data.message) {
+    } else if (err?.response?.data?.message) {
       formRef.value?.setErrors({
         email: err.response.data.message,
       })

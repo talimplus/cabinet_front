@@ -1,5 +1,5 @@
 import http from '../baseHttp';
-import type { CenterForm, CentersParams } from '@/types/center.types';
+import type { CenterForm, CentersParams } from '@/types/centers.types';
 
 
 export const fetchCenters = async (par: CentersParams) => {
@@ -18,4 +18,13 @@ export const editCenter = async (form: CenterForm, id: number) => {
 
 export const deleteCenter = async (id: number) => {
         return await http.delete(`/centers/${id}`)
+}
+
+/**
+ * Markazda turib, markaz Wi-Fi'siga ulangan holda bosiladi — so'rov kelgan
+ * tashqi IP markazga yoziladi. Xodim davomatidagi eng ishonchli langar shu.
+ */
+export const captureCenterIp = async (id: number) => {
+        const { data } = await http.post<{ publicIp: string }>(`/centers/${id}/capture-ip`)
+        return data
 }

@@ -11,19 +11,6 @@
       <v-card-text>
         <v-row>
           <v-col cols="12" md="4">
-            <v-select
-              v-model="filters.centerId"
-              :items="centerOptions"
-              item-title="title"
-              item-value="value"
-              :label="$t('statistics.filters.center')"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              @update:model-value="loadDashboard"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" md="4">
             <v-text-field
               v-model="filters.fromMonth"
               :label="$t('statistics.filters.fromMonth')"
@@ -334,23 +321,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchDashboard } from '@/services/pages/statistics'
 import type { DashboardResponse, DashboardParams } from '@/types/statistics.types'
-import { fetchAllCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/centers.types'
 import dayjs from 'dayjs'
 
 const { t } = useI18n()
 
 const loading = ref(false)
 const dashboard = ref<DashboardResponse | null>(null)
-const centers = ref<Center[]>([])
 const selectedPeriod = ref('month')
 
 const filters = ref<DashboardParams>({
-  centerId: undefined,
   fromMonth: dayjs().format('YYYY-MM'),
   toMonth: dayjs().add(1, 'month').format('YYYY-MM'),
 })
@@ -359,13 +342,6 @@ const periodOptions = computed(() => [
   { title: t('statistics.periods.month'), value: 'month' },
   { title: t('statistics.periods.year'), value: 'year' },
 ])
-
-const centerOptions = computed(() => {
-  return centers.value.map(center => ({
-    title: center.name,
-    value: center.id,
-  }))
-})
 
 // Generate month labels for charts
 const getMonthLabels = () => {
@@ -616,22 +592,7 @@ const getPeriodLabel = () => {
   return `${start} - ${end}`
 }
 
-const loadCenters = async () => {
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !filters.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      filters.value.centerId = defaultCenter.id
-    }
-  } catch (error) {
-    console.error('Failed to load centers:', error)
-  }
-}
-
 const loadDashboard = async () => {
-  if (!filters.value.centerId) return
-  
   loading.value = true
   try {
     const data = await fetchDashboard(filters.value)
@@ -644,10 +605,7 @@ const loadDashboard = async () => {
 }
 
 onMounted(async () => {
-  await loadCenters()
-  if (filters.value.centerId) {
-    await loadDashboard()
-  }
+  await loadDashboard()
 })
 </script>
 

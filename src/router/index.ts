@@ -57,6 +57,24 @@ const router = createRouter({
           meta: { permission: ['groups.view'] },
         },
         {
+          path: '/users/:id',
+          name: 'staff-view',
+          component: () => import('../views/staff/view.vue'),
+          meta: { permission: ['staffPerformance.view'] },
+        },
+        {
+          path: '/my-performance',
+          name: 'my-performance',
+          component: () => import('../views/staff/my.vue'),
+          meta: { permission: ['staffAttendance.viewOwn'] },
+        },
+        {
+          path: '/staff-attendance',
+          name: 'staff-attendance',
+          component: () => import('../views/staff-attendance/index.vue'),
+          meta: { permission: ['staffAttendance.view'] },
+        },
+        {
           path: '/groups/:id',
           name: 'group-view',
           component: () => import('../views/groups/view.vue'),

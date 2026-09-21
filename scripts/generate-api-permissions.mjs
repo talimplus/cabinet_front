@@ -52,6 +52,35 @@ const joinPath = (...parts) => {
   return '/' + segments.join('/')
 }
 
+/**
+ * Query DTO'si ichida `centerId` bo'lgan klasslar. Ba'zi endpointlar
+ * `@Query('centerId')` emas, butun DTO oladi (masalan QueryStaffAttendanceDto).
+ */
+const dtoWithCenterId = new Set()
+const walkAll = (dir) => {
+  const found = []
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry)
+    if (statSync(full).isDirectory()) found.push(...walkAll(full))
+    else if (entry.endsWith('.ts')) found.push(full)
+  }
+  return found
+}
+for (const file of walkAll(BACKEND_SRC)) {
+  if (!file.includes('/dto/')) continue
+  const text = readFileSync(file, 'utf8')
+  // Har bir klass tanasini alohida tekshiramiz
+  const parts = text.split(/export class /).slice(1)
+  for (const part of parts) {
+    const name = part.split(/[\s{]/)[0]
+    const body = part.slice(0, part.indexOf('\n}') + 1)
+    if (/\bcenterId\b/.test(body)) dtoWithCenterId.add(name)
+  }
+}
+
+const QUERY_CENTER_ID = /@Query\(\s*['"]centerId['"]\s*\)/
+const QUERY_DTO = /@Query\(\s*\)\s*\w+\s*:\s*(\w+)/
+
 const rules = []
 const files = walk(BACKEND_SRC).sort()
 
@@ -86,11 +115,18 @@ for (const file of files) {
     const m = isPublic ? null : REQUIRE_PERMISSIONS.exec(chunk)
     const permissions = m ? literals(m[1]) : []
 
+    // Endpoint `centerId` filtrini qabul qiladimi — header'dagi aktiv filialni
+    // avtomatik qo'shish uchun kerak (`baseHttp.ts`).
+    const queryDto = QUERY_DTO.exec(chunk)?.[1]
+    const acceptsCenterId =
+      QUERY_CENTER_ID.test(chunk) || (!!queryDto && dtoWithCenterId.has(queryDto))
+
     const sub = literals(route.arg)[0] ?? ''
     rules.push({
       method: route.method,
       path: joinPath(base, sub),
       permissions,
+      acceptsCenterId,
       source: relative(join(FRONT, '..'), file),
     })
   })
@@ -118,7 +154,7 @@ const body = rules
     (r) =>
       `  { method: '${r.method}', path: '${r.path}', permissions: [${r.permissions
         .map((p) => `'${p}'`)
-        .join(', ')}] },`,
+        .join(', ')}]${r.acceptsCenterId ? ', acceptsCenterId: true' : ''} },`,
   )
   .join('\n')
 
@@ -141,6 +177,11 @@ export interface ApiPermissionRule {
   path: string
   /** Bittasi yetarli (OR) — backenddagi PermissionsGuard bilan bir xil */
   permissions: string[]
+  /**
+   * Endpoint \`centerId\` filtrini qabul qiladi. \`baseHttp.ts\` bunday
+   * so'rovlarga header'da tanlangan aktiv filialni avtomatik qo'shadi.
+   */
+  acceptsCenterId?: boolean
 }
 
 export const API_PERMISSION_RULES: ApiPermissionRule[] = [

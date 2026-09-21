@@ -16,20 +16,6 @@
               @update:model-value="handleYearChange"
             ></v-select>
           </v-col>
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="selectedCenterId"
-              :items="centerOptions"
-              item-title="title"
-              item-value="value"
-              :label="$t('payroll.center')"
-              variant="outlined"
-              density="compact"
-              clearable
-              :loading="loadingCenters"
-              @update:model-value="handleFilterChange"
-            ></v-select>
-          </v-col>
         </v-row>
       </v-card-text>
 
@@ -65,6 +51,7 @@
                 <th>{{ $t('payroll.table.baseSalary') }}</th>
                 <th v-if="hasTeachers">{{ $t('payroll.table.commission') }}</th>
                 <th>{{ $t('payroll.table.totalSalary') }}</th>
+                <th>{{ $t('payroll.table.deduction') }}</th>
                 <th>{{ $t('payroll.table.paid') }}</th>
                 <th>{{ $t('payroll.table.remaining') }}</th>
                 <th>{{ $t('payroll.table.status') }}</th>
@@ -95,6 +82,18 @@
                   <span v-else class="text-medium-emphasis">—</span>
                 </td>
                 <td class="font-weight-bold">{{ formatCurrency(getTotalSalary(staff)) }}</td>
+                <td>
+                  <span v-if="(staff.deductionAmount ?? 0) > 0" class="text-error">
+                    −{{ formatCurrency(staff.deductionAmount ?? 0) }}
+                  </span>
+                  <span v-else class="text-medium-emphasis">—</span>
+                  <div
+                    v-if="(staff.deductionOutstanding ?? 0) > 0"
+                    class="text-caption text-warning"
+                  >
+                    {{ $t('payroll.table.outstanding', { amount: formatCurrency(staff.deductionOutstanding ?? 0) }) }}
+                  </div>
+                </td>
                 <td>{{ formatCurrency(staff.paidAmount) }}</td>
                 <td :class="{ 'text-error font-weight-bold': getRemainingAmount(staff) > 0 }">
                   {{ formatCurrency(getRemainingAmount(staff)) }}
@@ -105,17 +104,30 @@
                   </v-chip>
                 </td>
                 <td>
-                  <v-btn
-                    v-if="canPaySalary && staff.status !== PayrollStatus.PAID"
-                    color="primary"
-                    size="small"
-                    variant="flat"
-                    @click="openPaymentModal(staff)"
-                    :disabled="processingPayment"
-                  >
-                    {{ $t('payroll.pay') }}
-                  </v-btn>
-                  <span v-else class="text-caption text-medium-emphasis">{{ $t('payroll.paid') }}</span>
+                  <div class="d-flex align-center" style="gap: 4px">
+                    <v-btn
+                      v-if="canViewStaff"
+                      icon="mdi-eye"
+                      size="small"
+                      variant="text"
+                      color="medium-emphasis"
+                      :title="$t('staff.viewAction')"
+                      @click="openStaffModal(staff)"
+                    ></v-btn>
+                    <v-btn
+                      v-if="canPaySalary && staff.status !== PayrollStatus.PAID"
+                      color="primary"
+                      size="small"
+                      variant="flat"
+                      @click="openPaymentModal(staff)"
+                      :disabled="processingPayment"
+                    >
+                      {{ $t('payroll.pay') }}
+                    </v-btn>
+                    <span v-else-if="!canPaySalary || staff.status === PayrollStatus.PAID" class="text-caption text-medium-emphasis">
+                      {{ $t('payroll.paid') }}
+                    </span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -123,6 +135,26 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <!-- Xodim sahifasi: davomat, topshirilmagan pullar, jarimalar + to'lash -->
+    <v-dialog v-model="staffModal.show" max-width="1100" scrollable>
+      <v-card>
+        <v-card-title class="d-flex align-center pa-4">
+          <span class="text-h6">{{ $t('staff.title') }}</span>
+          <v-spacer></v-spacer>
+          <v-btn icon="mdi-close" variant="text" @click="staffModal.show = false"></v-btn>
+        </v-card-title>
+        <v-card-text>
+          <StaffOverview
+            v-if="staffModal.userId"
+            :user-id="staffModal.userId"
+            :month="forMonth.slice(0, 7)"
+            show-actions
+            @changed="loadStaffSalaries"
+          />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
     <!-- Payment Modal -->
     <v-dialog v-model="paymentModal.show" max-width="500" persistent>
@@ -180,6 +212,49 @@
             maxlength="500"
             class="mb-3"
           ></v-textarea>
+
+          <!-- Oylikdan ushlab qolish (kechikish, topshirilmagan pul va h.k.) -->
+          <template v-if="canDeduct">
+            <v-checkbox
+              v-model="paymentModal.withDeduction"
+              :label="$t('payroll.modal.addDeduction')"
+              density="compact"
+              hide-details
+              class="mb-2"
+            ></v-checkbox>
+
+            <template v-if="paymentModal.withDeduction">
+              <v-text-field
+                v-model.number="paymentModal.deductionAmount"
+                :label="$t('staff.deduction.amount')"
+                :hint="$t('staff.deduction.amountHint')"
+                persistent-hint
+                type="number"
+                variant="outlined"
+                density="compact"
+                :suffix="$t('payroll.modal.currencySuffix')"
+                class="mb-3"
+              ></v-text-field>
+              <v-select
+                v-model="paymentModal.deductionType"
+                :items="deductionTypeOptions"
+                item-title="title"
+                item-value="value"
+                :label="$t('staff.deduction.type')"
+                variant="outlined"
+                density="compact"
+                class="mb-3"
+              ></v-select>
+              <v-textarea
+                v-model="paymentModal.deductionReason"
+                :label="$t('staff.deduction.reason')"
+                variant="outlined"
+                density="compact"
+                rows="2"
+                class="mb-3"
+              ></v-textarea>
+            </template>
+          </template>
 
           <!-- Payment History -->
           <div v-if="paymentModal.staff?.paymentHistory && paymentModal.staff.paymentHistory.length > 0" class="mb-2">
@@ -240,15 +315,29 @@
 
 <script setup lang="ts">
 import { usePermissions } from '@/composables/usePermissions'
+import { useCenterStore } from '@/stores/center'
+import StaffOverview from '@/components/pages/staff/StaffOverview.vue'
+import { apiErrorMessage } from '@/services/apiError'
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { StaffSalary, StaffUser } from '@/types/payroll.types'
+import type { StaffSalary, StaffUser, PayStaffSalaryPayload } from '@/types/payroll.types'
 import { PayrollStatus } from '@/types/payroll.types'
 import { fetchStaffSalaries, payStaffSalary } from '@/services/pages/payroll'
-import { fetchAllCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/centers.types'
 
-const { canPaySalary } = usePermissions()
+const { canPaySalary, can } = usePermissions()
+const centerStore = useCenterStore()
+
+/** Xodim sahifasini (davomat, qarz, jarimalar) ko'rish */
+const canViewStaff = computed(() => can('staffPerformance.view'))
+
+const staffModal = ref<{ show: boolean; userId: number | null }>({
+  show: false,
+  userId: null,
+})
+
+const openStaffModal = (staff: StaffSalary) => {
+  staffModal.value = { show: true, userId: staff.userId }
+}
 
 // Component name
 defineOptions({
@@ -260,11 +349,8 @@ const { t } = useI18n()
 // State
 const selectedYear = ref(new Date().getFullYear())
 const selectedMonthIndex = ref(0) // Will be set after centers load
-const selectedCenterId = ref<number | null>(null)
 const staffSalaries = ref<StaffSalary[]>([])
-const centers = ref<Center[]>([])
 const loading = ref(false)
-const loadingCenters = ref(false)
 const processingPayment = ref(false)
 
 // Payment Modal
@@ -273,7 +359,20 @@ const paymentModal = ref({
   staff: null as StaffSalary | null,
   amount: 0 as number,
   comment: '' as string,
+  // Oylikdan ushlab qolish (ixtiyoriy)
+  withDeduction: false,
+  deductionAmount: null as number | null,
+  deductionReason: '' as string,
+  deductionType: 'other' as 'late' | 'unsettled_payment' | 'other',
 })
+
+const canDeduct = computed(() => can('payroll.deduct'))
+
+const deductionTypeOptions = computed(() => [
+  { value: 'late', title: t('staff.deductionType.late') },
+  { value: 'unsettled_payment', title: t('staff.deductionType.unsettled_payment') },
+  { value: 'other', title: t('staff.deductionType.other') },
+])
 
 // Snackbar
 const snackbar = ref({
@@ -288,10 +387,11 @@ const currentMonth = computed(() => new Date().getMonth())
 
 // Get the earliest center's creation date
 const getEarliestCenterDate = computed(() => {
+  const centers = { value: centerStore.centers }
   if (centers.value.length === 0) return null
-  
-  if (selectedCenterId.value) {
-    const center = centers.value.find(c => c.id === selectedCenterId.value)
+
+  if (centerStore.activeCenterId) {
+    const center = centers.value.find(c => c.id === centerStore.activeCenterId)
     if (center?.createdAt) {
       const date = new Date(center.createdAt)
       return { year: date.getFullYear(), month: date.getMonth() }
@@ -370,13 +470,6 @@ const forMonth = computed(() => {
   return `${selectedYear.value}-${selectedMonth.value}`
 })
 
-const centerOptions = computed(() => {
-  return centers.value.map((center) => ({
-    title: center.name,
-    value: center.id,
-  }))
-})
-
 const hasTeachers = computed(() => {
   return staffSalaries.value.some(staff => staff.user.role === 'teacher' && (staff.earningCommissionAmount || 0) > 0)
 })
@@ -401,9 +494,19 @@ const amountRules = [
 ]
 
 const canProcessPayment = computed(() => {
+  const modal = paymentModal.value
+
+  // Jarima yozilayotgan bo'lsa summa va sabab to'liq bo'lishi kerak
+  if (modal.withDeduction) {
+    if (!modal.deductionAmount || modal.deductionAmount <= 0) return false
+    if (!modal.deductionReason.trim()) return false
+    // Faqat jarima yozish ham mumkin (to'lovsiz)
+    if (!modal.amount) return true
+  }
+
   return (
-    paymentModal.value.amount > 0 &&
-    paymentModal.value.amount <= remainingAmount.value &&
+    modal.amount > 0 &&
+    modal.amount <= remainingAmount.value &&
     amountError.value.length === 0
   )
 })
@@ -416,17 +519,10 @@ const isPastMonth = (monthValue: string): boolean => {
   return false
 }
 
-const loadCenters = async () => {
-  loadingCenters.value = true
+/** Oy oralig'i filial ochilgan sanadan boshlanadi — filiallar store'dan keladi */
+const initMonthRange = async () => {
+  await centerStore.load()
   try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !selectedCenterId.value) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      selectedCenterId.value = defaultCenter.id
-    }
-    
-    // Update year and month based on center creation date
     if (getEarliestCenterDate.value) {
       const earliestDate = getEarliestCenterDate.value
       // Default to current year if it's >= earliest center year, otherwise use earliest year
@@ -437,18 +533,16 @@ const loadCenters = async () => {
       selectedYear.value = currentYear.value
       selectedMonthIndex.value = currentMonth.value
     }
-  } catch (error: any) {
-    console.error('Markazlarni yuklashda xatolik:', error)
-    centers.value = []
-  } finally {
-    loadingCenters.value = false
+  } catch (error) {
+    console.error(error)
   }
 }
 
 const loadStaffSalaries = async () => {
   loading.value = true
   try {
-    const response = await fetchStaffSalaries(forMonth.value, selectedCenterId.value || undefined)
+    // Filial header'dan keladi — `baseHttp` uni avtomatik qo'shadi
+    const response = await fetchStaffSalaries(forMonth.value)
     staffSalaries.value = Array.isArray(response) ? response : []
   } catch (error: any) {
     showSnackbar(error.response?.data?.message || t('payroll.messages.loadSalariesError'), 'error')
@@ -472,69 +566,83 @@ const handleMonthChange = () => {
   loadStaffSalaries()
 }
 
-const handleFilterChange = () => {
-  // Update year and month when center changes
-  if (getEarliestCenterDate.value) {
-    const earliestDate = getEarliestCenterDate.value
-    selectedYear.value = earliestDate.year
-    selectedMonthIndex.value = 0
-  }
-  loadStaffSalaries()
-}
-
 const openPaymentModal = (staff: StaffSalary) => {
   paymentModal.value = {
     show: true,
     staff,
-    amount: getTotalSalary(staff) - staff.paidAmount,
+    // Jarima allaqachon ushlangan bo'lsa, qolgan summa shundan hisoblanadi
+    amount: getRemainingAmount(staff),
     comment: '',
+    withDeduction: false,
+    deductionAmount: null,
+    deductionReason: '',
+    deductionType: 'other',
   }
 }
 
 const closePaymentModal = () => {
   if (processingPayment.value) return
+  resetPaymentModal()
+}
+
+const confirmPayment = async () => {
+  const modal = paymentModal.value
+  if (!modal.staff) return
+
+  const amount = Number(modal.amount || 0)
+  const hasDeduction =
+    modal.withDeduction && Number(modal.deductionAmount || 0) > 0 && !!modal.deductionReason.trim()
+
+  processingPayment.value = true
+  try {
+    // Faqat jarima yozish ham mumkin — bunda to'lov summasi 0 bo'ladi
+    if (amount <= 0 && !hasDeduction) {
+      showSnackbar(t('payroll.messages.invalidAmount'), 'error')
+      return
+    }
+    if (amount > remainingAmount.value) {
+      showSnackbar(t('payroll.messages.exceedsRemainingAmount'), 'error')
+      return
+    }
+
+    const payload: PayStaffSalaryPayload = { amount }
+    if (modal.comment && modal.comment.trim()) {
+      payload.comment = modal.comment.trim()
+    }
+    if (hasDeduction) {
+      payload.deduction = {
+        amount: Number(modal.deductionAmount),
+        reason: modal.deductionReason.trim(),
+        type: modal.deductionType,
+      }
+    }
+
+    await payStaffSalary(modal.staff.id, payload)
+    showSnackbar(
+      amount > 0
+        ? t('payroll.messages.paymentSuccess', { amount: formatCurrency(amount) })
+        : t('staff.deduction.success'),
+      'success',
+    )
+    resetPaymentModal()
+    await loadStaffSalaries()
+  } catch (error) {
+    showSnackbar(apiErrorMessage(error) || t('payroll.messages.paymentError'), 'error')
+  } finally {
+    processingPayment.value = false
+  }
+}
+
+const resetPaymentModal = () => {
   paymentModal.value = {
     show: false,
     staff: null,
     amount: 0,
     comment: '',
-  }
-}
-
-const confirmPayment = async () => {
-  if (!paymentModal.value.staff) return
-
-  processingPayment.value = true
-  try {
-    if (!paymentModal.value.amount || paymentModal.value.amount <= 0) {
-      showSnackbar(t('payroll.messages.invalidAmount'), 'error')
-      return
-    }
-    if (paymentModal.value.amount > remainingAmount.value) {
-      showSnackbar(t('payroll.messages.exceedsRemainingAmount'), 'error')
-      return
-    }
-
-    const payload: any = {
-      amount: paymentModal.value.amount,
-    }
-    if (paymentModal.value.comment && paymentModal.value.comment.trim()) {
-      payload.comment = paymentModal.value.comment.trim()
-    }
-
-    await payStaffSalary(paymentModal.value.staff.id, payload)
-    showSnackbar(t('payroll.messages.paymentSuccess', { amount: formatCurrency(paymentModal.value.amount) }), 'success')
-    paymentModal.value = {
-      show: false,
-      staff: null,
-      amount: 0,
-      comment: '',
-    }
-    await loadStaffSalaries()
-  } catch (error: any) {
-    showSnackbar(error.response?.data?.message || t('payroll.messages.paymentError'), 'error')
-  } finally {
-    processingPayment.value = false
+    withDeduction: false,
+    deductionAmount: null,
+    deductionReason: '',
+    deductionType: 'other',
   }
 }
 
@@ -607,7 +715,9 @@ const getTotalSalary = (staff: StaffSalary): number => {
 }
 
 const getRemainingAmount = (staff: StaffSalary): number => {
-  return getTotalSalary(staff) - staff.paidAmount
+  // Backend jarimani hisobga olib `remaining` beradi; eski javoblar uchun fallback
+  if (staff.remaining !== undefined) return staff.remaining
+  return getTotalSalary(staff) - (staff.deductionAmount ?? 0) - staff.paidAmount
 }
 
 const formatCurrency = (amount: number): string => {
@@ -641,10 +751,8 @@ const showSnackbar = (message: string, color: 'success' | 'error' = 'success') =
 
 // Lifecycle
 onMounted(async () => {
-  await loadCenters()
-  if (selectedCenterId.value) {
-    await loadStaffSalaries()
-  }
+  await initMonthRange()
+  await loadStaffSalaries()
 })
 </script>
 

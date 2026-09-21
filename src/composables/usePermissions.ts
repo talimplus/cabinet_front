@@ -124,6 +124,20 @@ export function usePermissions() {
     // ── AI ─────────────────────────────────────────────────────────
     canUseSyllabusAi: computed(() => userStore.can('syllabus.ai')),
 
+    // ── Xodim faoliyati va jarimalar ───────────────────────────────
+    /** Xodim sahifasi: davomat, topshirilmagan pullar, jarimalar */
+    canViewStaffPerformance: computed(() => userStore.can('staffPerformance.view')),
+    /** Oylikdan ushlab qolish (jarima yozish/o'chirish) */
+    canDeductSalary: computed(() => userStore.can('payroll.deduct')),
+
+    // ── Xodim davomati ─────────────────────────────────────────────
+    /** O'zi uchun "Keldim" bosa oladi */
+    canCheckIn: computed(() => userStore.can('staffAttendance.checkIn')),
+    /** Barcha xodimlar davomatini ko'radi (sahifa va menyu) */
+    canViewStaffAttendance: computed(() => userStore.can('staffAttendance.view')),
+    /** Tasdiqlash, qo'lda kiritish, o'chirish */
+    canManageStaffAttendance: computed(() => userStore.can('staffAttendance.manage')),
+
     // ── Davomat ────────────────────────────────────────────────────
     canManageAttendance: computed(() => userStore.can('attendance.manage')),
     canManagePastAttendance: computed(() => userStore.can('attendance.managePast')),

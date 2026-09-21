@@ -7,20 +7,6 @@
 
     <v-card-text>
       <v-row>
-        <v-col v-if="isAdmin" cols="12" md="3">
-          <v-select
-            v-model="params.centerId"
-            :items="centerOptions"
-            item-title="title"
-            item-value="value"
-            :label="$t('leads.center')"
-            variant="outlined"
-            density="compact"
-            clearable
-            :loading="loadingCenters"
-            @update:model-value="handleCenterChange"
-          ></v-select>
-        </v-col>
         <v-col cols="12" md="3">
           <v-select
             v-model="params.status"
@@ -192,29 +178,19 @@ import CreateLeadModal from '@/components/leads/CreateLeadModal.vue'
 import type { Lead } from '@/types/leads.types'
 import type { LeadsParams } from '@/types/leads.types'
 import { LeadStatus } from '@/types/leads.enum'
-import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllGroups } from '@/services/pages/groups'
-import type { Center } from '@/types/centers.types'
 import type { Group } from '@/types/groups.types'
-import { useUserStore } from '@/stores/user'
 
 const { canCreateLead, canEditLead, canViewGroups } = usePermissions()
 
 const leads = ref<Lead[]>([])
 const openModal = ref(false)
 const formForEdit = ref<Lead | null>(null)
-const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
-const loadingCenters = ref(false)
 const totalPages = ref(1)
-const userStore = useUserStore()
 const { t } = useI18n()
 
-// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
-const isAdmin = computed(() => userStore.can('centers.view'))
-
 const params = ref<LeadsParams>({
-  centerId: undefined,
   name: '',
   phone: '',
   status: undefined,
@@ -231,13 +207,6 @@ const statusOptions = [
   { title: t('leads.status.later'), value: LeadStatus.LATER },
 ]
 
-const centerOptions = computed(() => {
-  return centers.value.map(center => ({
-    title: center.name,
-    value: center.id,
-  }))
-})
-
 const groupOptions = computed(() => {
   return groups.value.map(group => ({
     title: group.name,
@@ -245,26 +214,11 @@ const groupOptions = computed(() => {
   }))
 })
 
-const loadCenters = async () => {
-  loadingCenters.value = true
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-    }
-  } catch (err) {
-    console.log(err)
-  } finally {
-    loadingCenters.value = false
-  }
-}
-
-const loadGroups = async (centerId?: number) => {
+const loadGroups = async () => {
   if (!canViewGroups.value) return
   try {
-    const { data } = await fetchAllGroups(centerId)
+    // Filial header'dan keladi — `baseHttp` uni avtomatik qo'shadi
+    const { data } = await fetchAllGroups()
     groups.value = data
   } catch (err) {
     console.log(err)
@@ -297,17 +251,6 @@ const getLeads = async () => {
   } catch (err) {
     console.log(err)
   }
-}
-
-const handleCenterChange = () => {
-  if (params.value.centerId) {
-    loadGroups(params.value.centerId)
-  } else {
-    groups.value = []
-    params.value.groupId = undefined
-  }
-  params.value.page = 1
-  getLeads()
 }
 
 const editLead = (item: Lead) => {
@@ -401,13 +344,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 }
 
 onMounted(async () => {
-  await loadCenters()
-  if (!isAdmin.value && userStore.user?.centerId) {
-    params.value.centerId = userStore.user.centerId
-  }
-  if (params.value.centerId) {
-    await loadGroups(params.value.centerId)
-  }
+  await loadGroups()
   await getLeads()
 })
 </script>

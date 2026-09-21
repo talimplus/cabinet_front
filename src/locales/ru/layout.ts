@@ -1,4 +1,5 @@
 export default {
+  allCenters: 'Все центры',
   menu: {
     statistics: 'Статистика',
     users: 'Сотрудники',
@@ -17,6 +18,8 @@ export default {
     subjects: 'Предметы',
     rooms: 'Комнаты',
     syllabuses: 'Учебные планы',
+    myPerformance: 'Моя работа',
+    staffAttendance: 'Посещаемость сотрудников',
     todayLessons: 'Уроки на сегодня',
     roles: 'Роли и права',
   },

@@ -125,20 +125,6 @@
                 ></v-autocomplete>
               </Field>
             </v-col>
-            <v-col v-if="isAdmin" cols="12" sm="6">
-              <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
-                <v-select
-                  :items="centers"
-                  item-title="name"
-                  item-value="id"
-                  v-model="form.centerId"
-                  :label="$t('students.labels.center')"
-                  :error-messages="errors"
-                  @update:model-value="handleChange"
-                  @blur="handleBlur"
-                ></v-select>
-              </Field>
-            </v-col>
             <v-col v-if="canViewGroups" cols="12" sm="6">
               <Field name="groupIds" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
@@ -388,8 +374,6 @@ import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue
 import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { StudentForm } from '@/types/students.types'
-import type { Center } from '@/types/center.types'
-import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllGroups } from '@/services/pages/groups'
 import type { Group } from '@/types/groups.types'
 import { fetchAllStudents, createStudent, updateStudent } from '@/services/pages/students'
@@ -399,18 +383,15 @@ import { WeekDay } from '@/types/groups.enum'
 import dayjs from 'dayjs'
 import { fetchSubjects } from '@/services/pages/subjects'
 import type { Subject } from '@/types/subject.types'
-import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 
 const { canEditStudent, canCreateStudent, canViewGroups, canViewStudents, canViewSubjects } =
   usePermissions()
 
 const { t } = useI18n()
 
-const userStore = useUserStore()
-// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
-const isAdmin = computed(() => userStore.can('centers.view'))
+const centerStore = useCenterStore()
 
-const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
 const students = ref<Student[]>([])
 const subjects = ref<Subject[]>([])
@@ -455,15 +436,6 @@ interface Emits {
   (e: 'clearForm'): void
 }
 const emit = defineEmits<Emits>()
-const getCenters = async () => {
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-  } catch (err) {
-    console.log(err)
-  }
-}
-
 const getSubjects = async () => {
   if (!canViewSubjects.value) return
   try {
@@ -475,7 +447,6 @@ const getSubjects = async () => {
   }
 }
 
-getCenters()
 getSubjects()
 
 watch(open, async (newValue) => {
@@ -566,9 +537,9 @@ watch(open, async (newValue) => {
     groups.value = []
     students.value = []
   }
-  // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz (yaratish rejimida)
-  if (newValue && !props.formForEdit?.id && !isAdmin.value && userStore.user?.centerId) {
-    form.value.centerId = userStore.user.centerId
+  // Filial header'dan: aktiv filial ("barchasi" bo'lsa — standart filial)
+  if (newValue && !props.formForEdit?.id) {
+    form.value.centerId = centerStore.centerIdForCreate ?? undefined
   }
 })
 

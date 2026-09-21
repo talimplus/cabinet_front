@@ -20,18 +20,6 @@
             ></v-select>
           </v-col>
           <v-col cols="12" md="3">
-            <v-select
-              v-model="params.centerId"
-              :items="centerOptions"
-              :label="$t('expenses.center')"
-              variant="outlined"
-              density="compact"
-              clearable
-              :loading="loadingCenters"
-              @update:model-value="handleFilterChange"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" md="3">
             <v-text-field
               v-model="params.search"
               :label="$t('common.search')"
@@ -124,20 +112,6 @@
         </v-card-title>
         <Form ref="expenseFormRef" @submit="saveExpense">
           <v-card-text class="pa-4">
-            <Field v-if="isAdmin" name="centerId" v-slot="{ handleChange, handleBlur, errors }">
-              <v-select
-                v-model="expenseForm.centerId"
-                :items="centerOptions"
-                :label="$t('expenses.center')"
-                variant="outlined"
-                density="compact"
-                class="mb-1"
-                :error-messages="errors"
-                @update:model-value="handleChange"
-                @blur="handleBlur"
-              ></v-select>
-            </Field>
-
             <Field name="name" v-slot="{ handleChange, handleBlur, errors }">
               <v-text-field
                 v-model="expenseForm.name"
@@ -254,15 +228,14 @@ import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { Expense, ExpenseForm, ExpensesParams } from '@/types/expenses.types'
 import { fetchExpenses, fetchExpenseById, createExpense, updateExpense, deleteExpense } from '@/services/pages/expenses'
-import { fetchAllCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/centers.types'
 import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 
 const { canCreateExpense, canEditExpense, canDeleteExpense } = usePermissions()
 
 const userStore = useUserStore()
+const centerStore = useCenterStore()
 // Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
-const isAdmin = computed(() => userStore.can('centers.view'))
 
 // Component name
 defineOptions({
@@ -275,9 +248,7 @@ const { t } = useI18n()
 const selectedYear = ref(new Date().getFullYear())
 const selectedMonthIndex = ref(new Date().getMonth())
 const expenses = ref<Expense[]>([])
-const centers = ref<Center[]>([])
 const loading = ref(false)
-const loadingCenters = ref(false)
 const processing = ref(false)
 const totalPages = ref(1)
 
@@ -285,7 +256,6 @@ const params = ref<ExpensesParams>({
   page: 1,
   perPage: 10,
   forMonth: undefined,
-  centerId: undefined,
   search: undefined,
 })
 
@@ -365,13 +335,6 @@ const forMonth = computed(() => {
   return `${selectedYear.value}-${selectedMonth.value}`
 })
 
-const centerOptions = computed(() => {
-  return centers.value.map(center => ({
-    title: center.name,
-    value: center.id,
-  }))
-})
-
 const monthOptions = computed(() => {
   const options = []
   const now = new Date()
@@ -417,10 +380,6 @@ const loadExpenses = async () => {
       forMonth: forMonth.value,
     }
 
-    if (params.value.centerId) {
-      queryParams.centerId = params.value.centerId
-    }
-
     if (params.value.search) {
       queryParams.search = params.value.search
     }
@@ -433,25 +392,6 @@ const loadExpenses = async () => {
     expenses.value = []
   } finally {
     loading.value = false
-  }
-}
-
-const loadCenters = async () => {
-  loadingCenters.value = true
-  try {
-    const response = await fetchAllCenters()
-    centers.value = response.data || []
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-      // Load expenses after setting default center
-      await loadExpenses()
-    }
-  } catch (error: any) {
-    console.error('Markazlarni yuklashda xatolik:', error)
-    centers.value = []
-  } finally {
-    loadingCenters.value = false
   }
 }
 
@@ -483,10 +423,9 @@ const openCreateModal = () => {
     isEdit: false,
     expenseId: null,
   }
-  const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
   expenseForm.value = {
-    // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
-    centerId: isAdmin.value ? (defaultCenter?.id || 0) : (userStore.user?.centerId || 0),
+    // Filial header'dan: aktiv filial (yoki "barchasi" bo'lsa — standart filial)
+    centerId: centerStore.centerIdForCreate ?? userStore.user?.centerId ?? 0,
     name: '',
     amount: 0,
     description: '',
@@ -626,12 +565,7 @@ watch(() => forMonth.value, () => {
 
 // Lifecycle
 onMounted(async () => {
-  await loadCenters()
-  // If centerId is set, loadExpenses is already called in loadCenters
-  // Otherwise load expenses without center filter
-  if (!params.value.centerId) {
-    loadExpenses()
-  }
+  await loadExpenses()
 })
 </script>
 

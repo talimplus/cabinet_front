@@ -13,20 +13,6 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text class="pt-0" v-if="isAdmin">
-          <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
-            <v-select
-              v-model="form.centerId"
-              :items="centers"
-              :label="$t('subjects.centers')"
-              item-title="name"
-              item-value="id"
-              :error-messages="errors"
-              @update:model-value="handleChange"
-              @blur="handleBlur"
-            ></v-select>
-          </Field>
-        </v-card-text>
         <template v-slot:actions>
           <v-btn @click="open = false">{{ $t('common.cancel') }}</v-btn>
           <v-btn v-if="canManageSubjects" type="submit" color="primary" :text="$t('common.save')" :loading="loading" :disabled="loading"></v-btn>
@@ -39,25 +25,21 @@
 
 <script setup lang="ts">
 import { usePermissions } from '@/composables/usePermissions'
-import { ref, defineModel, defineEmits, defineProps, watch, computed } from 'vue'
+import { ref, defineModel, defineEmits, defineProps, watch } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { createSubjects, editSubject } from '@/services/pages/subjects'
 import type { SubjectForm, Subject } from '@/types/subject.types'
-import type { Center } from '@/types/center.types'
-import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 
 const { canManageSubjects } = usePermissions()
 
-const userStore = useUserStore()
-// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
-const isAdmin = computed(() => userStore.can('centers.view'))
+const centerStore = useCenterStore()
 
 interface Emits {
   (e: 'updateData'): void
   (e: 'clearForm'): void
 }
 interface Props {
-  centers: Center[]
   formForEdit: Subject
 }
 
@@ -86,9 +68,10 @@ watch(
         centerId: undefined,
       }
     }
-    // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
-    if (newValue && !isAdmin.value && userStore.user?.centerId) {
-      form.value.centerId = userStore.user.centerId
+    // Filial header'dan: aktiv filial ("barchasi" bo'lsa — standart filial).
+    // Admin bo'lmagan xodim uchun `null` — backend o'z filialini qo'yadi.
+    if (newValue && !props.formForEdit?.id) {
+      form.value.centerId = centerStore.centerIdForCreate ?? undefined
     }
   }
 )

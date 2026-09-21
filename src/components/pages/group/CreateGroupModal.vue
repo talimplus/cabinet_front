@@ -20,21 +20,6 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text class="py-2" v-if="isAdmin">
-          <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
-            <v-select
-              v-model="form.centerId"
-              :items="centers"
-              :label="$t('groups.form.center')"
-              item-title="name"
-              item-value="id"
-              @update:modelValue="changedCenter"
-              :error-messages="errors"
-              @update:model-value="handleChange"
-              @blur="handleBlur"
-            ></v-select>
-          </Field>
-        </v-card-text>
         <v-card-text class="py-2" v-if="canViewSubjects">
           <Field name="subjectId" v-slot="{ handleChange, handleBlur, errors }">
             <v-select
@@ -94,6 +79,36 @@
               @blur="handleBlur"
             ></v-text-field>
           </Field>
+
+          <!--
+            Narx oy o'rtasida o'zgartirilsa ham keyingi oydan kuchga kiradi:
+            joriy oy to'lovlari (to'langan ham, to'lanmagan ham) o'zgarmaydi.
+          -->
+          <v-alert
+            v-if="feeChanged"
+            :type="applyFeeNow ? 'warning' : 'info'"
+            variant="tonal"
+            density="compact"
+            class="mt-1"
+          >
+            <template v-if="applyFeeNow">
+              {{ $t('groups.form.feeApplyNowWarning', { fee: formatCurrency(currentFee) }) }}
+            </template>
+            <template v-else>
+              {{ $t('groups.form.feeNextMonthHint', { month: nextMonthLabel }) }}
+              <template v-if="currentFee !== null">
+                {{ $t('groups.form.feeCurrentMonth', { fee: formatCurrency(currentFee) }) }}
+              </template>
+            </template>
+          </v-alert>
+
+          <v-checkbox
+            v-if="feeChanged"
+            v-model="applyFeeNow"
+            density="compact"
+            hide-details
+            :label="$t('groups.form.applyFeeNow')"
+          ></v-checkbox>
         </v-card-text>
         <v-card-text class="py-2">
           <Field name="endDate" v-slot="{ handleChange, handleBlur, errors }">
@@ -223,12 +238,11 @@ import { fetchUsers } from '@/services/pages/users'
 import { createGroup, updateGroup } from '@/services/pages/groups'
 import { fetchRooms } from '@/services/pages/rooms'
 import type { GroupFormDays, GroupForm } from '@/types/groups.types'
-import type { Center } from '@/types/center.types'
 import type { User } from '@/types/users.types'
 import type { Subject } from '@/types/subject.types'
 import type { Room } from '@/types/room.types'
 import type { Group } from '@/types/groups.types'
-import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 import { useNotificationStore } from '@/stores/notification'
 import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
@@ -249,14 +263,11 @@ const firstMessage = (value?: string | string[]): string =>
 const subjects = ref<Subject[]>([])
 const users = ref<User[]>([])
 const rooms = ref<Room[]>([])
-const userStore = useUserStore()
 const notify = useNotificationStore()
+const centerStore = useCenterStore()
 const { t } = useI18n()
-// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
-const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Props {
-  centers: Center[]
   formForEdit?: Group
 }
 
@@ -286,6 +297,35 @@ const form = ref<GroupForm>({
 const endDate = ref<Date | null>(null)
 const shortenConfirm = ref(false)
 
+// Narx: default holatda yangi narx keyingi oydan kuchga kiradi.
+// Bu checkbox faqat xato kiritilgan narxni shu oyda tuzatish uchun.
+const applyFeeNow = ref(false)
+
+const formatCurrency = (amount?: number | null): string => {
+  if (amount === null || amount === undefined) return '—'
+  return (
+    new Intl.NumberFormat('uz-UZ', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Number(amount) || 0) + " so'm"
+  )
+}
+
+/** Joriy oyda amal qilayotgan narx (backend `monthlyFee` shuni qaytaradi). */
+const currentFee = computed<number | null>(() => props.formForEdit?.monthlyFee ?? null)
+
+/** Formadagi narx joriy amaldagi narxdan farq qilyaptimi (faqat tahrirlashda). */
+const feeChanged = computed(() => {
+  if (!props.formForEdit?.id) return false
+  const raw = form.value.monthlyFee
+  if (raw === undefined || raw === null || raw === '') return false
+  return +raw !== Number(currentFee.value ?? 0)
+})
+
+/** Yangi narx kuchga kiradigan oy — foydalanuvchiga ko'rsatish uchun. */
+const nextMonthLabel = computed(() => dayjs().add(1, 'month').startOf('month').format('DD.MM.YYYY'))
+
 // YYYY-MM-DD ko'rinishiga keltirish — backend shu formatni kutadi
 const toISODate = (value?: Date | string | null): string | null => {
   if (!value) return null
@@ -312,7 +352,7 @@ const isShortening = computed(() => {
   return iso < prev
 })
 
-watch(open, (newValue: boolean) => {
+watch(open, async (newValue: boolean) => {
   console.log(props.formForEdit)
   if (newValue && props.formForEdit?.id) {
     form.value.name = props.formForEdit?.name || ''
@@ -320,7 +360,11 @@ watch(open, (newValue: boolean) => {
     form.value.subjectId = props.formForEdit?.subject?.id
     form.value.roomId = props.formForEdit?.room?.id
     form.value.teacherId = props.formForEdit?.teacher?.id
-    form.value.monthlyFee = props.formForEdit?.monthlyFee ?? undefined
+    // Rejalashtirilgan (keyingi oydan kuchga kiradigan) narx bo'lsa — inputda
+    // aynan o'sha ko'rinadi, aks holda admin narxni qayta kiritib yuboradi.
+    form.value.monthlyFee =
+      props.formForEdit?.upcomingMonthlyFee ?? props.formForEdit?.monthlyFee ?? undefined
+    applyFeeNow.value = false
     endDate.value = props.formForEdit?.endDate ? dayjs(props.formForEdit.endDate).toDate() : null
 
     // Convert schedules to days format
@@ -354,15 +398,19 @@ watch(open, (newValue: boolean) => {
       days: [],
       centerId: '',
     }
+    applyFeeNow.value = false
     endDate.value = null
     days.value = []
     allTimes.value = ''
     times.value = []
     differentTime.value = false
 
-    // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
-    if (newValue && !isAdmin.value && userStore.user?.centerId) {
-      form.value.centerId = userStore.user.centerId
+    // Filial header'dan: guruh aktiv filialga (yoki "barchasi" bo'lsa —
+    // standart filialga) yaratiladi. Fan/ustoz/xona ro'yxati ham shu filialdan.
+    if (newValue) {
+      // Filiallar hali yuklanmagan bo'lishi mumkin (to'g'ridan-to'g'ri linkdan kirish)
+      await centerStore.load()
+      form.value.centerId = centerStore.centerIdForCreate ?? ''
       getSubjects()
       getUsers()
       getRooms()
@@ -430,16 +478,6 @@ const getRooms = async () => {
   }
 }
 
-function changedCenter() {
-  form.value.subjectId = undefined
-  form.value.teacherId = undefined
-  form.value.roomId = undefined
-
-  getSubjects()
-  getUsers()
-  getRooms()
-}
-
 const submit = async () => {
   if (endDateError.value) return
   // Sana qisqartirilsa avval tasdiqlatamiz
@@ -474,6 +512,12 @@ const save = async () => {
     // null yuborilsa muddat olib tashlanadi (guruh muddatsiz bo'ladi)
     endDate: selectedEndDate.value,
     days: [],
+  }
+
+  // Narx o'zgargan bo'lsa: default — keyingi oydan. Checkbox belgilansa —
+  // shu oydan (xatoni tuzatish) va joriy oyning ochiq to'lovlari qayta hisoblanadi.
+  if (feeChanged.value) {
+    submitData.applyFeeFrom = applyFeeNow.value ? 'current_month' : 'next_month'
   }
 
   // Convert days and times to days array

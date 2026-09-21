@@ -14,7 +14,12 @@ export interface GroupSchedule {
 export interface Group {
         id: number;
         name: string;
+        /** JORIY oyda amal qilayotgan narx. Narx o'zgartirilsa u keyingi oydan kuchga kiradi. */
         monthlyFee: number | null;
+        /** Keyingi oydan kuchga kiradigan narx (reja bo'lmasa null). */
+        upcomingMonthlyFee?: number | null;
+        /** `upcomingMonthlyFee` kuchga kiradigan oy: YYYY-MM-01. */
+        upcomingFeeFromMonth?: string | null;
         createdAt: string;
         center: Center;
         subject: Subject;
@@ -36,6 +41,12 @@ export interface GroupForm {
         teacherId?: number,
         roomId?: number,
         monthlyFee?: number | null,
+        /**
+         * Yangi narx qachondan kuchga kirsin.
+         * Yuborilmasa — `next_month` (keyingi oydan).
+         * `current_month` faqat xato kiritilgan narxni tuzatish uchun.
+         */
+        applyFeeFrom?: 'next_month' | 'current_month',
         // Darslar boshlanish/tugash sanalari: YYYY-MM-DD.
         // endDate ixtiyoriy; null yuborilsa muddat olib tashlanadi (guruh "muddatsiz" bo'ladi).
         startDate?: string | null,

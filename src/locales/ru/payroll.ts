@@ -4,6 +4,8 @@ export default {
   center: 'Центр',
   emptyState: 'Данные о зарплате за этот месяц не найдены',
   table: {
+    deduction: 'Удержано',
+    outstanding: "остаток: {amount}",
     worker: 'Сотрудник',
     role: 'Роль',
     baseSalary: 'Оклад',
@@ -42,6 +44,7 @@ export default {
     unpaid: 'Не выплачено',
   },
   modal: {
+    addDeduction: "Удержать из зарплаты (штраф)",
     title: 'Оплата',
     worker: 'Сотрудник:',
     totalSalary: 'Итого зарплата:',

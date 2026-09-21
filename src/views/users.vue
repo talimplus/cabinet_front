@@ -8,19 +8,6 @@
     </v-card-title>
     <v-row class="px-4">
       <v-col cols="12" sm="6" md="3">
-        <v-select
-          :label="$t('users.filter.center')"
-          variant="outlined"
-          clearable
-          density="compact"
-          :items="centers"
-          item-title="name"
-          item-value="id"
-          v-model="params.centerId"
-          @update:modelValue="getUsers"
-        ></v-select>
-      </v-col>
-      <v-col cols="12" sm="6" md="3">
         <v-text-field
           @input="getUsers"
           variant="outlined"
@@ -49,6 +36,17 @@
       </template>
       <template v-slot:item.actions="{ item }">
         <v-btn
+          v-if="can('staffPerformance.view')"
+          @click="openStaff(item)"
+          density="compact"
+          color="medium-emphasis"
+          icon="mdi-eye"
+          size="small"
+          class="me-2"
+          variant="text"
+          :title="$t('staff.viewAction')"
+        ></v-btn>
+        <v-btn
           v-if="can('users.update')"
           @click="editUser(item)"
           density="compact"
@@ -75,7 +73,6 @@
       @updateData="getUsers"
       @clearForm="clearFormForEdit"
       v-model:open="openModal"
-      :centers="centers"
       :formForEdit="formForEdit"
     ></CreateUser>
   </v-card>
@@ -84,15 +81,20 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { fetchUsers, deleteUser } from '@/services/pages/users'
 import type { User, UsersParams } from '@/types/users.types'
 import CreateUser from '../components/pages/user/CreateUser.vue'
-import type { Center } from '@/types/centers.types'
-import { fetchAllCenters } from '@/services/pages/centers'
 import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
 const { can } = usePermissions()
+const router = useRouter()
+
+/** Xodim sahifasi: davomat, kechikishlar, topshirilmagan pullar, jarimalar */
+const openStaff = (item: User) => {
+  router.push(`/users/${item.id}`)
+}
 
 /**
  * Rol nomi endi dinamik — admin qo'ygan nom ("Kassir") ko'rsatiladi.
@@ -106,7 +108,6 @@ function roleLabel(item: User) {
   return label === key ? item.role : label
 }
 
-const centers = ref<Center[]>([])
 const users = ref<User[]>([])
 const openModal = ref(false)
 const laoding = ref(false)
@@ -114,7 +115,6 @@ const formForEdit = ref<User>({})
 const totalPages = ref(0)
 
 const params = ref<UsersParams>({
-  centerId: undefined,
   name: '',
   phone: '',
   page: 1,
@@ -140,24 +140,8 @@ const getUsers = async () => {
   }
 }
 
-const getCenters = async () => {
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find((c) => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-    }
-  } catch (err) {
-    console.log(err)
-  }
-}
-
 onMounted(async () => {
-  await getCenters()
-  if (params.value.centerId) {
-    await getUsers()
-  }
+  await getUsers()
 })
 
 const remove = async (id: number) => {

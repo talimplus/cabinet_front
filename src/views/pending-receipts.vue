@@ -27,21 +27,6 @@
             ></v-date-input>
           </v-col>
           <v-col cols="12" sm="6" md="3">
-            <v-select
-              v-model="filters.centerId"
-              :items="centerOptions"
-              item-title="title"
-              item-value="value"
-              :label="$t('pendingReceipts.filters.center')"
-              variant="outlined"
-              density="compact"
-              hide-details
-              clearable
-              :loading="loadingCenters"
-              @update:model-value="handleFilterChange"
-            ></v-select>
-          </v-col>
-          <v-col cols="12" sm="6" md="3">
             <v-btn
               variant="text"
               prepend-icon="mdi-filter-remove-outline"
@@ -456,7 +441,6 @@ import type {
   ConfirmReceiptsPayload,
   ReceiptsStatsResponse,
 } from '@/types/payments.types'
-import type { Center } from '@/types/center.types'
 import {
   fetchPendingReceipts,
   fetchReceiptsStats,
@@ -464,7 +448,6 @@ import {
   confirmReceipts,
   rejectReceipt,
 } from '@/services/pages/payments'
-import { fetchAllCenters } from '@/services/pages/centers'
 
 const { canConfirmReceipt, canRejectReceipt } = usePermissions()
 
@@ -493,18 +476,10 @@ const pendingTotalAmount = ref(0)
 const filters = ref({
   dateFrom: null as Date | string | null,
   dateTo: null as Date | string | null,
-  centerId: null as number | null,
 })
 
 const hasFilters = computed(
-  () => !!(filters.value.dateFrom || filters.value.dateTo || filters.value.centerId),
-)
-
-// Markazlar
-const centers = ref<Center[]>([])
-const loadingCenters = ref(false)
-const centerOptions = computed(() =>
-  centers.value.map((center) => ({ title: center.name, value: center.id })),
+  () => !!(filters.value.dateFrom || filters.value.dateTo),
 )
 
 // Statistika
@@ -604,7 +579,6 @@ const currentFilterParams = (): PendingReceiptsParams => {
 
   if (dateFrom) params.dateFrom = dateFrom
   if (dateTo) params.dateTo = dateTo
-  if (filters.value.centerId) params.centerId = filters.value.centerId
 
   return params
 }
@@ -658,19 +632,6 @@ const loadStats = async () => {
   }
 }
 
-const loadCenters = async () => {
-  loadingCenters.value = true
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-  } catch (error: any) {
-    console.error('Markazlarni yuklashda xatolik:', error)
-    centers.value = []
-  } finally {
-    loadingCenters.value = false
-  }
-}
-
 const reload = async () => {
   await Promise.all([loadPendingReceipts(), loadStats()])
 }
@@ -690,7 +651,7 @@ const handleFilterChange = () => {
 }
 
 const resetFilters = () => {
-  filters.value = { dateFrom: null, dateTo: null, centerId: null }
+  filters.value = { dateFrom: null, dateTo: null }
   handleFilterChange()
 }
 
@@ -851,7 +812,6 @@ const showSnackbar = (message: string, color: 'success' | 'error' = 'success') =
 
 // Lifecycle
 onMounted(() => {
-  loadCenters()
   reload()
 })
 </script>

@@ -3,8 +3,10 @@ import axios, { type AxiosError } from 'axios';
 import i18n from '@/plugins/i18n';
 import { useNotificationStore } from '@/stores/notification';
 import { useUserStore } from '@/stores/user';
+import { useCenterStore } from '@/stores/center';
 import {
         PermissionDeniedError,
+        acceptsCenterId,
         isPermissionDeniedError,
         permissionsForRequest,
 } from '@/permissions/apiPermissions';
@@ -36,6 +38,23 @@ http.interceptors.request.use(function (config) {
                 } catch (error) {
                         if (isPermissionDeniedError(error)) throw error
                         // Pinia hali tayyor emas — tekshiruvsiz davom etamiz
+                }
+        }
+
+        // Header'da tanlangan aktiv filialni avtomatik qo'shamiz.
+        // Faqat `centerId` ni qabul qiladigan endpointlarga (generatsiya
+        // qilingan ro'yxat bo'yicha) — aks holda backend 422 berishi mumkin.
+        // Sahifa o'zi aniq `centerId` bergan bo'lsa unga tegilmaydi.
+        if (acceptsCenterId(config.method, config.url)) {
+                try {
+                        const centerStore = useCenterStore()
+                        const active = centerStore.requestCenterId
+                        const params = (config.params ?? {}) as Record<string, unknown>
+                        if (active !== undefined && params.centerId === undefined) {
+                                config.params = { ...params, centerId: active }
+                        }
+                } catch {
+                        // Pinia hali tayyor emas — filtrsiz davom etamiz
                 }
         }
 

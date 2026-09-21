@@ -54,21 +54,6 @@
               @update:model-value="handleFilterChange"
             ></v-select>
           </v-col>
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="selectedCenterId"
-              :items="centerOptions"
-              item-title="title"
-              hide-details
-              item-value="value"
-              :label="$t('payments.filters.center')"
-              variant="outlined"
-              density="compact"
-              clearable
-              :loading="loadingCenters"
-              @update:model-value="handleCenterChange"
-            ></v-select>
-          </v-col>
           <v-col v-if="canViewTeachers" cols="12" md="3">
             <v-select
               v-model="selectedTeacherId"
@@ -727,8 +712,6 @@ import { fetchAllGroups } from '@/services/pages/groups'
 import type { Group } from '@/types/groups.types'
 import { fetchAllTeachers } from '@/services/pages/users'
 import type { TeacherListItem } from '@/types/users.types'
-import { fetchAllCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/centers.types'
 import CheckModal from '@/components/pages/payments/CheckModal.vue'
 import PaymentHistoryModal from '@/components/pages/payments/PaymentHistoryModal.vue'
 import ExclusionCard from '@/components/pages/payments/ExclusionCard.vue'
@@ -756,18 +739,15 @@ const selectedMonthIndex = ref(new Date().getMonth())
 const selectedStatus = ref<PaymentStatus | 'all' | null>(null)
 const selectedGroupId = ref<number | null>(null)
 const selectedTeacherId = ref<number | null>(null)
-const selectedCenterId = ref<number | null>(null)
 const searchQuery = ref('')
 const payments = ref<Payment[]>([])
 const groups = ref<Group[]>([])
 const teachers = ref<TeacherListItem[]>([])
-const centers = ref<Center[]>([])
 const loading = ref(false)
 const exportingMonth = ref(false)
 const exportingPeriod = ref(false)
 const loadingGroups = ref(false)
 const loadingTeachers = ref(false)
-const loadingCenters = ref(false)
 const processingPayment = ref(false)
 const page = ref(1)
 const totalPages = ref(1)
@@ -926,13 +906,6 @@ const teacherOptions = computed(() => {
   }))
 })
 
-const centerOptions = computed(() => {
-  return centers.value.map((center) => ({
-    title: center.name,
-    value: center.id,
-  }))
-})
-
 const selectedMonth = computed(() => {
   return (
     availableMonths.value[selectedMonthIndex.value]?.value ||
@@ -1019,10 +992,8 @@ const loadGroups = async () => {
   if (!canViewGroups.value) return
   loadingGroups.value = true
   try {
-    const response = await fetchAllGroups(
-      selectedCenterId.value || undefined,
-      selectedTeacherId.value || undefined,
-    )
+    // Filial header'dan keladi — `baseHttp` uni avtomatik qo'shadi
+    const response = await fetchAllGroups(undefined, selectedTeacherId.value || undefined)
     groups.value = response.data || []
     // Reset group selection if selected group is not in the new list
     if (selectedGroupId.value && !groups.value.find((g) => g.id === selectedGroupId.value)) {
@@ -1040,9 +1011,7 @@ const loadTeachers = async () => {
   if (!canViewTeachers.value) return
   loadingTeachers.value = true
   try {
-    const data = await fetchAllTeachers(
-      selectedCenterId.value ? { centerId: selectedCenterId.value } : undefined,
-    )
+    const data = await fetchAllTeachers()
     teachers.value = data
     // Tanlangan ustoz yangi ro'yxatda bo'lmasa — tanlovni tozalaymiz
     if (selectedTeacherId.value && !teachers.value.find((tt) => tt.id === selectedTeacherId.value)) {
@@ -1053,23 +1022,6 @@ const loadTeachers = async () => {
     teachers.value = []
   } finally {
     loadingTeachers.value = false
-  }
-}
-
-const loadCenters = async () => {
-  loadingCenters.value = true
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !selectedCenterId.value) {
-      const defaultCenter = centers.value.find((c) => c.isDefault) || centers.value[0]
-      selectedCenterId.value = defaultCenter.id
-    }
-  } catch (error: any) {
-    console.error('Markazlarni yuklashda xatolik:', error)
-    centers.value = []
-  } finally {
-    loadingCenters.value = false
   }
 }
 
@@ -1098,10 +1050,6 @@ const currentFilterParams = (includeMonth = true): PaymentsParams => {
     params.teacherId = selectedTeacherId.value
   }
 
-  if (selectedCenterId.value) {
-    params.centerId = selectedCenterId.value
-  }
-
   return params
 }
 
@@ -1119,18 +1067,6 @@ const loadPayments = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const handleCenterChange = async () => {
-  // Reset group selection when center changes
-  selectedGroupId.value = null
-  selectedTeacherId.value = null
-  page.value = 1
-  // Reload teachers and groups for the new center
-  await loadTeachers()
-  await loadGroups()
-  // Reload payments
-  loadPayments()
 }
 
 // Ustoz almashganda guruhlar ro'yxati shu ustozning guruhlariga qisqaradi
@@ -1451,12 +1387,9 @@ const showSnackbar = (message: string, color: 'success' | 'error' = 'success') =
 
 // Lifecycle
 onMounted(async () => {
-  await loadCenters()
   await loadTeachers()
   await loadGroups()
-  if (selectedCenterId.value) {
-    await loadPayments()
-  }
+  await loadPayments()
 })
 </script>
 

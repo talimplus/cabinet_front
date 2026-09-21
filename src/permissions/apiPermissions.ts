@@ -15,6 +15,8 @@ interface CompiledRule {
   method: string
   regex: RegExp
   permissions: string[]
+  /** Endpoint `centerId` filtrini qabul qiladi (header'dagi aktiv filial) */
+  acceptsCenterId: boolean
   /** Statik segment ko'p bo'lgan qoida birinchi tekshiriladi ('/groups/all' > '/groups/:id') */
   specificity: number
 }
@@ -32,6 +34,7 @@ const compile = (rule: ApiPermissionRule): CompiledRule => {
     method: rule.method,
     regex: new RegExp(`^/${pattern}$`),
     permissions: rule.permissions,
+    acceptsCenterId: !!rule.acceptsCenterId,
     specificity: statics * 1000 + segments.length,
   }
 }
@@ -74,6 +77,23 @@ export const permissionsForRequest = (
   const rule = COMPILED.find((r) => r.method === verb && r.regex.test(path))
   // Qoida topilmadi yoki `permissions: []` (ochiq endpoint) — tekshirmaymiz
   return rule && rule.permissions.length ? rule.permissions : null
+}
+
+/**
+ * Endpoint `centerId` filtrini qabul qiladimi.
+ *
+ * Faqat shunday so'rovlarga header'dagi aktiv filial qo'shiladi — aks holda
+ * backenddagi `forbidNonWhitelisted` validatsiyasi 422 qaytarishi mumkin.
+ */
+export const acceptsCenterId = (
+  method: string | undefined,
+  url: string | undefined,
+): boolean => {
+  if (!url) return false
+  const verb = (method ?? 'get').toUpperCase()
+  const path = normalize(url)
+  return !!COMPILED.find((r) => r.method === verb && r.regex.test(path))
+    ?.acceptsCenterId
 }
 
 /** Ruxsat yo'qligi sababli yuborilmagan so'rov xatosi */

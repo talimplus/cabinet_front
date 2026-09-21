@@ -4,20 +4,6 @@
     <v-card-text>
       <v-row>
         <v-col cols="12" md="4">
-          <v-select
-            v-model="params.centerId"
-            :items="centerOptions"
-            item-title="title"
-            item-value="value"
-            :label="$t('students.labels.center')"
-            variant="outlined"
-            clearable
-            density="compact"
-            :loading="loadingCenters"
-            @update:model-value="getStudents"
-          ></v-select>
-        </v-col>
-        <v-col cols="12" md="4">
           <v-text-field
             v-model="params.search"
             :label="$t('students.labels.search')"
@@ -127,8 +113,6 @@ import type { StudentsParams, Student } from '@/types/students.types'
 import { fetchStudents, updateStudentStatus } from '@/services/pages/students'
 import { StudentStatus, studentStatusLabels } from '@/types/students.enum'
 import CreateStudent from '@/components/students/CreateStudent.vue'
-import { fetchAllCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/center.types'
 import { usePermissions } from '@/composables/usePermissions'
 import { useDebounceFn } from '@/composables/useDebounceFn'
 
@@ -142,12 +126,9 @@ const statusList = computed(() => {
 const openModal = ref(false)
 const students = ref<Student[]>([])
 const formForEdit = ref<Student>({})
-const centers = ref<Center[]>([])
-const loadingCenters = ref(false)
 const totalPages = ref(1)
 
 const params = ref<StudentsParams>({
-  centerId: undefined,
   search: '',
   name: '',
   phone: '',
@@ -163,13 +144,6 @@ const onSearch = useDebounceFn(() => {
   getStudents()
 })
 
-const centerOptions = computed(() => {
-  return centers.value.map((center) => ({
-    title: center.name,
-    value: center.id,
-  }))
-})
-
 function clearFormForEdit() {
   formForEdit.value = {}
 }
@@ -179,24 +153,7 @@ function editStudent(item: Student) {
   formForEdit.value = item
 }
 
-const loadCenters = async () => {
-  loadingCenters.value = true
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-    }
-  } catch (err) {
-    console.log(err)
-  } finally {
-    loadingCenters.value = false
-  }
-}
-
 const getStudents = async () => {
-  if (!params.value.centerId) return
   try {
     const {
       data: { data, meta },
@@ -213,10 +170,7 @@ const getStudents = async () => {
 }
 
 onMounted(async () => {
-  await loadCenters()
-  if (params.value.centerId) {
-    await getStudents()
-  }
+  await getStudents()
 })
 
 const changeStatus = async (status: StudentStatus, item: Student) => {

@@ -11,6 +11,7 @@ export default {
     startDate: 'Boshlanish sanasi',
     endDate: 'Tugash sanasi',
     monthlyFee: 'Kurs summasi',
+    upcomingFee: '{date} dan: {fee}',
     room: 'Xona',
     teacher: 'Ustoz',
   },
@@ -115,6 +116,12 @@ export default {
     room: 'Xona',
     teacher: 'Ustoz',
     monthlyFee: "Oylik to'lov",
+    feeNextMonthHint: "Yangi narx {month} dan kuchga kiradi.",
+    feeCurrentMonth: "Joriy oy shu narxda qoladi: {fee}.",
+    applyFeeNow: "Shu oydan qo'llash (xato kiritilgan narxni tuzatish)",
+    feeApplyNowWarning:
+      "Narx SHU OYDAN qo'llanadi: joriy oyning to'lanmagan va qisman to'langan " +
+      "to'lovlari qayta hisoblanadi (eski narx: {fee}). To'liq to'langanlar o'zgarmaydi.",
     endDate: 'Darslar tugash sanasi',
     endDateHint:
       "Ixtiyoriy, lekin kiritish tavsiya etiladi. Bo'sh qoldirilsa guruh muddatsiz bo'ladi va to'lov cheksiz hisoblanaveradi.",

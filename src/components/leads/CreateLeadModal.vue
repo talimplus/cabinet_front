@@ -113,20 +113,6 @@
               </Field>
             </v-col>
 
-            <v-col v-if="isAdmin" cols="12" sm="6">
-              <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
-                <v-select
-                  :items="centers"
-                  item-title="name"
-                  item-value="id"
-                  v-model="form.centerId"
-                  :label="$t('leads.center')"
-                  :error-messages="errors"
-                  @update:model-value="handleChange"
-                  @blur="handleBlur"
-                ></v-select>
-              </Field>
-            </v-col>
             <v-col v-if="canViewGroups" cols="12" sm="6">
               <Field name="groupIds" v-slot="{ handleChange, handleBlur, errors }">
                 <v-select
@@ -284,13 +270,11 @@ import { useI18n } from 'vue-i18n'
 import { Form, Field } from 'vee-validate'
 import type { Lead, LeadForm } from '@/types/leads.types'
 import { LeadStatus } from '@/types/leads.enum'
-import type { Center } from '@/types/centers.types'
 import type { Group } from '@/types/groups.types'
-import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllGroups } from '@/services/pages/groups'
 import { createLead, updateLead, transferLeadToStudent } from '@/services/pages/leads'
 import { usePermissions } from '@/composables/usePermissions'
-import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 import { WeekDay } from '@/types/groups.enum'
 import dayjs from 'dayjs'
 
@@ -302,13 +286,10 @@ const leadFormRef = ref()
 const saving = ref(false)
 const transferring = ref(false)
 
-const centers = ref<Center[]>([])
 const groups = ref<Group[]>([])
-const userStore = useUserStore()
+const centerStore = useCenterStore()
 const { t } = useI18n()
 const { canTransferLead, canEditLead, canCreateLead, canViewGroups } = usePermissions()
-// Markaz tanlay olish — filiallarni ko'ra oladigan xodimda
-const isAdmin = computed(() => userStore.can('centers.view'))
 
 interface Props {
   formForEdit?: Lead | null
@@ -360,15 +341,6 @@ const dayList = computed(() => {
   ]
 })
 
-const getCenters = async () => {
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-  } catch (err) {
-    console.log(err)
-  }
-}
-
 const getGroups = async (centerId?: number) => {
   if (!canViewGroups.value) return
   try {
@@ -380,9 +352,6 @@ const getGroups = async (centerId?: number) => {
 }
 
 watch(open, (newValue) => {
-  if (newValue) {
-    getCenters()
-  }
   if (newValue && props.formForEdit?.id) {
     form.value = {
       phone: props.formForEdit.phone,
@@ -402,7 +371,7 @@ watch(open, (newValue) => {
       jshshir: props.formForEdit.jshshir || '',
       status: props.formForEdit.status || LeadStatus.NEW,
       groupIds: props.formForEdit.groupIds || [],
-      centerId: props.formForEdit.centerId || userStore.user?.centerId,
+      centerId: props.formForEdit.centerId ?? centerStore.centerIdForCreate ?? undefined,
       followUpDate: props.formForEdit.followUpDate || undefined,
     }
 
@@ -445,14 +414,10 @@ watch(open, (newValue) => {
   }
 })
 
-watch(centers, (newCenters) => {
-  if (!open.value || props.formForEdit?.id) return
-  if (isAdmin.value && newCenters.length > 0 && !form.value.centerId) {
-    const defaultCenter = newCenters.find(c => c.isDefault) || newCenters[0]
-    form.value.centerId = defaultCenter.id
-  } else if (!isAdmin.value && userStore.user?.centerId) {
-    form.value.centerId = userStore.user.centerId
-  }
+// Yangi lid: filial header'dagi aktiv filial ("barchasi" bo'lsa — standart)
+watch(open, (newValue) => {
+  if (!newValue || props.formForEdit?.id) return
+  form.value.centerId = centerStore.centerIdForCreate ?? undefined
   if (form.value.centerId) {
     getGroups(form.value.centerId)
   }
@@ -543,7 +508,8 @@ const submit = async () => {
 
   cleanOptionalFields(payload)
 
-  if (!isAdmin.value) {
+  // Filialni almashtira olmaydigan xodim uchun backend o'zi qo'yadi
+  if (!centerStore.canSwitch) {
     delete payload.centerId
   }
 

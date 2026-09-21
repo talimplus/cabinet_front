@@ -17,6 +17,9 @@
       ></v-btn>
     </div>
 
+    <!-- "Keldim" — ishga kelganini belgilash -->
+    <CheckInCard />
+
     <div v-if="loading && !data" class="text-center pa-12">
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
@@ -183,6 +186,7 @@ import { useI18n } from 'vue-i18n'
 import { fetchTeacherToday } from '@/services/pages/syllabuses'
 import type { TeacherToday, TopicDifficulty } from '@/types/syllabus.types'
 import MarkdownView from '@/components/pages/syllabus/MarkdownView.vue'
+import CheckInCard from '@/components/pages/staff-attendance/CheckInCard.vue'
 
 defineOptions({ name: 'TeacherToday' })
 

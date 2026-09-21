@@ -69,13 +69,15 @@
 
 <script setup lang="ts">
 import { usePermissions } from '@/composables/usePermissions'
+import { useCenterStore } from '@/stores/center'
 import CenterCreate from '@/components/pages/center/CenterCreate.vue'
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchCenters, deleteCenter } from '@/services/pages/centers'
-import type { Center, CentersParams } from '@/types/center.types'
+import type { Center, CentersParams } from '@/types/centers.types'
 
 const { canManageCenters } = usePermissions()
+const centerStore = useCenterStore()
 
 const { t } = useI18n()
 
@@ -111,6 +113,8 @@ const getCenters = async () => {
     } = await fetchCenters(params.value)
     items.value = data
     totalPages.value = meta.totalPages
+    // Header'dagi filial tanlagichi ham yangilansin (nom o'zgardi/o'chdi)
+    await centerStore.load(true)
   } catch (err) {
     console.log(err)
   } finally {

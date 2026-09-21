@@ -49,10 +49,26 @@ export interface StaffSalary {
   earningCommissionAmount?: number
   earningCarryOverCommission?: number
   earningTotalEarning?: number
+  // Jarimalar (oylikdan ushlab qolish)
+  /** Shu oy oyligidan ushlab qolingan jarima */
+  deductionAmount?: number
+  /** Qo'lga tegadigan summa: baseSalary − deductionAmount */
+  netSalary?: number
+  /** netSalary − paidAmount */
+  remaining?: number
+  /** Hali ushlanmagan jarima qoldig'i (keyingi oyliklarga o'tadi) */
+  deductionOutstanding?: number
 }
 
 
 export interface PayStaffSalaryPayload {
+  /** Qo'lga beriladigan summa. Faqat jarima yozish uchun 0 yuboriladi. */
   amount: number
   comment?: string
+  /** Shu to'lov bilan birga yoziladigan jarima (oylikdan ushlab qolinadi) */
+  deduction?: {
+    amount: number
+    reason: string
+    type?: 'late' | 'unsettled_payment' | 'other'
+  }
 }

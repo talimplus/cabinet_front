@@ -7,18 +7,6 @@
 
     <v-row class="px-4">
       <v-col cols="12" sm="6" md="3">
-        <v-select
-          :label="$t('subjects.centers')"
-          density="compact"
-          clearable
-          :items="centers"
-          variant="outlined"
-          item-title="name"
-          item-value="id"
-          v-model="params.centerId"
-          @update:modelValue="getSubjects"
-        ></v-select> </v-col
-      ><v-col cols="12" sm="6" md="3">
         <v-text-field
           variant="outlined"
           v-model="params.name"
@@ -60,7 +48,6 @@
       v-model:open="openModal"
       @updateData="getSubjects"
       @clearForm="clearFormForEdit"
-      :centers="centers"
       :formForEdit="formForEdit"
     >
     </CreateSubjects>
@@ -73,8 +60,6 @@ import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchSubjects, deleteSubject } from '@/services/pages/subjects'
 import type { Subject, SubjectsParams } from '@/types/subject.types'
-import { fetchAllCenters } from '@/services/pages/centers'
-import type { Center } from '@/types/centers.types'
 import CreateSubjects from '@/components/pages/subjects/CreateSubject.vue'
 
 const { canManageSubjects } = usePermissions()
@@ -82,7 +67,6 @@ const { canManageSubjects } = usePermissions()
 const { t } = useI18n()
 
 const items = ref<Subject[]>([])
-const centers = ref<Center[]>([])
 const openModal = ref(false)
 const totalPages = ref(0)
 const formForEdit = ref<Subject>()
@@ -90,7 +74,6 @@ const formForEdit = ref<Subject>()
 const params = ref<SubjectsParams>({
   page: 1,
   perPage: 10,
-  centerId: undefined,
 })
 
 const edit = (subject: Subject) => {
@@ -129,24 +112,8 @@ const getSubjects = async () => {
   }
 }
 
-const getCenters = async () => {
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-    }
-  } catch (err) {
-    console.log(err)
-  }
-}
-
 onMounted(async () => {
-  await getCenters()
-  if (params.value.centerId) {
-    await getSubjects()
-  }
+  await getSubjects()
 })
 
 watch(

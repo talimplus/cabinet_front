@@ -8,20 +8,6 @@
     </v-card-title>
     <v-card-text>
       <v-row>
-        <v-col cols="12" md="4">
-          <v-select
-            v-model="params.centerId"
-            :items="centerOptions"
-            item-title="title"
-            item-value="value"
-            :label="$t('groups.filter.center')"
-            variant="outlined"
-            density="compact"
-            clearable
-            :loading="loadingCenters"
-            @update:model-value="handleCenterChange"
-          ></v-select>
-        </v-col>
         <v-col v-if="!isTeacher && canViewTeachers" cols="12" md="4">
           <v-select
             v-model="params.teacherId"
@@ -70,7 +56,16 @@
       </template>
 
       <template v-slot:item.monthlyFee="{ item }">
-        {{ formatCurrency(item.monthlyFee) }}
+        <div class="text-no-wrap">{{ formatCurrency(item.monthlyFee) }}</div>
+        <!-- Narx oy o'rtasida o'zgartirilsa keyingi oydan kuchga kiradi -->
+        <div v-if="item.upcomingMonthlyFee != null" class="text-caption text-medium-emphasis">
+          {{
+            t('groups.table.upcomingFee', {
+              fee: formatCurrency(item.upcomingMonthlyFee),
+              date: formatDate(item.upcomingFeeFromMonth),
+            })
+          }}
+        </div>
       </template>
 
       <template v-slot:item.status="{ item }">
@@ -154,7 +149,6 @@
       @update:model-value="getGroups"
     ></v-pagination>
     <create-group-modal
-      :centers="centers"
       v-model:open="openFormModal"
       @close="openFormModal = false"
       @updateData="getGroups"
@@ -187,11 +181,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchGroups, deleteGroup, changeGroupStatus } from '@/services/pages/groups'
 import CreateGroupModal from '@/components/pages/group/CreateGroupModal.vue'
-import { fetchAllCenters } from '@/services/pages/centers'
 import { fetchAllTeachers } from '@/services/pages/users'
 import type { TeacherListItem } from '@/types/users.types'
 import type { Group } from '@/types/groups.types'
-import type { Center } from '@/types/centers.types'
 import type { GroupsParams } from '@/types/groups.types'
 import { GroupStatus } from '@/types/groups.enum'
 import { usePermissions } from '@/composables/usePermissions'
@@ -219,28 +211,18 @@ const firstMessage = (value?: string | string[]): string =>
   (Array.isArray(value) ? value[0] : value) || ''
 
 const items = ref<Group[]>([])
-const centers = ref<Center[]>([])
 const openFormModal = ref(false)
 const deleteLoading = ref(false)
 const formForEdit = ref<Group | null>(null)
 const finishConfirm = ref<{ show: boolean; item: Group | null }>({ show: false, item: null })
-const loadingCenters = ref(false)
 const teachers = ref<TeacherListItem[]>([])
 const loadingTeachers = ref(false)
 const totalPages = ref(1)
 
 const params = ref<GroupsParams>({
-  centerId: undefined,
   teacherId: undefined,
   page: 1,
   perPage: 10,
-})
-
-const centerOptions = computed(() => {
-  return centers.value.map((center) => ({
-    title: center.name,
-    value: center.id,
-  }))
 })
 
 const teacherOptions = computed(() => {
@@ -277,9 +259,8 @@ const loadTeachers = async () => {
   if (isTeacher.value || !canViewTeachers.value) return
   loadingTeachers.value = true
   try {
-    teachers.value = await fetchAllTeachers(
-      params.value.centerId ? { centerId: params.value.centerId } : undefined,
-    )
+    // Filial header'dan keladi — `baseHttp` uni avtomatik qo'shadi
+    teachers.value = await fetchAllTeachers()
     // Tanlangan ustoz yangi ro'yxatda bo'lmasa — tanlovni tozalaymiz
     if (params.value.teacherId && !teachers.value.find((it) => it.id === params.value.teacherId)) {
       params.value.teacherId = undefined
@@ -292,40 +273,14 @@ const loadTeachers = async () => {
   }
 }
 
-const handleCenterChange = async () => {
-  params.value.teacherId = undefined
-  params.value.page = 1
-  await loadTeachers()
-  await getGroups()
-}
-
 const handleTeacherChange = async () => {
   params.value.page = 1
   await getGroups()
 }
 
-const loadCenters = async () => {
-  loadingCenters.value = true
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find((c) => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-    }
-  } catch (err) {
-    console.log(err)
-  } finally {
-    loadingCenters.value = false
-  }
-}
-
 onMounted(async () => {
-  await loadCenters()
   await loadTeachers()
-  if (params.value.centerId) {
-    await getGroups()
-  }
+  await getGroups()
 })
 
 const remove = async (id: number) => {

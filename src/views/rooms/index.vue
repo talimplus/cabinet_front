@@ -16,18 +16,6 @@
           >
           </v-text-field>
         </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <v-select
-            v-model="params.centerId"
-            density="compact"
-            variant="outlined"
-            :label="$t('rooms.centers')"
-            item-title="name"
-            item-value="id"
-            :items="centers"
-            @update:modelValue="getRooms"
-          ></v-select>
-        </v-col>
       </v-row>
       <v-card-text>
         <v-data-table :loading="loading" :items="items" :headers="headers" hide-default-footer>
@@ -75,10 +63,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CreateRoom from '@/components/pages/room/CreateRoom.vue'
 import { fetchRooms } from '@/services/pages/rooms'
-import { fetchAllCenters } from '@/services/pages/centers'
 import { deleteRoom } from '@/services/pages/rooms'
 import type { Room, RoomParams } from '@/types/room.types'
-import type { Center } from '@/types/centers.types'
 
 const { canManageRooms } = usePermissions()
 
@@ -87,11 +73,9 @@ const { t } = useI18n()
 const formForEdit = ref<Room>()
 const openModal = ref(false)
 const items = ref<Room[]>([])
-const centers = ref<Center[]>([])
 const loading = ref(false)
 
 const params = ref<RoomParams>({
-  centerId: undefined,
   name: '',
 })
 
@@ -119,24 +103,8 @@ const getRooms = async () => {
   }
 }
 
-const getCenters = async () => {
-  try {
-    const { data } = await fetchAllCenters()
-    centers.value = data
-    if (centers.value.length > 0 && !params.value.centerId) {
-      const defaultCenter = centers.value.find(c => c.isDefault) || centers.value[0]
-      params.value.centerId = defaultCenter.id
-    }
-  } catch (err) {
-    console.log(err)
-  }
-}
-
 onMounted(async () => {
-  await getCenters()
-  if (params.value.centerId) {
-    await getRooms()
-  }
+  await getRooms()
 })
 
 const remove = async (id: number) => {

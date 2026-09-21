@@ -17,6 +17,8 @@ import uzUsers from './uz/users'
 import uzRoles from './uz/roles'
 import uzProfile from './uz/profile'
 import uzStatistics from './uz/statistics'
+import uzStaffAttendance from './uz/staffAttendance'
+import uzStaff from './uz/staff'
 
 // Russian namespaces
 import ruCommon from './ru/common'
@@ -37,6 +39,8 @@ import ruUsers from './ru/users'
 import ruRoles from './ru/roles'
 import ruProfile from './ru/profile'
 import ruStatistics from './ru/statistics'
+import ruStaffAttendance from './ru/staffAttendance'
+import ruStaff from './ru/staff'
 
 export const messages = {
   uz: {
@@ -58,6 +62,8 @@ export const messages = {
     roles: uzRoles,
     profile: uzProfile,
     statistics: uzStatistics,
+    staffAttendance: uzStaffAttendance,
+    staff: uzStaff,
   },
   ru: {
     common: ruCommon,
@@ -78,5 +84,7 @@ export const messages = {
     roles: ruRoles,
     profile: ruProfile,
     statistics: ruStatistics,
+    staffAttendance: ruStaffAttendance,
+    staff: ruStaff,
   },
 }

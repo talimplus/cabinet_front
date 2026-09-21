@@ -4,6 +4,8 @@ export default {
   center: 'Markaz',
   emptyState: 'Bu oy uchun ish haqi maʼlumotlari topilmadi',
   table: {
+    deduction: 'Ushlab qolindi',
+    outstanding: "qoldiq: {amount}",
     worker: 'Ishchi',
     role: 'Rol',
     baseSalary: 'Asosiy maosh',
@@ -42,6 +44,7 @@ export default {
     unpaid: 'Toʻlanmagan',
   },
   modal: {
+    addDeduction: "Oylikdan ushlab qolish (jarima)",
     title: 'Toʻlov',
     worker: 'Ishchi:',
     totalSalary: 'Jami maosh:',

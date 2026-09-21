@@ -1,4 +1,5 @@
 export default {
+  allCenters: 'Barcha filiallar',
   menu: {
     statistics: 'Statistika',
     users: 'Ishchilar',
@@ -17,6 +18,8 @@ export default {
     subjects: 'Fanlar',
     rooms: 'Xonalar',
     syllabuses: 'Kurs rejalari',
+    myPerformance: 'Mening faoliyatim',
+    staffAttendance: 'Xodimlar davomati',
     todayLessons: 'Bugungi darslar',
     roles: 'Rollar va ruxsatlar',
   },

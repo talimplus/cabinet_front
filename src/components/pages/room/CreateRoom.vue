@@ -13,20 +13,6 @@
             ></v-text-field>
           </Field>
         </v-card-text>
-        <v-card-text v-if="isAdmin">
-          <Field name="centerId" v-slot="{ handleChange, handleBlur, errors }">
-            <v-select
-              v-model="form.centerId"
-              :items="centers"
-              :label="$t('rooms.centers')"
-              item-title="name"
-              item-value="id"
-              :error-messages="errors"
-              @update:model-value="handleChange"
-              @blur="handleBlur"
-            ></v-select>
-          </Field>
-        </v-card-text>
         <v-card-actions>
           <v-btn :text="$t('common.cancel')" @click="open = false"></v-btn>
           <v-btn v-if="canManageRooms" type="submit" :loading="loading" :disabled="loading" :text="$t('rooms.submit')" color="primary"></v-btn>
@@ -38,21 +24,16 @@
 
 <script setup lang="ts">
 import { usePermissions } from '@/composables/usePermissions'
-import { ref, defineProps, defineModel, defineEmits, watch, computed } from 'vue'
+import { ref, defineProps, defineModel, defineEmits, watch } from 'vue'
 import { Form, Field } from 'vee-validate'
 import { createRoom, updateRoom } from '@/services/pages/rooms.ts'
-import { fetchCenters } from '@/services/pages/centers'
 import type { RoomForm } from '@/types/room.types'
-import type { Center } from '@/types/center.types'
-import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 
 const { canManageRooms } = usePermissions()
 
 const loading = ref(false)
-const centers = ref<Center[]>([])
-const userStore = useUserStore()
-// Markaz (filial) tanlay olish — rol nomiga emas, ruxsatga bog'liq
-const isAdmin = computed(() => userStore.can('centers.view'))
+const centerStore = useCenterStore()
 
 interface Emits {
   (e: 'updateData'): void
@@ -83,26 +64,11 @@ watch(open, (newValue: boolean) => {
       centerId: '',
     }
   }
-  // Admin bo'lmagan foydalanuvchilar uchun centerId'ni /auth/me'dan olamiz
-  if (newValue && !isAdmin.value && userStore.user?.centerId) {
-    form.value.centerId = userStore.user.centerId
+  // Filial header'dan: aktiv filial ("barchasi" bo'lsa — standart filial)
+  if (newValue && !props.formForEdit?.id) {
+    form.value.centerId = centerStore.centerIdForCreate ?? ''
   }
 })
-
-const getCenters = async () => {
-  // Filial tanlash faqat `centers.view` bo'lganda ko'rinadi — aks holda so'ramaymiz
-  if (!isAdmin.value) return
-  try {
-    const {
-      data: { data },
-    } = await fetchCenters()
-    centers.value = data
-  } catch (err) {
-    console.log(err)
-  } finally {
-  }
-}
-getCenters()
 
 const submit = async () => {
   try {

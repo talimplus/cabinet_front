@@ -96,6 +96,36 @@
 
     <v-app-bar class="app-bar" flat height="66">
       <v-app-bar-nav-icon @click="drawer = !drawer" size="large"></v-app-bar-nav-icon>
+
+      <!--
+        Aktiv filial — butun kabinet shu tanlovga bog'liq: barcha ro'yxatlar
+        shu filial bo'yicha keladi, yangi yozuvlar shu filialga tushadi.
+      -->
+      <v-select
+        v-if="centerStore.canSwitch && centerStore.centers.length > 1"
+        :model-value="centerStore.activeCenterId"
+        :items="centerOptions"
+        item-title="title"
+        item-value="value"
+        :loading="centerStore.loading"
+        variant="outlined"
+        density="compact"
+        hide-details
+        prepend-inner-icon="mdi-office-building-outline"
+        class="center-switcher ms-2"
+        @update:model-value="onCenterChange"
+      ></v-select>
+
+      <v-chip
+        v-else-if="ownCenterName"
+        size="small"
+        variant="tonal"
+        prepend-icon="mdi-office-building-outline"
+        class="ms-2"
+      >
+        {{ ownCenterName }}
+      </v-chip>
+
       <v-spacer></v-spacer>
 
       <v-menu location="bottom end" offset="10">
@@ -177,23 +207,54 @@
 
     <v-main class="main-content">
       <div class="content-wrapper">
-        <router-view />
+        <!--
+          Filial almashganda sahifa qaytadan mount bo'ladi va o'z
+          ma'lumotlarini yangi filial bo'yicha qayta yuklaydi. Shu sabab
+          har bir sahifaga alohida watcher yozish shart emas.
+        -->
+        <router-view :key="`center-${centerStore.activeCenterId ?? 'all'}`" />
       </div>
     </v-main>
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { logout } from '@/services/pages/auth'
 import { useUserStore } from '@/stores/user'
+import { useCenterStore } from '@/stores/center'
 import { setLocale, type AppLocale } from '@/plugins/i18n'
 
 const router = useRouter()
 const userStore = useUserStore()
+const centerStore = useCenterStore()
 const { t, locale } = useI18n()
+
+/** Birinchi punkt — "Barcha filiallar" (centerId umuman yuborilmaydi) */
+const centerOptions = computed(() => [
+  { value: null as number | null, title: t('layout.allCenters') },
+  ...centerStore.centers.map((center) => ({
+    value: center.id as number | null,
+    title: center.name,
+  })),
+])
+
+/** Filialni almashtira olmaydigan xodimga o'z filiali nomi ko'rsatiladi */
+const ownCenterName = computed(() => {
+  if (centerStore.canSwitch) return ''
+  const own = centerStore.centers.find((c) => c.id === userStore.user?.centerId)
+  return own?.name ?? ''
+})
+
+const onCenterChange = (value: number | null) => {
+  centerStore.setActive(value ?? null)
+}
+
+onMounted(() => {
+  centerStore.load()
+})
 
 const changeLocale = (lang: AppLocale) => {
   setLocale(lang)
@@ -241,6 +302,20 @@ const allItems = {
       icon: 'mdi-book-open-variant',
       path: '/syllabuses',
       permission: ['syllabus.view'],
+    },
+    {
+      text: 'layout.menu.myPerformance',
+      icon: 'mdi-account-details',
+      path: '/my-performance',
+      permission: ['staffAttendance.viewOwn'],
+      // Markaz egasi o'z-o'ziga jarima yozmaydi — sahifa unga keraksiz
+      hideForBaseRoles: ['admin', 'super_admin'],
+    },
+    {
+      text: 'layout.menu.staffAttendance',
+      icon: 'mdi-account-clock',
+      path: '/staff-attendance',
+      permission: ['staffAttendance.view'],
     },
   ],
   payment: [
@@ -334,10 +409,19 @@ interface MenuItem {
   icon: string
   path: string
   permission?: string[]
+  /**
+   * Rol TURI bo'yicha yashirish (ruxsat emas, biznes-mantiq).
+   * Masalan "Mening faoliyatim" markaz egasiga keraksiz: uning o'ziga
+   * davomat ham, jarima ham yozilmaydi.
+   */
+  hideForBaseRoles?: string[]
 }
 
 const filterItems = (items: MenuItem[]) =>
-  items.filter((item) => !item.permission?.length || userStore.can(...item.permission))
+  items.filter((item) => {
+    if (item.hideForBaseRoles?.includes(userStore.user?.role ?? '')) return false
+    return !item.permission?.length || userStore.can(...item.permission)
+  })
 
 const standaloneItems = computed(() => filterItems(allItems.standalone))
 const paymentGroupItems = computed(() => filterItems(allItems.payment))
@@ -380,6 +464,8 @@ const handleLogout = async () => {
     // Clear user from store
     const userStore = useUserStore()
     userStore.clearUser()
+    // Boshqa hisobga kirilganda eski filial qolib ketmasin
+    centerStore.reset()
     // Redirect to login page
     router.push('/login')
     logoutLoading.value = false
@@ -388,6 +474,11 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+/* Header'dagi filial tanlagichi — juda keng bo'lib ketmasligi kerak */
+.center-switcher {
+  max-width: 230px;
+}
+
 .app-container {
   background: #f4f5fa;
 }
